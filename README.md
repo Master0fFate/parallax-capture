@@ -28,15 +28,15 @@
 
 ### Option 1: Download installer
 
-Grab the latest `ParallaxCapture-Setup-x.x.x.exe` from [Releases](https://github.com/your-org/parallax-screencapture/releases).  
+Grab the latest `ParallaxCapture-Setup-x.x.x.exe` from [Releases](https://github.com/Master0fFate/parallax-capture/releases).  
 The installer checks for .NET 10 and offers to download it if missing.
 
 ### Option 2: Build from source
 
 ```powershell
 # Prerequisites: .NET 10 SDK
-git clone https://github.com/your-org/parallax-screencapture.git
-cd parallax-screencapture\parallax
+git clone https://github.com/Master0fFate/parallax-capture.git
+cd parallax-capture\parallax
 dotnet build -c Release -p:Platform=x64
 dotnet run --project parallax.csproj
 ```
