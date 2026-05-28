@@ -1,0 +1,461 @@
+<Window x:Class="parallax.UI.Windows.AnnotationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="True"
+        ResizeMode="NoResize"
+        Title="parallax - Annotate"
+        KeyDown="Window_KeyDown">
+
+    <Window.Resources>
+        <!-- ─── ICON RESOURCES ─── -->
+        
+        <!-- Pen -->
+        <PathGeometry x:Key="IconPenGeo">M2.5,13 L5.5,10 L10.5,5 L13,2.5 C13.4,2.1 13.4,1.5 13,1.1 L12.9,1 C12.5,0.6 11.9,0.6 11.5,1 L9,3.5 L4,8.5 L1,12.5 Z M1,12.5 L2.5,14</PathGeometry>
+        
+        <!-- Arrow -->
+        <PathGeometry x:Key="IconArrowGeo">M2,14 L14,2 M14,2 L8,4 M14,2 L10,8</PathGeometry>
+        
+        <!-- Rectangle -->
+        <PathGeometry x:Key="IconRectGeo">M2,3 L14,3 L14,13 L2,13 Z</PathGeometry>
+        
+        <!-- Ellipse -->
+        <PathGeometry x:Key="IconEllipseGeo">M8,3 A6,5.5 0 1,0 8,14 A6,5.5 0 1,0 8,3 Z</PathGeometry>
+        
+        <!-- Highlighter -->
+        <PathGeometry x:Key="IconHlGeo">M3,7 L13,7 L13,10 L3,10 Z M4,4 L4,13 M12,4 L12,13</PathGeometry>
+        
+        <!-- Blur -->
+        <PathGeometry x:Key="IconBlurGeo">M8,3 A5,5 0 1,0 8,13 A5,5 0 1,0 8,3 Z M8,4 A4,4 0 1,0 8,12 A4,4 0 1,0 8,4 Z M8,5 A3,3 0 1,0 8,11 A3,3 0 1,0 8,5 Z</PathGeometry>
+        
+        <!-- Color picker -->
+        <PathGeometry x:Key="IconColorGeo">M3,3 A10,10 0 1,0 13,13 A10,10 0 1,0 3,3 Z M6,6 L10,10</PathGeometry>
+        
+        <!-- Undo -->
+        <PathGeometry x:Key="IconUndoGeo">M8,2 C4.7,2 2,4.7 2,8 L0.5,6.5 L0,7 L3,10 L6,7 L5.5,6.5 L4,8 C4,5.2 6.2,3 9,3 C11.8,3 14,5.2 14,8 C14,10.8 11.8,13 9,13 L8,13 L8,14 L9,14 C12.3,14 15,11.3 15,8 C15,4.7 12.3,2 9,2 Z</PathGeometry>
+        
+        <!-- Clear / Trash -->
+        <PathGeometry x:Key="IconClearGeo">M4,14 L5.5,14 L5.5,6 L4,6 Z M7,14 L8.5,14 L8.5,6 L7,6 Z M10,14 L11.5,14 L11.5,6 L10,6 Z M2,4 L5,4 L6,2 L10,2 L11,4 L14,4 L14,5 L2,5 Z</PathGeometry>
+
+        <Style x:Key="ToolButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="2">
+                            <Viewbox Width="16" Height="16"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                            </Viewbox>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#FF4A4A6E" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#FF007ACC" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Opacity" Value="0.4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ToolButtonIconStyle" TargetType="Button"
+               BasedOn="{StaticResource ToolButtonStyle}">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+        </Style>
+
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#FF2A2A4E" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#555577" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontFamily" Value="Segoe UI" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="MinWidth" Value="75" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#FF3A3A6E" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#FF007ACC" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="UndoClearButtonStyle" TargetType="Button"
+               BasedOn="{StaticResource ActionButtonStyle}">
+            <Setter Property="Width" Value="Auto" />
+            <Setter Property="MinWidth" Value="55" />
+            <Setter Property="Padding" Value="6,0" />
+        </Style>
+
+        <Style x:Key="ColorSwatchStyle" TargetType="Button">
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#666" />
+            <Setter Property="Margin" Value="1,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="2"
+                                Width="{TemplateBinding Width}"
+                                Height="{TemplateBinding Height}">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="BorderBrush" Value="White" />
+                                            <Setter Property="BorderThickness" Value="2" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="White" />
+                                <Setter TargetName="border" Property="BorderThickness" Value="2" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Border CornerRadius="4"
+                Background="White"
+                Margin="6">
+            <Border.Effect>
+                <DropShadowEffect Color="Black"
+                                  Opacity="0.35"
+                                  BlurRadius="12"
+                                  ShadowDepth="3" />
+            </Border.Effect>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />  <!-- Title Bar -->
+                    <RowDefinition Height="Auto" />  <!-- Toolbar -->
+                    <RowDefinition Height="*"    />  <!-- Canvas Area -->
+                    <RowDefinition Height="Auto" />  <!-- Bottom Bar -->
+                </Grid.RowDefinitions>
+
+                <!-- TITLE BAR (draggable) -->
+                <Border Grid.Row="0"
+                        Background="#FF1E1E2E"
+                        CornerRadius="4,4,0,0"
+                        MouseDown="TitleBar_MouseDown"
+                        Padding="10,8">
+                    <Grid>
+                        <TextBlock Text="parallax -- Annotation"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   FontFamily="Segoe UI"
+                                   VerticalAlignment="Center" />
+                        <Button x:Name="BtnClose"
+                                Content="X"
+                                Width="28" Height="22"
+                                Background="Transparent"
+                                Foreground="White"
+                                BorderThickness="0"
+                                FontSize="11"
+                                Click="BtnClose_Click"
+                                Cursor="Hand"
+                                HorizontalAlignment="Right" />
+                    </Grid>
+                </Border>
+
+                <!-- TOOLBAR ROW -->
+                <Border Grid.Row="1"
+                        Background="#FF2A2A3E"
+                        Padding="6,4">
+                    <StackPanel Orientation="Horizontal">
+
+                        <!-- ── Tool Buttons with icons ── -->
+                        <Button x:Name="BtnPen" ToolTip="Pen (P)"
+                                Tag="Pen"
+                                Click="Tool_Click"
+                                Style="{StaticResource ToolButtonIconStyle}">
+                            <Path Data="{StaticResource IconPenGeo}"
+                                  Stroke="White" StrokeThickness="1.2"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  StrokeLineJoin="Round"
+                                  Fill="Transparent" />
+                        </Button>
+
+                        <Button x:Name="BtnArrow" ToolTip="Arrow (A)"
+                                Tag="Arrow"
+                                Click="Tool_Click"
+                                Style="{StaticResource ToolButtonIconStyle}">
+                            <Path Data="{StaticResource IconArrowGeo}"
+                                  Stroke="White" StrokeThickness="1.5"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  StrokeLineJoin="Round" />
+                        </Button>
+
+                        <Button x:Name="BtnRect" ToolTip="Rectangle (R)"
+                                Tag="Rectangle"
+                                Click="Tool_Click"
+                                Style="{StaticResource ToolButtonIconStyle}">
+                            <Path Data="{StaticResource IconRectGeo}"
+                                  Stroke="White" StrokeThickness="1.2"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  StrokeLineJoin="Round" />
+                        </Button>
+
+                        <Button x:Name="BtnEllipse" ToolTip="Ellipse (E)"
+                                Tag="Ellipse"
+                                Click="Tool_Click"
+                                Style="{StaticResource ToolButtonIconStyle}">
+                            <Path Data="{StaticResource IconEllipseGeo}"
+                                  Stroke="White" StrokeThickness="1.2"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  StrokeLineJoin="Round" />
+                        </Button>
+
+                        <Button x:Name="BtnText" ToolTip="Text (T)"
+                                Tag="Text"
+                                Click="Tool_Click"
+                                Style="{StaticResource ToolButtonIconStyle}">
+                            <TextBlock Text="T" FontSize="14" FontWeight="Bold"
+                                       Foreground="White"
+                                       FontFamily="Segoe UI" />
+                        </Button>
+
+                        <Button x:Name="BtnHighlight" ToolTip="Highlighter (H)"
+                                Tag="Highlighter"
+                                Click="Tool_Click"
+                                Style="{StaticResource ToolButtonIconStyle}">
+                            <Path Data="{StaticResource IconHlGeo}"
+                                  Stroke="White" StrokeThickness="1.2"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  StrokeLineJoin="Round"
+                                  Fill="#44FFFFFF" />
+                        </Button>
+
+                        <Button x:Name="BtnBlur" ToolTip="Blur (B)"
+                                Tag="Blur"
+                                Click="Tool_Click"
+                                Style="{StaticResource ToolButtonIconStyle}">
+                            <Path Data="{StaticResource IconBlurGeo}"
+                                  Stroke="White" StrokeThickness="1.2"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  StrokeLineJoin="Round"
+                                  Opacity="0.8" />
+                        </Button>
+
+                        <Separator Width="1" Background="#555" Margin="4,0" />
+
+                        <!-- ── Color Picker ── -->
+                        <ItemsControl x:Name="ColorSwatches"
+                                      VerticalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+
+                        <Button x:Name="BtnMoreColors"
+                                ToolTip="More Colors..."
+                                Width="22" Height="20"
+                                Margin="1,0"
+                                Click="MoreColors_Click"
+                                Cursor="Hand"
+                                BorderThickness="1"
+                                BorderBrush="#666"
+                                Background="#FF2A2A3E"
+                                Foreground="White"
+                                FontSize="10"
+                                FontFamily="Segoe UI"
+                                Content="..."
+                                VerticalAlignment="Center" />
+
+                        <Separator Width="1" Background="#555" Margin="4,0" />
+
+                        <!-- ── Stroke Thickness ── -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Size:"
+                                       Foreground="#AAA"
+                                       FontSize="11"
+                                       FontFamily="Segoe UI"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,4,0" />
+                            <Border BorderBrush="#555" BorderThickness="1"
+                                    CornerRadius="3"
+                                    Background="#1A1A2E"
+                                    Padding="4,0">
+                                <Grid>
+                                    <Slider x:Name="ThicknessSlider"
+                                            Minimum="1" Maximum="20" Value="2"
+                                            Width="72" Height="22"
+                                            VerticalAlignment="Center"
+                                            ToolTip="Stroke Thickness: 2"
+                                            ValueChanged="ThicknessSlider_ValueChanged"
+                                            Style="{StaticResource CustomSliderStyle}" />
+                                </Grid>
+                            </Border>
+                            <TextBlock x:Name="ThicknessValue"
+                                       Text="2"
+                                       Foreground="#CCC"
+                                       FontSize="10"
+                                       FontFamily="Segoe UI"
+                                       VerticalAlignment="Center"
+                                       MinWidth="14"
+                                       TextAlignment="Center"
+                                       Margin="3,0,0,0" />
+                        </StackPanel>
+
+                        <Separator Width="1" Background="#555" Margin="4,0" />
+
+                        <!-- ── Undo (wider with icon) ── -->
+                        <Button x:Name="BtnUndo"
+                                ToolTip="Undo (Ctrl+Z)"
+                                Click="BtnUndo_Click"
+                                Style="{StaticResource UndoClearButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconUndoGeo}"
+                                      Stroke="White" StrokeThickness="1.0"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"
+                                      Width="12" Height="12"
+                                      Margin="0,0,4,0" />
+                                <TextBlock Text="Undo" FontSize="11" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- ── Clear (wider with icon) ── -->
+                        <Button x:Name="BtnClear"
+                                ToolTip="Clear All"
+                                Click="BtnClear_Click"
+                                Style="{StaticResource UndoClearButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconClearGeo}"
+                                      Stroke="White" StrokeThickness="0.8"
+                                      Fill="White"
+                                      Width="12" Height="12"
+                                      Margin="0,0,4,0" />
+                                <TextBlock Text="Clear" FontSize="11" />
+                            </StackPanel>
+                        </Button>
+
+                    </StackPanel>
+                </Border>
+
+                <!-- ANNOTATION CANVAS AREA -->
+                <ScrollViewer Grid.Row="2"
+                              Background="#FF151525"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto">
+                    <Grid>
+                        <Image x:Name="ScreenshotImage"
+                               Stretch="None"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+
+                        <Canvas x:Name="AnnotationCanvas"
+                                Background="Transparent"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                MouseDown="AnnotationCanvas_MouseDown"
+                                MouseMove="AnnotationCanvas_MouseMove"
+                                MouseUp="AnnotationCanvas_MouseUp"
+                                Cursor="Cross" />
+                    </Grid>
+                </ScrollViewer>
+
+                <!-- BOTTOM ACTION BAR -->
+                <Border Grid.Row="3"
+                        Background="#FF1E1E2E"
+                        Padding="8,6"
+                        CornerRadius="0,0,4,4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Save feedback: green text that auto-fades -->
+                        <TextBlock x:Name="TxtStatus"
+                                   Grid.Column="0"
+                                   Text=""
+                                   Foreground="#4F4"
+                                   FontSize="11"
+                                   FontFamily="Segoe UI"
+                                   VerticalAlignment="Center"
+                                   Opacity="0" />
+
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right">
+
+                            <Button x:Name="BtnCopyClipboard"
+                                    Content="Copy"
+                                    Height="28" Padding="12,0"
+                                    Click="BtnCopyClipboard_Click"
+                                    Style="{StaticResource ActionButtonStyle}" />
+
+                            <Button x:Name="BtnSave"
+                                    Content="Save"
+                                    Height="28" Padding="12,0"
+                                    Click="BtnSave_Click"
+                                    Style="{StaticResource ActionButtonStyle}" />
+
+                            <Button x:Name="BtnSaveAs"
+                                    Content="Save As..."
+                                    Height="28" Padding="12,0"
+                                    Click="BtnSaveAs_Click"
+                                    Style="{StaticResource ActionButtonStyle}" />
+
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

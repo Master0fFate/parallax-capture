@@ -1,0 +1,53 @@
+<Window x:Class="parallax.UI.Windows.RecordingBorderWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        IsHitTestVisible="False"
+        Title="parallax Recording Border">
+    <!-- The window has 22px extra height at the top (TopPadding in code-behind)
+         for the REC label. The border sits below that, aligned to the capture region. -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="22" />   <!-- REC label area (code-behind pads Top) -->
+            <RowDefinition Height="*" />    <!-- Border + gap area -->
+        </Grid.RowDefinitions>
+
+        <!-- REC label at top-left, inside the padded area -->
+        <Border x:Name="RecLabel"
+                Grid.Row="0"
+                Background="#CC000000"
+                CornerRadius="2"
+                Padding="5,2"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Margin="4,4,0,0"
+                IsHitTestVisible="False">
+            <StackPanel Orientation="Horizontal">
+                <Ellipse Width="6" Height="6"
+                         Fill="#FFFF4444"
+                         VerticalAlignment="Center"
+                         Margin="0,0,4,0" />
+                <TextBlock Text="REC"
+                           Foreground="#FFFF4444"
+                           FontSize="10"
+                           FontWeight="Bold"
+                           FontFamily="Segoe UI"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+        </Border>
+
+        <!-- Pure 2px red border OUTSIDE the capture region (5px gap, see code-behind).
+             No fill, no anti-aliased corners. The border is separated from the
+             capture region by a 5px transparent gap, so ScreenRecorderLib never sees it. -->
+        <Border x:Name="BorderOverlay"
+                Grid.Row="1"
+                BorderBrush="#FFFF4444"
+                BorderThickness="2"
+                Background="Transparent"
+                IsHitTestVisible="False" />
+    </Grid>
+</Window>

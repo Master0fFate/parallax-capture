@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
+    <AssemblyName>Parallax Capture</AssemblyName>
+    <RootNamespace>parallax</RootNamespace>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+
+    <!-- Framework-dependent publish: tiny .exe, installer handles .NET runtime -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>embedded</DebugType>
+
+    <!-- Version info shown in Windows -->
+    <Version>1.0.0</Version>
+    <Company>parallax</Company>
+    <Product>Parallax Capture</Product>
+    <Description>Screenshot and screen recording tool for Windows</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Remove WinForms global using to prevent namespace conflicts with WPF -->
+    <Using Remove="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FFMpegCore" Version="5.1.0" />
+    <PackageReference Include="GlobalHotKey" Version="1.0.0" />
+    <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="ScreenRecorderLib" Version="5.0.0" />
+    <PackageReference Include="SharpAvi" Version="2.1.2" />
+  </ItemGroup>
+
+</Project>
