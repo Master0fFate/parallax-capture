@@ -613,41 +613,6 @@ namespace parallax.UI.Windows
         {
             switch (e.Key)
             {
-                case Key.P:
-                    _currentTool = AnnotationTool.Pen;
-                    FinalizeTextBox();
-                    e.Handled = true;
-                    break;
-                case Key.A:
-                    _currentTool = AnnotationTool.Arrow;
-                    FinalizeTextBox();
-                    e.Handled = true;
-                    break;
-                case Key.R:
-                    _currentTool = AnnotationTool.Rectangle;
-                    FinalizeTextBox();
-                    e.Handled = true;
-                    break;
-                case Key.E:
-                    _currentTool = AnnotationTool.Ellipse;
-                    FinalizeTextBox();
-                    e.Handled = true;
-                    break;
-                case Key.T:
-                    _currentTool = AnnotationTool.Text;
-                    FinalizeTextBox();
-                    e.Handled = true;
-                    break;
-                case Key.H:
-                    _currentTool = AnnotationTool.Highlighter;
-                    FinalizeTextBox();
-                    e.Handled = true;
-                    break;
-                case Key.B:
-                    _currentTool = AnnotationTool.Blur;
-                    FinalizeTextBox();
-                    e.Handled = true;
-                    break;
                 case Key.Z:
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
