@@ -453,8 +453,12 @@
                               HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto">
                     <Grid x:Name="ContentGrid">
+                        <Grid.LayoutTransform>
+                            <ScaleTransform x:Name="ZoomTransform"
+                                            ScaleX="1" ScaleY="1" />
+                        </Grid.LayoutTransform>
                         <Image x:Name="ScreenshotImage"
-                               Stretch="Fill"
+                               Stretch="None"
                                HorizontalAlignment="Left"
                                VerticalAlignment="Top" />
 
