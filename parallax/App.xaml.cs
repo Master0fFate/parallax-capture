@@ -105,9 +105,9 @@ namespace parallax
 
         protected override void OnExit(ExitEventArgs e)
         {
-            _hotkeyManager?.Dispose();
-            _recorderService?.Dispose();
-            _trayManager?.Dispose();
+            try { _hotkeyManager?.Dispose(); } catch { }
+            try { _recorderService?.Dispose(); } catch { }
+            try { _trayManager?.Dispose(); } catch { }
             base.OnExit(e);
         }
     }

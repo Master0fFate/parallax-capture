@@ -46,6 +46,10 @@ namespace parallax.UI.Windows
             Interval = TimeSpan.FromSeconds(3)
         };
 
+        // ── Zoom
+        private double _zoomLevel = 1.0;
+        private static readonly double[] ZoomSteps = { 0.25, 0.33, 0.5, 0.67, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0 };
+
         public AnnotationWindow(Bitmap screenshot, ClipboardService clipboardService, FileService fileService)
         {
             InitializeComponent();
@@ -57,17 +61,11 @@ namespace parallax.UI.Windows
             _clipboardService = clipboardService;
             _fileService = fileService;
 
-            // Pre-size window BEFORE Show() so CenterScreen works correctly.
-            double extraWidth  = 20;  // margins/shadow
-            double extraHeight = 130; // title + toolbar + bottom bar + margin
-            double desiredW = _sourceBitmap.Width  + extraWidth;
-            double desiredH = _sourceBitmap.Height + extraHeight;
-
-            // Cap window size to the work area so it is always visible
+            // Fixed window size — image scrolls + zooms inside, like Paint
             double maxW = System.Windows.SystemParameters.WorkArea.Width;
             double maxH = System.Windows.SystemParameters.WorkArea.Height;
-            Width  = Math.Max(Math.Min(desiredW, maxW), 750);
-            Height = Math.Max(Math.Min(desiredH, maxH), 450);
+            Width  = Math.Min(950, maxW);
+            Height = Math.Min(700, maxH);
 
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             Topmost = true;
@@ -205,6 +203,45 @@ namespace parallax.UI.Windows
             AnnotationCanvas.Children.Clear();
         }
 
+        // ── Zoom ──
+
+        private void BtnZoomIn_Click(object sender, RoutedEventArgs e)
+        {
+            for (int i = 0; i < ZoomSteps.Length; i++)
+            {
+                if (ZoomSteps[i] > _zoomLevel + 0.001)
+                {
+                    ApplyZoom(ZoomSteps[i]);
+                    return;
+                }
+            }
+        }
+
+        private void BtnZoomOut_Click(object sender, RoutedEventArgs e)
+        {
+            for (int i = ZoomSteps.Length - 1; i >= 0; i--)
+            {
+                if (ZoomSteps[i] < _zoomLevel - 0.001)
+                {
+                    ApplyZoom(ZoomSteps[i]);
+                    return;
+                }
+            }
+        }
+
+        private void BtnZoomReset_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyZoom(1.0);
+        }
+
+        private void ApplyZoom(double level)
+        {
+            _zoomLevel = level;
+            ZoomTransform.ScaleX = level;
+            ZoomTransform.ScaleY = level;
+            TxtZoomLevel.Text = $"{(int)(level * 100)}%";
+        }
+
         // ────────────────────────────────────────────
         // CANVAS DRAWING EVENTS
         // ────────────────────────────────────────────
@@ -214,7 +251,9 @@ namespace parallax.UI.Windows
             if (e.LeftButton != MouseButtonState.Pressed) return;
 
             FinalizeTextBox();
-            _drawStart = e.GetPosition(AnnotationCanvas);
+            _drawStart = new System.Windows.Point(
+                e.GetPosition(AnnotationCanvas).X / _zoomLevel,
+                e.GetPosition(AnnotationCanvas).Y / _zoomLevel);
             _isDrawing = true;
             _penPoints.Clear();
 
@@ -352,12 +391,12 @@ namespace parallax.UI.Windows
         {
             if (!_isDrawing || _currentShape == null) return;
 
-            var pos = e.GetPosition(AnnotationCanvas);
+            var raw = e.GetPosition(AnnotationCanvas);
+            var pos = new System.Windows.Point(raw.X / _zoomLevel, raw.Y / _zoomLevel);
 
-            // Clamp to canvas bounds — prevents drawing bleeding into toolbar/titlebar
-            // when CaptureMouse routes events from outside the canvas area
-            pos.X = Math.Max(0, Math.Min(pos.X, AnnotationCanvas.ActualWidth));
-            pos.Y = Math.Max(0, Math.Min(pos.Y, AnnotationCanvas.ActualHeight));
+            // Clamp to image bounds — prevents drawing bleeding into toolbar/titlebar
+            pos.X = Math.Max(0, Math.Min(pos.X, _sourceBitmap.Width));
+            pos.Y = Math.Max(0, Math.Min(pos.Y, _sourceBitmap.Height));
 
             switch (_currentTool)
             {
