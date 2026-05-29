@@ -75,7 +75,11 @@ namespace parallax.UI.Windows
                 var bitmapImage = BitmapHelper.ToBitmapImage(_sourceBitmap);
                 ScreenshotImage.Source = bitmapImage;
 
-                // Size the canvas to the full screenshot (may scroll if window was capped)
+                // Size all content layers to the screenshot
+                ContentGrid.Width  = _sourceBitmap.Width;
+                ContentGrid.Height = _sourceBitmap.Height;
+                ScreenshotImage.Width  = _sourceBitmap.Width;
+                ScreenshotImage.Height = _sourceBitmap.Height;
                 AnnotationCanvas.Width  = _sourceBitmap.Width;
                 AnnotationCanvas.Height = _sourceBitmap.Height;
 
@@ -231,13 +235,16 @@ namespace parallax.UI.Windows
         private void ApplyZoom(double level)
         {
             _zoomLevel = level;
+            double w = _sourceBitmap.Width  * level;
+            double h = _sourceBitmap.Height * level;
 
-            // Manually resize the image and canvas — no transforms.
-            // The ScrollViewer handles scrolling automatically.
-            ScreenshotImage.Width  = _sourceBitmap.Width  * level;
-            ScreenshotImage.Height = _sourceBitmap.Height * level;
-            AnnotationCanvas.Width  = _sourceBitmap.Width  * level;
-            AnnotationCanvas.Height = _sourceBitmap.Height * level;
+            // Grid must have explicit size so ScrollViewer knows content extent
+            ContentGrid.Width  = w;
+            ContentGrid.Height = h;
+            ScreenshotImage.Width  = w;
+            ScreenshotImage.Height = h;
+            AnnotationCanvas.Width  = w;
+            AnnotationCanvas.Height = h;
 
             TxtZoomLevel.Text = $"{(int)(level * 100)}%";
         }

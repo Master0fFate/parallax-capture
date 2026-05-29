@@ -452,9 +452,9 @@
                               Background="#FF151525"
                               HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto">
-                    <Grid>
+                    <Grid x:Name="ContentGrid">
                         <Image x:Name="ScreenshotImage"
-                               Stretch="None"
+                               Stretch="Fill"
                                HorizontalAlignment="Left"
                                VerticalAlignment="Top" />
 
