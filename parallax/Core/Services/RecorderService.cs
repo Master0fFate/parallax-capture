@@ -21,6 +21,21 @@ namespace parallax.Core.Services
             return @"\\.\DISPLAY1";
         }
 
+        // Attempts to find a valid audio output device.
+        // Returns (enabled, deviceName). If no device found, audio is disabled
+        // to prevent the native RecordingManager from silently failing.
+        private (bool enabled, string? device) FindAudioOutputDevice()
+        {
+            try
+            {
+                var devices = Recorder.GetSystemAudioDevices(AudioDeviceSource.OutputDevices);
+                if (devices != null && devices.Count > 0)
+                    return (true, devices[0].DeviceName);
+            }
+            catch { /* Audio enumeration failed — disable audio */ }
+            return (false, null);
+        }
+
         // Starts recording a specific screen region
         // x, y = screen coordinates of top-left corner of region
         // width, height = size of region
@@ -33,6 +48,11 @@ namespace parallax.Core.Services
             _recorder?.Dispose();
 
             _currentOutputPath = outputPath;
+
+            // Find a real audio device — passing null AudioOutputDevice with
+            // IsAudioEnabled=true causes ScreenRecorderLib's native code to
+            // silently fail to initialize the RecordingManager.
+            var (audioEnabled, audioDevice) = FindAudioOutputDevice();
 
             var options = new RecorderOptions
             {
@@ -53,8 +73,8 @@ namespace parallax.Core.Services
                 },
                 AudioOptions = new AudioOptions
                 {
-                    IsAudioEnabled = true,
-                    AudioOutputDevice = null
+                    IsAudioEnabled = audioEnabled,
+                    AudioOutputDevice = audioDevice
                 },
                 SourceOptions = new SourceOptions
                 {
@@ -63,6 +83,7 @@ namespace parallax.Core.Services
                         new DisplayRecordingSource
                         {
                             DeviceName = GetPrimaryDisplayName(),
+                            RecorderApi = RecorderApi.WindowsGraphicsCapture,
                             SourceRect = new ScreenRect(x, y, width, height)
                         }
                     }
@@ -97,6 +118,8 @@ namespace parallax.Core.Services
 
             _currentOutputPath = outputPath;
 
+            var (audioEnabled, audioDevice) = FindAudioOutputDevice();
+
             var options = new RecorderOptions
             {
                 OutputOptions = new OutputOptions
@@ -111,8 +134,8 @@ namespace parallax.Core.Services
                 },
                 AudioOptions = new AudioOptions
                 {
-                    IsAudioEnabled = true,
-                    AudioOutputDevice = null
+                    IsAudioEnabled = audioEnabled,
+                    AudioOutputDevice = audioDevice
                 },
                 SourceOptions = new SourceOptions
                 {
@@ -120,7 +143,8 @@ namespace parallax.Core.Services
                     {
                         new DisplayRecordingSource
                         {
-                            DeviceName = GetPrimaryDisplayName()
+                            DeviceName = GetPrimaryDisplayName(),
+                            RecorderApi = RecorderApi.WindowsGraphicsCapture
                         }
                     }
                 }

@@ -32,6 +32,7 @@ namespace parallax.UI.Windows
         // ── FFmpeg state
         private bool _ffmpegAvailable = false;
         private bool _ffmpegDownloading = false;
+        private bool _isClosing = false;
 
         // ── Timer for updating timeline during playback
         private readonly DispatcherTimer _playbackTimer;
@@ -252,12 +253,15 @@ namespace parallax.UI.Windows
 
         private void VideoPlayer_MediaFailed(object? sender, ExceptionRoutedEventArgs e)
         {
+            // Suppress during editor close -- VideoPlayer.Close() triggers this
+            if (_isClosing) return;
+
             // Try falling back to ffplay if available
             if (File.Exists(FfplayPath))
             {
                 var result = MessageBox.Show(
-                    "This video uses an unsupported codec.\n\nOpen with external player (ffplay)?",
-                    "Unsupported Codec",
+                    "This video format needs FFmpeg for playback.\n\nOpen with ffplay now?",
+                    "Extended Codec Support",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question);
 
@@ -273,8 +277,8 @@ namespace parallax.UI.Windows
             else
             {
                 var result = MessageBox.Show(
-                    "This video uses an unsupported codec.\n\nDownload FFmpeg + ffplay to enable playback of all video formats?",
-                    "Extended Codec Support Required",
+                    "For extended codec support and video editor capability please download FFmpeg + ffplay.\n\nWould you like to download it now?",
+                    "Download FFmpeg?",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question);
 
@@ -285,7 +289,7 @@ namespace parallax.UI.Windows
             }
 
             ShowEditorStatus(
-                "Cannot play this file \u2014 unsupported format or missing codec.",
+                "Playback requires FFmpeg. Click 'Download FFmpeg' or install manually.",
                 isError: true);
             PlayOverlay.Visibility = Visibility.Collapsed;
         }
@@ -712,6 +716,8 @@ namespace parallax.UI.Windows
 
         protected override void OnClosing(CancelEventArgs e)
         {
+            _isClosing = true;
+
             // Warn if closing with an unsaved temp recording
             if (_isTempFile && !_hasBeenSaved && File.Exists(_videoPath))
             {

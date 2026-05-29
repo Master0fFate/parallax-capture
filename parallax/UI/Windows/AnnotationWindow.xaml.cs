@@ -246,10 +246,11 @@ namespace parallax.UI.Windows
             if (e.LeftButton != MouseButtonState.Pressed) return;
 
             FinalizeTextBox();
-            // ContentGrid has LayoutTransform for zoom. Get mouse in ContentGrid's
-            // visual space, then inverse-transform to get true image coordinates.
-            _drawStart = ZoomTransform.Inverse.Transform(
-                e.GetPosition(ContentGrid));
+            // GetPosition(AnnotationCanvas) already traverses the visual tree including
+            // the parent ContentGrid's LayoutTransform, returning coordinates in the
+            // Canvas's own logical coordinate space (0..Width, 0..Height). No zoom
+            // correction needed — Canvas.SetLeft/Top and geometry expect this space.
+            _drawStart = e.GetPosition(AnnotationCanvas);
             _isDrawing = true;
             _penPoints.Clear();
 
@@ -387,9 +388,9 @@ namespace parallax.UI.Windows
         {
             if (!_isDrawing || _currentShape == null) return;
 
-            // Inverse-transform from ContentGrid's zoomed space to image coordinates
-            var pos = ZoomTransform.Inverse.Transform(
-                e.GetPosition(ContentGrid));
+            // GetPosition(AnnotationCanvas) returns logical canvas-space coords —
+            // the parent LayoutTransform is already accounted for by WPF.
+            var pos = e.GetPosition(AnnotationCanvas);
 
             // Clamp to image bounds — prevents drawing bleeding into toolbar/titlebar
             pos.X = Math.Max(0, Math.Min(pos.X, _sourceBitmap.Width));
@@ -459,12 +460,12 @@ namespace parallax.UI.Windows
         {
             if (!_isDrawing) return;
 
-            var endPos = e.GetPosition(AnnotationCanvas);
-
-            // For arrows: draw arrowhead at the end
+            // For arrows: draw arrowhead at the end position (already in canvas coords)
             if (_currentTool == AnnotationTool.Arrow && _currentShape is Line arrowLine)
             {
-                DrawArrowhead(arrowLine.X1, arrowLine.Y1, endPos.X, endPos.Y);
+                // Use the line's final X2/Y2 (already Pushed+Clamped in MouseMove) to ensure
+                // the arrowhead exactly matches the visual endpoint regardless of zoom.
+                DrawArrowhead(arrowLine.X1, arrowLine.Y1, arrowLine.X2, arrowLine.Y2);
             }
 
             // For blur: finalize the VisualBrush viewbox to match the final rectangle position

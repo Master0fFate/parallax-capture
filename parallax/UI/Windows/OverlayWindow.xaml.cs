@@ -147,18 +147,33 @@ namespace parallax.UI.Windows
             // Convert from canvas-relative DIPs to physical screen pixels.
             // PointToScreen handles DPI scaling correctly — avoids the DIP/physical-pixel
             // mismatch that caused selections to be offset on HiDPI displays.
-            var topLeft     = MainCanvas.PointToScreen(new System.Windows.Point(rect.X, rect.Y));
-            var bottomRight = MainCanvas.PointToScreen(new System.Windows.Point(
-                rect.X + rect.Width, rect.Y + rect.Height));
+            // Wrapped in try-catch: PointToScreen can fail on unusual multi-monitor
+            // or DPI configurations, which would otherwise leave the overlay stuck open.
+            try
+            {
+                var topLeft     = MainCanvas.PointToScreen(new System.Windows.Point(rect.X, rect.Y));
+                var bottomRight = MainCanvas.PointToScreen(new System.Windows.Point(
+                    rect.X + rect.Width, rect.Y + rect.Height));
 
-            SelectedRegion = new System.Drawing.Rectangle(
-                (int)topLeft.X,
-                (int)topLeft.Y,
-                (int)(bottomRight.X - topLeft.X),
-                (int)(bottomRight.Y - topLeft.Y)
-            );
+                SelectedRegion = new System.Drawing.Rectangle(
+                    (int)topLeft.X,
+                    (int)topLeft.Y,
+                    (int)(bottomRight.X - topLeft.X),
+                    (int)(bottomRight.Y - topLeft.Y)
+                );
 
-            SelectionConfirmed = true;
+                SelectionConfirmed = true;
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(
+                    $"Could not convert selection to screen coordinates: {ex.Message}",
+                    "parallax",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Error);
+                SelectionConfirmed = false;
+            }
+
             Close();
         }
 

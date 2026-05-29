@@ -242,17 +242,28 @@ namespace parallax.Tray
                     _recorderService.RecordingCompleted += OnRecordingCompleted;
                     _recorderService.RecordingFailed    += OnRecordingFailed;
 
-                    _recorderService.StartRegionRecording(region.X, region.Y, region.Width, region.Height, outputPath);
+                    // Show the recording border BEFORE starting the recorder —
+                    // gives the user immediate visual feedback even if the
+                    // native recording engine fails asynchronously.
+                    ShowRecordingBorder(region.X, region.Y, region.Width, region.Height);
                     _isRecording = true;
                     UpdateRecordingMenuState();
 
-                    ShowRecordingBorder(region.X, region.Y, region.Width, region.Height);
+                    _recorderService.StartRegionRecording(region.X, region.Y, region.Width, region.Height, outputPath);
 
                     ShowBalloon("Recording started", "Press Alt+R or use tray menu to stop.");
                 }
                 catch (Exception ex)
                 {
-                    ShowBalloon("Recording failed", ex.Message);
+                    // Balloon tips are silently suppressed by Windows Focus Assist /
+                    // notification settings. Use MessageBox so the user always sees errors.
+                    _isRecording = false;
+                    UpdateRecordingMenuState();
+                    System.Windows.MessageBox.Show(
+                        $"Recording failed: {ex.Message}",
+                        "parallax - Recording Error",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Error);
                 }
             };
             timer.Start();
