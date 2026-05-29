@@ -456,7 +456,15 @@ namespace parallax.Tray
 
         private static void ExitApp()
         {
-            System.Windows.Application.Current.Shutdown();
+            try
+            {
+                System.Windows.Application.Current.Shutdown();
+            }
+            catch
+            {
+                // Fallback: force kill the process if graceful shutdown fails
+                Environment.Exit(0);
+            }
         }
 
         public void Dispose()

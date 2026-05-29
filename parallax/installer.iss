@@ -9,7 +9,7 @@
 ; ───────────────────────────────────────────────────────────────────
 
 #define AppName        "Parallax Capture"
-#define AppVersion     "1.0.0"
+#define AppVersion     "1.0.2"
 #define AppPublisher   "Master0fFate"
 #define AppExeName     "Parallax Capture.exe"
 #define AppSourceDir   "publish"

@@ -61,12 +61,6 @@ namespace parallax.UI.Windows
             _clipboardService = clipboardService;
             _fileService = fileService;
 
-            // Fixed window size — image scrolls + zooms inside, like Paint
-            double maxW = System.Windows.SystemParameters.WorkArea.Width;
-            double maxH = System.Windows.SystemParameters.WorkArea.Height;
-            Width  = Math.Min(950, maxW);
-            Height = Math.Min(700, maxH);
-
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             Topmost = true;
 
