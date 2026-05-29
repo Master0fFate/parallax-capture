@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -21,7 +21,7 @@
     <DebugType>embedded</DebugType>
 
     <!-- Version info shown in Windows -->
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Company>parallax</Company>
     <Product>Parallax Capture</Product>
     <Description>Screenshot and screen recording tool for Windows</Description>
