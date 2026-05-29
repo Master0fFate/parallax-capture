@@ -245,9 +245,8 @@ namespace parallax.UI.Windows
             if (e.LeftButton != MouseButtonState.Pressed) return;
 
             FinalizeTextBox();
-            _drawStart = new System.Windows.Point(
-                e.GetPosition(AnnotationCanvas).X / _zoomLevel,
-                e.GetPosition(AnnotationCanvas).Y / _zoomLevel);
+            _drawStart = ZoomTransform.Inverse.Transform(
+                e.GetPosition(ZoomGrid));
             _isDrawing = true;
             _penPoints.Clear();
 
@@ -385,8 +384,8 @@ namespace parallax.UI.Windows
         {
             if (!_isDrawing || _currentShape == null) return;
 
-            var raw = e.GetPosition(AnnotationCanvas);
-            var pos = new System.Windows.Point(raw.X / _zoomLevel, raw.Y / _zoomLevel);
+            var pos = ZoomTransform.Inverse.Transform(
+                e.GetPosition(ZoomGrid));
 
             // Clamp to image bounds — prevents drawing bleeding into toolbar/titlebar
             pos.X = Math.Max(0, Math.Min(pos.X, _sourceBitmap.Width));

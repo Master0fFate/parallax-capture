@@ -13,7 +13,7 @@
         MinWidth="600" MinHeight="400"
         KeyDown="Window_KeyDown">
     <WindowChrome.WindowChrome>
-        <shell:WindowChrome CaptionHeight="28"
+        <shell:WindowChrome CaptionHeight="0"
                              ResizeBorderThickness="6"
                              GlassFrameThickness="0"
                              CornerRadius="0" />
@@ -364,7 +364,7 @@
                         <!-- ── Zoom Controls ── -->
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Button x:Name="BtnZoomOut"
-                                    Content="\u2212"
+                                    Content="-"
                                     ToolTip="Zoom Out"
                                     Width="24" Height="22"
                                     Click="BtnZoomOut_Click"
