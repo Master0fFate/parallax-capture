@@ -452,20 +452,16 @@
                               Background="#FF151525"
                               HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto">
-                    <Grid x:Name="ZoomGrid">
-                        <Grid.LayoutTransform>
-                            <ScaleTransform x:Name="ZoomTransform"
-                                            ScaleX="1" ScaleY="1" />
-                        </Grid.LayoutTransform>
+                    <Grid>
                         <Image x:Name="ScreenshotImage"
                                Stretch="None"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Top" />
 
                         <Canvas x:Name="AnnotationCanvas"
                                 Background="Transparent"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
                                 MouseDown="AnnotationCanvas_MouseDown"
                                 MouseMove="AnnotationCanvas_MouseMove"
                                 MouseUp="AnnotationCanvas_MouseUp"

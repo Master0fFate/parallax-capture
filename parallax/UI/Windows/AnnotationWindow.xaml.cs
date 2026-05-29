@@ -231,8 +231,14 @@ namespace parallax.UI.Windows
         private void ApplyZoom(double level)
         {
             _zoomLevel = level;
-            ZoomTransform.ScaleX = level;
-            ZoomTransform.ScaleY = level;
+
+            // Manually resize the image and canvas — no transforms.
+            // The ScrollViewer handles scrolling automatically.
+            ScreenshotImage.Width  = _sourceBitmap.Width  * level;
+            ScreenshotImage.Height = _sourceBitmap.Height * level;
+            AnnotationCanvas.Width  = _sourceBitmap.Width  * level;
+            AnnotationCanvas.Height = _sourceBitmap.Height * level;
+
             TxtZoomLevel.Text = $"{(int)(level * 100)}%";
         }
 
@@ -245,8 +251,9 @@ namespace parallax.UI.Windows
             if (e.LeftButton != MouseButtonState.Pressed) return;
 
             FinalizeTextBox();
-            _drawStart = ZoomTransform.Inverse.Transform(
-                e.GetPosition(ZoomGrid));
+            // Canvas is sized at imageW * zoom, so divide to get image coordinates
+            var raw = e.GetPosition(AnnotationCanvas);
+            _drawStart = new System.Windows.Point(raw.X / _zoomLevel, raw.Y / _zoomLevel);
             _isDrawing = true;
             _penPoints.Clear();
 
@@ -384,8 +391,9 @@ namespace parallax.UI.Windows
         {
             if (!_isDrawing || _currentShape == null) return;
 
-            var pos = ZoomTransform.Inverse.Transform(
-                e.GetPosition(ZoomGrid));
+            // Canvas is sized at imageW * zoom — divide to get true image coordinates
+            var raw = e.GetPosition(AnnotationCanvas);
+            var pos = new System.Windows.Point(raw.X / _zoomLevel, raw.Y / _zoomLevel);
 
             // Clamp to image bounds — prevents drawing bleeding into toolbar/titlebar
             pos.X = Math.Max(0, Math.Min(pos.X, _sourceBitmap.Width));
@@ -548,9 +556,13 @@ namespace parallax.UI.Windows
 
         private BitmapSource RenderFinalImage()
         {
-            // Measure and arrange the canvas
-            AnnotationCanvas.Measure(new System.Windows.Size(_sourceBitmap.Width, _sourceBitmap.Height));
-            AnnotationCanvas.Arrange(new Rect(0, 0, _sourceBitmap.Width, _sourceBitmap.Height));
+            // Temporarily reset canvas to original image size for rendering.
+            // Annotations are at image coordinates (mouse / zoom), so rendering
+            // at 1:1 produces the correct output at the original resolution.
+            double prevW = AnnotationCanvas.Width;
+            double prevH = AnnotationCanvas.Height;
+            AnnotationCanvas.Width  = _sourceBitmap.Width;
+            AnnotationCanvas.Height = _sourceBitmap.Height;
 
             // Create a render target the size of the image
             var renderTarget = new RenderTargetBitmap(
@@ -569,8 +581,12 @@ namespace parallax.UI.Windows
             }
             renderTarget.Render(imageVisual);
 
-            // Then render the annotation canvas on top
+            // Then render the annotation canvas on top (at original size)
             renderTarget.Render(AnnotationCanvas);
+
+            // Restore zoomed size
+            AnnotationCanvas.Width  = prevW;
+            AnnotationCanvas.Height = prevH;
 
             return renderTarget;
         }
