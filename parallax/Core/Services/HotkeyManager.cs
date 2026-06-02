@@ -51,22 +51,22 @@ namespace parallax.Core.Services
             return result;
         }
 
-        // Shortcut method: Register PrintScreen with no modifiers
-        public void RegisterPrintScreen(Action callback)
+        // Shortcut method: Register PrintScreen with no modifiers. Returns true if successful.
+        public bool RegisterPrintScreen(Action callback)
         {
-            Register(ID_REGION_SCREENSHOT, MOD_NONE, 0x2C, callback); // 0x2C = VK_SNAPSHOT
+            return Register(ID_REGION_SCREENSHOT, MOD_NONE, 0x2C, callback); // 0x2C = VK_SNAPSHOT
         }
 
-        // Shortcut method: Register Alt+PrintScreen
-        public void RegisterAltPrintScreen(Action callback)
+        // Shortcut method: Register Alt+PrintScreen. Returns true if successful.
+        public bool RegisterAltPrintScreen(Action callback)
         {
-            Register(ID_FULLSCREEN, MOD_ALT, 0x2C, callback);
+            return Register(ID_FULLSCREEN, MOD_ALT, 0x2C, callback);
         }
 
-        // Shortcut method: Register Alt+R for region video
-        public void RegisterAltR(Action callback)
+        // Shortcut method: Register Alt+R for region video. Returns true if successful.
+        public bool RegisterAltR(Action callback)
         {
-            Register(ID_REGION_VIDEO, MOD_ALT, 0x52, callback); // 0x52 = R
+            return Register(ID_REGION_VIDEO, MOD_ALT, 0x52, callback); // 0x52 = R
         }
 
         // Windows message pump hook — fires when any registered hotkey is pressed

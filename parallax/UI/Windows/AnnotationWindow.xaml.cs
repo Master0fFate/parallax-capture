@@ -19,6 +19,7 @@ namespace parallax.UI.Windows
         // ── Dependencies
         private readonly ClipboardService _clipboardService;
         private readonly FileService _fileService;
+        private readonly string _imageFormat;
 
         // ── Current screenshot
         private Bitmap _sourceBitmap;
@@ -50,7 +51,7 @@ namespace parallax.UI.Windows
         private double _zoomLevel = 1.0;
         private static readonly double[] ZoomSteps = { 0.25, 0.33, 0.5, 0.67, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0 };
 
-        public AnnotationWindow(Bitmap screenshot, ClipboardService clipboardService, FileService fileService)
+        public AnnotationWindow(Bitmap screenshot, ClipboardService clipboardService, FileService fileService, string imageFormat = "png")
         {
             InitializeComponent();
 
@@ -60,11 +61,21 @@ namespace parallax.UI.Windows
             _sourceBitmap = screenshot;
             _clipboardService = clipboardService;
             _fileService = fileService;
+            _imageFormat = imageFormat;
 
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             Topmost = true;
 
             Loaded += AnnotationWindow_Loaded;
+
+            // Clean up bitmap when window closes (KAM #3)
+            Closed += (s, e) =>
+            {
+                _statusTimer.Stop();
+                _statusTimer.Tick -= OnStatusTick;
+                _sourceBitmap?.Dispose();
+                _sourceBitmap = null!;
+            };
         }
 
         private void AnnotationWindow_Loaded(object sender, RoutedEventArgs e)
@@ -605,10 +616,11 @@ namespace parallax.UI.Windows
         {
             FinalizeTextBox();
             var rendered = RenderFinalImage();
+            string ext = _imageFormat.ToLower();
             string actualPath = System.IO.Path.Combine(
                 _fileService.GetSaveFolder(),
-                $"parallax_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.png");
-            BitmapHelper.SaveBitmapSource(rendered, actualPath, "png");
+                $"parallax_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.{ext}");
+            BitmapHelper.SaveBitmapSource(rendered, actualPath, ext);
             ShowStatus($"Saved \u2014 {System.IO.Path.GetFileName(actualPath)}");
         }
 

@@ -64,7 +64,6 @@ Right-click the tray icon for the full menu — open video editor, open image ed
 - **.NET 10** — WPF + Windows Forms interop
 - **FFMpegCore** + direct ffmpeg CLI — video trimming/encoding
 - **ScreenRecorderLib** — hardware-accelerated screen capture
-- **SharpAvi** — AVI fallback encoding
 - **Hardcodet.NotifyIcon.Wpf** — system tray integration
 - **Newtonsoft.Json** — settings persistence
 

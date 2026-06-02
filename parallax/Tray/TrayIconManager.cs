@@ -20,8 +20,6 @@ namespace parallax.Tray
         private readonly SettingsService _settingsService;
         private AppSettings _settings;
 
-        private bool _isRecording = false;
-
         // ── Dynamic menu item references for toggling recording state
         private MenuItem? _recordMenuItem;
         private MenuItem? _stopMenuItem;
@@ -33,6 +31,9 @@ namespace parallax.Tray
         private string? _lastRecordingPath;
         private MenuItem? _videoEditorMenuItem;
         private VideoEditorWindow? _openVideoEditor;
+
+        // ── Pending action timer (KAM #4a): single field so we can cancel on rapid re-trigger
+        private System.Windows.Threading.DispatcherTimer? _pendingActionTimer;
 
         public TrayIconManager(
             ScreenshotService screenshotService,
@@ -122,16 +123,18 @@ namespace parallax.Tray
         }
 
         // Toggles visibility of Start Recording vs Stop Recording menu items
+        // Recording state is derived from RecorderService.IsRecording — single source of truth (KAM #6)
         private void UpdateRecordingMenuState()
         {
+            bool isRecording = _recorderService.IsRecording;
             if (_recordMenuItem != null)
-                _recordMenuItem.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
+                _recordMenuItem.Visibility = isRecording ? Visibility.Collapsed : Visibility.Visible;
             if (_stopMenuItem != null)
-                _stopMenuItem.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
+                _stopMenuItem.Visibility = isRecording ? Visibility.Visible : Visibility.Collapsed;
 
             // Update tooltip to show recording state
             if (_trayIcon != null)
-                _trayIcon.ToolTipText = _isRecording ? "parallax - RECORDING" : "parallax";
+                _trayIcon.ToolTipText = isRecording ? "parallax - RECORDING" : "parallax";
         }
 
         // ────────────────────────────────────────────
@@ -140,14 +143,19 @@ namespace parallax.Tray
 
         public void TriggerRegionScreenshot()
         {
+            // Cancel any pending trigger (KAM #4a — prevents duplicate windows on rapid key presses)
+            _pendingActionTimer?.Stop();
+            _pendingActionTimer = null;
+
             // Non-blocking delay via DispatcherTimer (avoids Thread.Sleep and async void crash)
-            var timer = new System.Windows.Threading.DispatcherTimer
+            _pendingActionTimer = new System.Windows.Threading.DispatcherTimer
             {
                 Interval = TimeSpan.FromMilliseconds(150)
             };
-            timer.Tick += (s, e) =>
+            _pendingActionTimer.Tick += (s, e) =>
             {
-                timer.Stop();
+                _pendingActionTimer?.Stop();
+                _pendingActionTimer = null;
                 try
                 {
                     var overlay = new OverlayWindow();
@@ -167,7 +175,7 @@ namespace parallax.Tray
                         ShowBalloon("Screenshot saved", path);
                     }
 
-                    var annotWindow = new AnnotationWindow(bitmap, _clipboardService, _fileService);
+                    var annotWindow = new AnnotationWindow(bitmap, _clipboardService, _fileService, _settings.ImageFormat);
                     annotWindow.Show();
                     annotWindow.Activate();
                 }
@@ -176,18 +184,23 @@ namespace parallax.Tray
                     ShowBalloon("Screenshot failed", ex.Message);
                 }
             };
-            timer.Start();
+            _pendingActionTimer.Start();
         }
 
         public void TriggerFullScreenshot()
         {
-            var timer = new System.Windows.Threading.DispatcherTimer
+            // Cancel any pending trigger (KAM #4a)
+            _pendingActionTimer?.Stop();
+            _pendingActionTimer = null;
+
+            _pendingActionTimer = new System.Windows.Threading.DispatcherTimer
             {
                 Interval = TimeSpan.FromMilliseconds(150)
             };
-            timer.Tick += (s, e) =>
+            _pendingActionTimer.Tick += (s, e) =>
             {
-                timer.Stop();
+                _pendingActionTimer?.Stop();
+                _pendingActionTimer = null;
                 try
                 {
                     var bitmap = _screenshotService.CaptureFullScreen();
@@ -202,7 +215,7 @@ namespace parallax.Tray
                     }
 
                     // Show annotation window directly (no ShowDialog before this, so no flush needed)
-                    var annotWindow = new AnnotationWindow(bitmap, _clipboardService, _fileService);
+                    var annotWindow = new AnnotationWindow(bitmap, _clipboardService, _fileService, _settings.ImageFormat);
                     annotWindow.Show();
                     annotWindow.Activate();
                 }
@@ -211,24 +224,29 @@ namespace parallax.Tray
                     ShowBalloon("Screenshot failed", ex.Message);
                 }
             };
-            timer.Start();
+            _pendingActionTimer.Start();
         }
 
         public void TriggerRegionVideo()
         {
-            if (_isRecording)
+            if (_recorderService.IsRecording)
             {
                 ShowBalloon("Already recording", "Stop the current recording first.");
                 return;
             }
 
-            var timer = new System.Windows.Threading.DispatcherTimer
+            // Cancel any pending trigger (KAM #4a)
+            _pendingActionTimer?.Stop();
+            _pendingActionTimer = null;
+
+            _pendingActionTimer = new System.Windows.Threading.DispatcherTimer
             {
                 Interval = TimeSpan.FromMilliseconds(150)
             };
-            timer.Tick += (s, e) =>
+            _pendingActionTimer.Tick += (s, e) =>
             {
-                timer.Stop();
+                _pendingActionTimer?.Stop();
+                _pendingActionTimer = null;
                 try
                 {
                     var overlay = new OverlayWindow();
@@ -246,10 +264,12 @@ namespace parallax.Tray
                     // gives the user immediate visual feedback even if the
                     // native recording engine fails asynchronously.
                     ShowRecordingBorder(region.X, region.Y, region.Width, region.Height);
-                    _isRecording = true;
                     UpdateRecordingMenuState();
 
                     _recorderService.StartRegionRecording(region.X, region.Y, region.Width, region.Height, outputPath);
+
+                    // Update menu state again now that IsRecording is true (KAM #6 — single source)
+                    UpdateRecordingMenuState();
 
                     ShowBalloon("Recording started", "Press Alt+R or use tray menu to stop.");
                 }
@@ -257,7 +277,7 @@ namespace parallax.Tray
                 {
                     // Balloon tips are silently suppressed by Windows Focus Assist /
                     // notification settings. Use MessageBox so the user always sees errors.
-                    _isRecording = false;
+                    HideRecordingBorder(); // KAM #1 — always clean up the border on failure
                     UpdateRecordingMenuState();
                     System.Windows.MessageBox.Show(
                         $"Recording failed: {ex.Message}",
@@ -266,12 +286,12 @@ namespace parallax.Tray
                         System.Windows.MessageBoxImage.Error);
                 }
             };
-            timer.Start();
+            _pendingActionTimer.Start();
         }
 
         public void StopRecording()
         {
-            if (!_isRecording) return;
+            if (!_recorderService.IsRecording) return;
             _recorderService.StopRecording();
         }
 
@@ -280,7 +300,6 @@ namespace parallax.Tray
             // ScreenRecorderLib fires this on a background thread — dispatch to UI thread
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                _isRecording = false;
                 _recorderService.RecordingCompleted -= OnRecordingCompleted;
                 _recorderService.RecordingFailed    -= OnRecordingFailed;
                 HideRecordingBorder();
@@ -317,7 +336,6 @@ namespace parallax.Tray
         {
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                _isRecording = false;
                 _recorderService.RecordingCompleted -= OnRecordingCompleted;
                 _recorderService.RecordingFailed    -= OnRecordingFailed;
                 HideRecordingBorder();
@@ -404,18 +422,22 @@ namespace parallax.Tray
 
             if (dialog.ShowDialog() != true) return;
 
+            System.Drawing.Bitmap? bitmap = null;
             try
             {
-                var bitmap = new System.Drawing.Bitmap(dialog.FileName);
+                bitmap = new System.Drawing.Bitmap(dialog.FileName);
+                var capturedBitmap = bitmap; // prevent closure over mutable
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    var annotWindow = new AnnotationWindow(bitmap, _clipboardService, _fileService);
+                    var annotWindow = new AnnotationWindow(capturedBitmap, _clipboardService, _fileService, _settings.ImageFormat);
                     annotWindow.Show();
                     annotWindow.Activate();
                 });
+                bitmap = null; // ownership transferred to AnnotationWindow
             }
             catch (Exception ex)
             {
+                bitmap?.Dispose(); // KAM #3 — dispose on failure
                 ShowBalloon("Image editor error", ex.Message);
             }
         }

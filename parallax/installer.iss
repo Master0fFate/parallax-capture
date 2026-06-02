@@ -1,15 +1,15 @@
 ; ───────────────────────────────────────────────────────────────────
 ; Parallax Capture — Inno Setup Installer
-; Requires Inno Setup 6+ (https://jrsoftware.org/isdl.php)
+; Requires Inno Setup 7 (https://jrsoftware.org/isdl.php)
 ;
 ; Build steps:
 ;   1. dotnet publish -c Release -p:Platform=x64 -o publish
 ;   2. Open this file in Inno Setup Compiler, click Compile
-;   3. Output: installer\ParallaxCapture-Setup-1.0.0.exe
+;   3. Output: installer\ParallaxCapture-Setup-{#AppVersion}.exe
 ; ───────────────────────────────────────────────────────────────────
 
 #define AppName        "Parallax Capture"
-#define AppVersion     "1.0.4"
+#define AppVersion     "1.0.5"
 #define AppPublisher   "Master0fFate"
 #define AppExeName     "Parallax Capture.exe"
 #define AppSourceDir   "publish"

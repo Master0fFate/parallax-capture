@@ -45,7 +45,6 @@
     <PackageReference Include="GlobalHotKey" Version="1.0.0" />
     <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="SharpAvi" Version="2.1.2" />
   </ItemGroup>
 
   <!-- ScreenRecorderLib 5.0.0 ships a mixed managed/native DLL per architecture.

@@ -37,6 +37,9 @@ namespace parallax.UI.Windows
         // ── Timer for updating timeline during playback
         private readonly DispatcherTimer _playbackTimer;
 
+        // ── Status auto-fade timer (KAM #4c): stored as field so we cancel before starting a new one
+        private DispatcherTimer? _statusTimer;
+
         public VideoEditorWindow(string videoPath, FileService fileService, Action<string>? onSaved = null)
         {
             InitializeComponent();
@@ -625,15 +628,17 @@ namespace parallax.UI.Windows
                 ? System.Windows.Media.Brushes.OrangeRed
                 : System.Windows.Media.Brushes.LimeGreen;
 
-            // Reset to default text after 4 seconds
-            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
-            timer.Tick += (s, e) =>
+            // Cancel any pending status timer (KAM #4c — prevents overlapping timers)
+            _statusTimer?.Stop();
+            _statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+            _statusTimer.Tick += (s, e) =>
             {
-                timer.Stop();
+                _statusTimer?.Stop();
+                _statusTimer = null;
                 TxtEditorStatus.Text = "Save to keep this recording, or close to discard.";
                 TxtEditorStatus.Foreground = System.Windows.Media.Brushes.Gray;
             };
-            timer.Start();
+            _statusTimer.Start();
         }
 
         private void BtnOpenVideo_Click(object sender, RoutedEventArgs e)

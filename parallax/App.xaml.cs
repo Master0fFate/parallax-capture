@@ -83,15 +83,15 @@ namespace parallax
             _hotkeyManager = new HotkeyManager();
             _hotkeyManager.Initialize(_backgroundWindow);
 
-            _hotkeyManager.RegisterPrintScreen(() =>
+            bool printScreenOk = _hotkeyManager.RegisterPrintScreen(() =>
                 _trayManager.TriggerRegionScreenshot()
             );
 
-            _hotkeyManager.RegisterAltPrintScreen(() =>
+            bool altPrintScreenOk = _hotkeyManager.RegisterAltPrintScreen(() =>
                 _trayManager.TriggerFullScreenshot()
             );
 
-            _hotkeyManager.RegisterAltR(() =>
+            bool altROk = _hotkeyManager.RegisterAltR(() =>
             {
                 if (_recorderService.IsRecording)
                     _trayManager.StopRecording();
@@ -99,8 +99,36 @@ namespace parallax
                     _trayManager.TriggerRegionVideo();
             });
 
-            // 6. Show welcome balloon
-            _trayManager.ShowBalloon("parallax is running", "Press Print Screen to capture a region.");
+            // KAM #10 — check hotkey registration and notify user if any failed
+            if (!printScreenOk)
+                System.Windows.MessageBox.Show(
+                    "Hotkey Print Screen could not be registered. It may be in use by another application.\n\n" +
+                    "Region screenshot via Print Screen will not work until you close the conflicting application.",
+                    "parallax - Hotkey Warning",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+
+            if (!altPrintScreenOk)
+                System.Windows.MessageBox.Show(
+                    "Hotkey Alt+Print Screen could not be registered. It may be in use by another application.\n\n" +
+                    "Full screenshot via Alt+Print Screen will not work.",
+                    "parallax - Hotkey Warning",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Warning);
+
+            if (!altROk)
+                System.Windows.MessageBox.Show(
+                    "Hotkey Alt+R could not be registered. It may be in use by another application.\n\n" +
+                    "Region video recording via Alt+R will not work.",
+                    "parallax - Hotkey Warning",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Warning);
+
+            // 6. Show welcome balloon — note which hotkeys are actually active
+            string balloonMsg = printScreenOk
+                ? "Press Print Screen to capture a region."
+                : "Some hotkeys could not be registered — check the warning message.";
+            _trayManager.ShowBalloon("parallax is running", balloonMsg);
         }
 
         protected override void OnExit(ExitEventArgs e)
