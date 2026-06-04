@@ -21,21 +21,6 @@ namespace parallax.Core.Services
             return @"\\.\DISPLAY1";
         }
 
-        // Attempts to find a valid audio output device.
-        // Returns (enabled, deviceName). If no device found, audio is disabled
-        // to prevent the native RecordingManager from silently failing.
-        private (bool enabled, string? device) FindAudioOutputDevice()
-        {
-            try
-            {
-                var devices = Recorder.GetSystemAudioDevices(AudioDeviceSource.OutputDevices);
-                if (devices != null && devices.Count > 0)
-                    return (true, devices[0].DeviceName);
-            }
-            catch { /* Audio enumeration failed — disable audio */ }
-            return (false, null);
-        }
-
         // Starts recording a specific screen region
         // x, y = screen coordinates of top-left corner of region
         // width, height = size of region
@@ -49,11 +34,12 @@ namespace parallax.Core.Services
 
             _currentOutputPath = outputPath;
 
-            // Find a real audio device — passing null AudioOutputDevice with
-            // IsAudioEnabled=true causes ScreenRecorderLib's native code to
-            // silently fail to initialize the RecordingManager.
-            var (audioEnabled, audioDevice) = FindAudioOutputDevice();
-
+            // Audio configuration per ScreenRecorderLib v5 docs:
+            // IsAudioEnabled=true turns on audio capture.
+            // IsOutputDeviceEnabled=true captures system audio (loopback).
+            // AudioOutputDevice defaults to empty string which means "use system default
+            // playback device". Explicitly enumerating devices and picking the first
+            // one (e.g. Voicemod Dummy) causes silent audio failure.
             var options = new RecorderOptions
             {
                 OutputOptions = new OutputOptions
@@ -73,9 +59,10 @@ namespace parallax.Core.Services
                 },
                 AudioOptions = new AudioOptions
                 {
-                    IsAudioEnabled = audioEnabled,
-                    IsOutputDeviceEnabled = audioEnabled,
-                    AudioOutputDevice = audioDevice
+                    IsAudioEnabled = true,
+                    IsOutputDeviceEnabled = true
+                    // AudioOutputDevice intentionally omitted — defaults to empty string
+                    // which tells ScreenRecorderLib to use the system default playback device.
                 },
                 SourceOptions = new SourceOptions
                 {
@@ -119,8 +106,6 @@ namespace parallax.Core.Services
 
             _currentOutputPath = outputPath;
 
-            var (audioEnabled, audioDevice) = FindAudioOutputDevice();
-
             var options = new RecorderOptions
             {
                 OutputOptions = new OutputOptions
@@ -135,9 +120,10 @@ namespace parallax.Core.Services
                 },
                 AudioOptions = new AudioOptions
                 {
-                    IsAudioEnabled = audioEnabled,
-                    IsOutputDeviceEnabled = audioEnabled,
-                    AudioOutputDevice = audioDevice
+                    IsAudioEnabled = true,
+                    IsOutputDeviceEnabled = true
+                    // AudioOutputDevice intentionally omitted — defaults to empty string
+                    // which tells ScreenRecorderLib to use the system default playback device.
                 },
                 SourceOptions = new SourceOptions
                 {
