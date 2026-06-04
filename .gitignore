@@ -34,3 +34,7 @@ data/
 *.spec
 spec/
 specs/
+
+# ── Parallax engine internal files ──
+.parallax/
+debug.md
