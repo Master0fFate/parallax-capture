@@ -74,6 +74,7 @@ namespace parallax.Core.Services
                 AudioOptions = new AudioOptions
                 {
                     IsAudioEnabled = audioEnabled,
+                    IsOutputDeviceEnabled = audioEnabled,
                     AudioOutputDevice = audioDevice
                 },
                 SourceOptions = new SourceOptions
@@ -135,6 +136,7 @@ namespace parallax.Core.Services
                 AudioOptions = new AudioOptions
                 {
                     IsAudioEnabled = audioEnabled,
+                    IsOutputDeviceEnabled = audioEnabled,
                     AudioOutputDevice = audioDevice
                 },
                 SourceOptions = new SourceOptions
