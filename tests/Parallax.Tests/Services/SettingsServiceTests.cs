@@ -65,7 +65,13 @@ public class SettingsServiceTests : IDisposable
             CopyToClipboardAfterCapture = false,
             SaveAutomatically = true,
             SeparateFolders = true,
-            StartWithWindows = true
+            StartWithWindows = true,
+            HotkeyScreenshotEnabled = false,
+            HotkeyFullscreenEnabled = true,
+            HotkeyRegionVideoEnabled = true,
+            HotkeyScreenshot = "None",
+            HotkeyFullscreen = "Ctrl+Shift+F9",
+            HotkeyRegionVideo = "Win+F10"
         };
 
         _service.Save(original);
@@ -78,6 +84,12 @@ public class SettingsServiceTests : IDisposable
         Assert.Equal(original.SaveAutomatically, loaded.SaveAutomatically);
         Assert.Equal(original.SeparateFolders, loaded.SeparateFolders);
         Assert.Equal(original.StartWithWindows, loaded.StartWithWindows);
+        Assert.Equal(original.HotkeyScreenshotEnabled, loaded.HotkeyScreenshotEnabled);
+        Assert.Equal(original.HotkeyFullscreenEnabled, loaded.HotkeyFullscreenEnabled);
+        Assert.Equal(original.HotkeyRegionVideoEnabled, loaded.HotkeyRegionVideoEnabled);
+        Assert.Equal(original.HotkeyScreenshot, loaded.HotkeyScreenshot);
+        Assert.Equal(original.HotkeyFullscreen, loaded.HotkeyFullscreen);
+        Assert.Equal(original.HotkeyRegionVideo, loaded.HotkeyRegionVideo);
     }
 
     [Fact]
@@ -132,7 +144,13 @@ public class SettingsServiceTests : IDisposable
             CopyToClipboardAfterCapture = false,
             SaveAutomatically = true,
             SeparateFolders = true,
-            StartWithWindows = true
+            StartWithWindows = true,
+            HotkeyScreenshotEnabled = false,
+            HotkeyFullscreenEnabled = true,
+            HotkeyRegionVideoEnabled = false,
+            HotkeyScreenshot = "None",
+            HotkeyFullscreen = "Ctrl+Alt+F8",
+            HotkeyRegionVideo = "Disabled"
         };
         File.WriteAllText(_settingsPath, JsonConvert.SerializeObject(data));
 
@@ -140,5 +158,11 @@ public class SettingsServiceTests : IDisposable
         Assert.Equal("jpeg", settings.ImageFormat);
         Assert.False(settings.CopyToClipboardAfterCapture);
         Assert.True(settings.SaveAutomatically);
+        Assert.False(settings.HotkeyScreenshotEnabled);
+        Assert.True(settings.HotkeyFullscreenEnabled);
+        Assert.False(settings.HotkeyRegionVideoEnabled);
+        Assert.Equal("None", settings.HotkeyScreenshot);
+        Assert.Equal("Ctrl+Alt+F8", settings.HotkeyFullscreen);
+        Assert.Equal("Disabled", settings.HotkeyRegionVideo);
     }
 }

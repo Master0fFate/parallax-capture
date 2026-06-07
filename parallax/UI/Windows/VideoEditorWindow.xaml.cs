@@ -1,8 +1,12 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -28,8 +32,21 @@ namespace parallax.UI.Windows
         private bool _mediaEnded = false;
         private Duration _naturalDuration = Duration.Automatic;
         private bool _isMuted = false;
+        private bool _isPreviewingTrim = false;
+        private TimeSpan _previewTrimEnd = TimeSpan.Zero;
 
         // ── FFmpeg state
+        private const long MaxFFmpegDownloadBytes = 250L * 1024L * 1024L;
+        private const int MaxFFmpegErrorChars = 4000;
+        private const int MaxStatusMessageChars = 280;
+        private static readonly TimeSpan FFmpegProcessTimeout = TimeSpan.FromMinutes(30);
+        private static readonly Uri FFmpegDownloadUri = new("https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip");
+        private static readonly string[] ExpectedFFmpegBinaries =
+        {
+            "ffmpeg.exe",
+            "ffplay.exe",
+            "ffprobe.exe"
+        };
         private bool _ffmpegAvailable = false;
         private bool _ffmpegDownloading = false;
         private bool _isClosing = false;
@@ -95,49 +112,31 @@ namespace parallax.UI.Windows
         private static string FfplayPath => Path.Combine(ToolsDir, "ffplay.exe");
         private static string FfprobePath => Path.Combine(ToolsDir, "ffprobe.exe");
 
-        private async Task CheckFFmpegAvailability()
+        private Task CheckFFmpegAvailability()
         {
             try
             {
                 Directory.CreateDirectory(ToolsDir);
 
-                // Check tools directory first
-                if (File.Exists(FfmpegPath))
+                if (TryGetFFmpegPath(out _))
                 {
-                    GlobalFFOptions.Configure(opt => opt.BinaryFolder = ToolsDir);
-                    _ffmpegAvailable = true;
-                    TxtFFmpegStatus.Text = "FFmpeg ready";
-                    TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.LimeGreen;
-                    BtnSaveTrimmed.IsEnabled = true;
-                    return;
+                    if (File.Exists(FfmpegPath))
+                    {
+                        GlobalFFOptions.Configure(opt => opt.BinaryFolder = ToolsDir);
+                    }
+
+                    SetFFmpegAvailableUi();
+                    return Task.CompletedTask;
                 }
 
-                // Also check FFMpegCore's global config (legacy app dir installs)
-                string? globalPath = GlobalFFOptions.GetFFMpegBinaryPath();
-                if (!string.IsNullOrEmpty(globalPath) && File.Exists(globalPath))
-                {
-                    _ffmpegAvailable = true;
-                    TxtFFmpegStatus.Text = "FFmpeg ready";
-                    TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.LimeGreen;
-                    BtnSaveTrimmed.IsEnabled = true;
-                    return;
-                }
-
-                // Not found
-                _ffmpegAvailable = false;
-                TxtFFmpegStatus.Text = "FFmpeg not found — trim disabled";
-                TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.Orange;
-                BtnDownloadFFmpeg.Visibility = Visibility.Visible;
-                BtnSaveTrimmed.IsEnabled = false;
-                BtnSaveTrimmed.ToolTip = "Install FFmpeg to enable trimming";
+                SetFFmpegMissingUi();
             }
             catch
             {
-                _ffmpegAvailable = false;
-                TxtFFmpegStatus.Text = "FFmpeg not found — trim disabled";
-                BtnDownloadFFmpeg.Visibility = Visibility.Visible;
-                BtnSaveTrimmed.IsEnabled = false;
+                SetFFmpegMissingUi();
             }
+
+            return Task.CompletedTask;
         }
 
         private async void BtnDownloadFFmpeg_Click(object sender, RoutedEventArgs e)
@@ -150,75 +149,61 @@ namespace parallax.UI.Windows
             try
             {
                 Directory.CreateDirectory(ToolsDir);
-                string extractDir = Path.Combine(Path.GetTempPath(), "parallax_ffmpeg_extract");
-                string zipPath = Path.Combine(Path.GetTempPath(), "parallax_ffmpeg.zip");
-
-                // Download FFmpeg essentials build from gyan.dev
-                string downloadUrl = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip";
+                string tempRoot = CreateUniqueTempDirectory("ffmpeg");
+                string zipPath = Path.Combine(tempRoot, "ffmpeg.zip");
+                string extractDir = Path.Combine(tempRoot, "extract");
+                Directory.CreateDirectory(extractDir);
 
                 TxtFFmpegStatus.Text = "Downloading FFmpeg...";
 
-                using (var client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) })
+                try
                 {
-                    var response = await client.GetAsync(downloadUrl);
-                    response.EnsureSuccessStatusCode();
-                    byte[] zipData = await response.Content.ReadAsByteArrayAsync();
-                    await File.WriteAllBytesAsync(zipPath, zipData);
-                }
+                    await DownloadFileWithLimitAsync(FFmpegDownloadUri, zipPath, MaxFFmpegDownloadBytes);
 
-                TxtFFmpegStatus.Text = "Extracting...";
-                await Task.Run(() =>
-                {
-                    System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, extractDir, overwriteFiles: true);
-                });
-
-                // Clean up zip
-                try { File.Delete(zipPath); } catch { }
-
-                // Find and copy ffmpeg, ffplay, ffprobe to persistent tools directory
-                var extractedDirs = Directory.GetDirectories(extractDir);
-                bool foundFfmpeg = false;
-                foreach (var exe in new[] { "ffmpeg.exe", "ffplay.exe", "ffprobe.exe" })
-                {
-                    string? exePath = null;
-                    foreach (var dir in extractedDirs)
+                    TxtFFmpegStatus.Text = "Extracting FFmpeg...";
+                    await Task.Run(() =>
                     {
-                        string candidate = Path.Combine(dir, exe);
-                        if (File.Exists(candidate)) { exePath = candidate; break; }
-                        candidate = Path.Combine(dir, "bin", exe);
-                        if (File.Exists(candidate)) { exePath = candidate; break; }
+                        System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, extractDir);
+                    });
+
+                    bool foundFfmpeg = await Task.Run(() => CopyExpectedFFmpegBinaries(extractDir));
+
+                    if (foundFfmpeg)
+                    {
+                        GlobalFFOptions.Configure(opt => opt.BinaryFolder = ToolsDir);
+
+                        SetFFmpegAvailableUi();
+                        ShowEditorStatus("FFmpeg and ffplay installed. All codecs supported.", false);
                     }
-                    if (exePath != null)
+                    else
                     {
-                        File.Copy(exePath, Path.Combine(ToolsDir, exe), overwrite: true);
-                        if (exe == "ffmpeg.exe") foundFfmpeg = true;
+                        TxtFFmpegStatus.Text = "Extraction failed. Try manual install.";
+                        TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.Red;
+                        ShowEditorStatus("FFmpeg install failed. The archive did not contain ffmpeg.exe.", true);
                     }
                 }
-
-                // Clean up extract dir
-                try { Directory.Delete(extractDir, recursive: true); } catch { }
-
-                if (foundFfmpeg)
+                finally
                 {
-                    GlobalFFOptions.Configure(opt => opt.BinaryFolder = ToolsDir);
-
-                    _ffmpegAvailable = true;
-                    TxtFFmpegStatus.Text = "FFmpeg ready";
-                    TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.LimeGreen;
-                    BtnSaveTrimmed.IsEnabled = true;
-                    BtnDownloadFFmpeg.Visibility = Visibility.Collapsed;
-                    ShowEditorStatus("FFmpeg + ffplay installed \u2014 all codecs supported.", false);
+                    TryDeleteFile(zipPath);
+                    TryDeleteDirectory(extractDir);
+                    TryDeleteDirectory(tempRoot);
                 }
-                else
-                {
-                    TxtFFmpegStatus.Text = "Extraction failed — try manual install";
-                    TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.Red;
-                }
+            }
+            catch (HttpRequestException ex)
+            {
+                ShowFFmpegDownloadFailure("FFmpeg download failed. Check your internet connection or install FFmpeg manually.", ex);
+            }
+            catch (TaskCanceledException ex)
+            {
+                ShowFFmpegDownloadFailure("FFmpeg download timed out. Check your connection and try again.", ex);
+            }
+            catch (InvalidOperationException ex)
+            {
+                ShowFFmpegDownloadFailure(ex.Message, ex);
             }
             catch (Exception ex)
             {
-                TxtFFmpegStatus.Text = $"Download failed: {ex.Message}";
-                TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.Red;
+                ShowFFmpegDownloadFailure("FFmpeg install failed. Try Download FFmpeg again or install FFmpeg manually.", ex);
             }
             finally
             {
@@ -249,6 +234,7 @@ namespace parallax.UI.Windows
         {
             _isPlaying = false;
             _mediaEnded = true;
+            _isPreviewingTrim = false;
             _playbackTimer.Stop();
             UpdatePlayButton();
             PlayOverlay.Visibility = Visibility.Visible;
@@ -272,7 +258,13 @@ namespace parallax.UI.Windows
                 {
                     try
                     {
-                        System.Diagnostics.Process.Start(FfplayPath, $"\"{_videoPath}\"");
+                        var startInfo = new ProcessStartInfo
+                        {
+                            FileName = FfplayPath,
+                            UseShellExecute = false
+                        };
+                        startInfo.ArgumentList.Add(_videoPath);
+                        Process.Start(startInfo);
                     }
                     catch { /* best effort */ }
                 }
@@ -309,6 +301,11 @@ namespace parallax.UI.Windows
                     double pos = VideoPlayer.Position.TotalSeconds;
                     TimelineSlider.Value = pos;
                     TxtCurrentTime.Text = FormatTime(VideoPlayer.Position);
+
+                    if (_isPreviewingTrim && VideoPlayer.Position >= _previewTrimEnd)
+                    {
+                        CompleteTrimPreview();
+                    }
                 }
             }
             catch { /* clock drift after media end */ }
@@ -335,6 +332,8 @@ namespace parallax.UI.Windows
 
         private void TogglePlayPause()
         {
+            _isPreviewingTrim = false;
+
             if (_mediaEnded)
             {
                 VideoPlayer.Position = TimeSpan.Zero;
@@ -368,6 +367,7 @@ namespace parallax.UI.Windows
 
         private void BtnRestart_Click(object sender, RoutedEventArgs e)
         {
+            _isPreviewingTrim = false;
             VideoPlayer.Position = TimeSpan.Zero;
             _mediaEnded = false;
             if (!_isPlaying)
@@ -396,6 +396,7 @@ namespace parallax.UI.Windows
         // We track mouse down/up on the slider for scrubbing
         private void TimelineSlider_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
+            _isPreviewingTrim = false;
             _isDraggingSlider = true;
             _playbackTimer.Stop();
         }
@@ -440,29 +441,177 @@ namespace parallax.UI.Windows
             }
         }
 
-        // Move trim start back 5 seconds
-        private void BtnTrimMinus5_Click(object sender, RoutedEventArgs e)
+        private void BtnPreviewTrim_Click(object sender, RoutedEventArgs e)
         {
-            var start = ParseTrimTime(TxtTrimStart.Text);
-            if (start != null)
+            if (!TryGetValidatedTrimRange(out var trimStart, out var trimEnd, out var errorMessage))
             {
-                var newStart = TimeSpan.FromSeconds(Math.Max(0, start.Value.TotalSeconds - 5));
-                TxtTrimStart.Text = FormatTime(newStart);
-                UpdateTrimDuration();
+                ShowEditorStatus(errorMessage, true);
+                return;
             }
+
+            _isPreviewingTrim = true;
+            _previewTrimEnd = trimEnd;
+            _mediaEnded = false;
+
+            VideoPlayer.Position = trimStart;
+            TimelineSlider.Value = trimStart.TotalSeconds;
+            TxtCurrentTime.Text = FormatTime(trimStart);
+            VideoPlayer.Play();
+            _isPlaying = true;
+            _playbackTimer.Start();
+            UpdatePlayButton();
+            ShowEditorStatus($"Previewing trim {FormatTime(trimStart)} to {FormatTime(trimEnd)}.", false);
         }
 
-        // Move trim end forward 5 seconds
-        private void BtnTrimPlus5_Click(object sender, RoutedEventArgs e)
+        private void BtnJumpTrimIn_Click(object sender, RoutedEventArgs e)
         {
-            var end = ParseTrimTime(TxtTrimOut.Text);
-            if (end != null && _naturalDuration.HasTimeSpan)
+            JumpToTrimPoint(TxtTrimStart.Text, "trim start");
+        }
+
+        private void BtnJumpTrimOut_Click(object sender, RoutedEventArgs e)
+        {
+            JumpToTrimPoint(TxtTrimOut.Text, "trim end");
+        }
+
+        // Existing -5s behavior: move trim start back 5 seconds.
+        private void BtnTrimMinus5_Click(object sender, RoutedEventArgs e) => NudgeTrimStart(-5);
+
+        private void BtnTrimStartMinus1_Click(object sender, RoutedEventArgs e) => NudgeTrimStart(-1);
+
+        private void BtnTrimStartPlus1_Click(object sender, RoutedEventArgs e) => NudgeTrimStart(1);
+
+        private void BtnTrimEndMinus1_Click(object sender, RoutedEventArgs e) => NudgeTrimEnd(-1);
+
+        private void BtnTrimEndPlus1_Click(object sender, RoutedEventArgs e) => NudgeTrimEnd(1);
+
+        // Existing +5s behavior: move trim end forward 5 seconds.
+        private void BtnTrimPlus5_Click(object sender, RoutedEventArgs e) => NudgeTrimEnd(5);
+
+        private void JumpToTrimPoint(string trimText, string label)
+        {
+            var position = ParseTrimTime(trimText);
+            if (position == null)
             {
-                double maxSec = _naturalDuration.TimeSpan.TotalSeconds;
-                var newEnd = TimeSpan.FromSeconds(Math.Min(maxSec, end.Value.TotalSeconds + 5));
-                TxtTrimOut.Text = FormatTime(newEnd);
-                UpdateTrimDuration();
+                ShowEditorStatus($"Invalid {label}. Use MM:SS, HH:MM:SS, or seconds.", true);
+                return;
             }
+
+            if (!IsPositionInsideVideo(position.Value))
+            {
+                ShowEditorStatus($"The {label} is outside this video's duration.", true);
+                return;
+            }
+
+            _isPreviewingTrim = false;
+            _mediaEnded = false;
+            VideoPlayer.Position = position.Value;
+            TimelineSlider.Value = position.Value.TotalSeconds;
+            TxtCurrentTime.Text = FormatTime(position.Value);
+            UpdatePlayButton();
+        }
+
+        private void NudgeTrimStart(double seconds)
+        {
+            if (!TryGetTrimTimes(out var start, out var end, out var errorMessage))
+            {
+                ShowEditorStatus(errorMessage, true);
+                return;
+            }
+
+            double maxStart = Math.Max(0, end.TotalSeconds - 1);
+            double newStart = Math.Clamp(start.TotalSeconds + seconds, 0, maxStart);
+            TxtTrimStart.Text = FormatTime(TimeSpan.FromSeconds(newStart));
+            UpdateTrimDuration();
+        }
+
+        private void NudgeTrimEnd(double seconds)
+        {
+            if (!TryGetTrimTimes(out var start, out var end, out var errorMessage))
+            {
+                ShowEditorStatus(errorMessage, true);
+                return;
+            }
+
+            double minEnd = start.TotalSeconds + 1;
+            double maxEnd = _naturalDuration.HasTimeSpan
+                ? _naturalDuration.TimeSpan.TotalSeconds
+                : Math.Max(end.TotalSeconds + Math.Abs(seconds), minEnd);
+            double newEnd = Math.Clamp(end.TotalSeconds + seconds, minEnd, maxEnd);
+            TxtTrimOut.Text = FormatTime(TimeSpan.FromSeconds(newEnd));
+            UpdateTrimDuration();
+        }
+
+        private void CompleteTrimPreview()
+        {
+            _isPreviewingTrim = false;
+            VideoPlayer.Pause();
+            VideoPlayer.Position = _previewTrimEnd;
+            TimelineSlider.Value = _previewTrimEnd.TotalSeconds;
+            TxtCurrentTime.Text = FormatTime(_previewTrimEnd);
+            _isPlaying = false;
+            _playbackTimer.Stop();
+            UpdatePlayButton();
+            ShowEditorStatus("Trim preview complete.", false);
+        }
+
+        private bool TryGetTrimTimes(out TimeSpan trimStart, out TimeSpan trimEnd, out string errorMessage)
+        {
+            trimStart = TimeSpan.Zero;
+            trimEnd = TimeSpan.Zero;
+            errorMessage = string.Empty;
+
+            var parsedStart = ParseTrimTime(TxtTrimStart.Text);
+            var parsedEnd = ParseTrimTime(TxtTrimOut.Text);
+            if (parsedStart == null || parsedEnd == null)
+            {
+                errorMessage = "Invalid trim times. Use MM:SS, HH:MM:SS, or seconds.";
+                return false;
+            }
+
+            trimStart = parsedStart.Value;
+            trimEnd = parsedEnd.Value;
+            return true;
+        }
+
+        private bool TryGetValidatedTrimRange(out TimeSpan trimStart, out TimeSpan trimEnd, out string errorMessage)
+        {
+            if (!TryGetTrimTimes(out trimStart, out trimEnd, out errorMessage))
+            {
+                return false;
+            }
+
+            if (trimStart < TimeSpan.Zero || trimEnd < TimeSpan.Zero)
+            {
+                errorMessage = "Trim times cannot be negative.";
+                return false;
+            }
+
+            if (_naturalDuration.HasTimeSpan)
+            {
+                if (trimStart > _naturalDuration.TimeSpan || trimEnd > _naturalDuration.TimeSpan)
+                {
+                    errorMessage = "Trim range is outside this video's duration.";
+                    return false;
+                }
+            }
+
+            if (trimEnd <= trimStart)
+            {
+                errorMessage = "Trim end must be after trim start.";
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool IsPositionInsideVideo(TimeSpan position)
+        {
+            if (position < TimeSpan.Zero)
+            {
+                return false;
+            }
+
+            return !_naturalDuration.HasTimeSpan || position <= _naturalDuration.TimeSpan;
         }
 
         // Updates the trim duration display based on current From/To values
@@ -485,11 +634,39 @@ namespace parallax.UI.Windows
 
         private TimeSpan? ParseTrimTime(string text)
         {
-            if (TimeSpan.TryParse($"00:{text}", out var result))
+            text = text.Trim();
+            if (string.IsNullOrEmpty(text))
+            {
+                return null;
+            }
+
+            string[] minuteParts = text.Split(':');
+            if (minuteParts.Length == 2
+                && int.TryParse(minuteParts[0], NumberStyles.None, CultureInfo.InvariantCulture, out int totalMinutes)
+                && int.TryParse(minuteParts[1], NumberStyles.None, CultureInfo.InvariantCulture, out int secondsPart)
+                && totalMinutes >= 0
+                && secondsPart is >= 0 and < 60)
+            {
+                return TimeSpan.FromMinutes(totalMinutes) + TimeSpan.FromSeconds(secondsPart);
+            }
+
+            string[] formats =
+            {
+                @"m\:ss",
+                @"mm\:ss",
+                @"h\:mm\:ss",
+                @"hh\:mm\:ss",
+                @"m\:ss\.fff",
+                @"mm\:ss\.fff",
+                @"h\:mm\:ss\.fff",
+                @"hh\:mm\:ss\.fff"
+            };
+
+            if (TimeSpan.TryParseExact(text, formats, CultureInfo.InvariantCulture, out var result))
                 return result;
 
             // Also try parsing as seconds
-            if (double.TryParse(text, out double seconds))
+            if (double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds))
                 return TimeSpan.FromSeconds(seconds);
 
             return null;
@@ -504,10 +681,10 @@ namespace parallax.UI.Windows
             string destPath = _fileService.GetVideoFilePath("mp4");
             try
             {
-                File.Copy(_videoPath, destPath, overwrite: true);
+                File.Copy(_videoPath, destPath, overwrite: false);
                 _hasBeenSaved = true;
                 _onSaved?.Invoke(destPath);
-                ShowEditorStatus($"Saved \u2014 {Path.GetFileName(destPath)}", false);
+                ShowEditorStatus($"Saved - {Path.GetFileName(destPath)}", false);
             }
             catch (Exception ex)
             {
@@ -519,25 +696,13 @@ namespace parallax.UI.Windows
         {
             if (!_ffmpegAvailable)
             {
-                MessageBox.Show("FFmpeg is required for trimming.\nClick 'Download FFmpeg' or install manually.",
-                    "FFmpeg Required", MessageBoxButton.OK, MessageBoxImage.Information);
+                ShowFFmpegRequired("save a trimmed video");
                 return;
             }
 
-            var trimStart = ParseTrimTime(TxtTrimStart.Text);
-            var trimEnd = ParseTrimTime(TxtTrimOut.Text);
-
-            if (trimStart == null || trimEnd == null)
+            if (!TryGetValidatedTrimRange(out var trimStart, out var trimEnd, out var errorMessage))
             {
-                MessageBox.Show("Invalid trim times. Use MM:SS format (e.g. 01:30).",
-                    "Invalid Time", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            if (trimEnd <= trimStart)
-            {
-                MessageBox.Show("Trim end must be after trim start.",
-                    "Invalid Range", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(errorMessage, "Invalid Trim Range", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -550,42 +715,127 @@ namespace parallax.UI.Windows
 
                 // Re-encode the trimmed segment with proper timestamps.
                 // -ss before -i for fast seek, -to for end, re-encode with libx264 + AAC.
-                string start = trimStart.Value.ToString(@"hh\:mm\:ss\.fff");
-                string duration = (trimEnd.Value - trimStart.Value).ToString(@"hh\:mm\:ss\.fff");
+                string start = FormatFFmpegTime(trimStart);
+                string duration = FormatFFmpegTime(trimEnd - trimStart);
 
-                var psi = new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = FfmpegPath,
-                    Arguments = $"-y -ss {start} -i \"{_videoPath}\" -t {duration} " +
-                                "-c:v libx264 -preset fast -crf 23 " +
-                                "-c:a aac -b:a 128k -movflags +faststart " +
-                                $"\"{outputPath}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardError = true
-                };
-
-                await Task.Run(() =>
-                {
-                    using var process = System.Diagnostics.Process.Start(psi)!;
-                    string stderr = process.StandardError.ReadToEnd();
-                    process.WaitForExit();
-                    if (process.ExitCode != 0)
-                        throw new Exception($"ffmpeg exited with code {process.ExitCode}\n{stderr}");
-                });
+                await RunFFmpegAsync(
+                    "Save trimmed video",
+                    outputPath,
+                    "-n",
+                    "-ss", start,
+                    "-i", _videoPath,
+                    "-t", duration,
+                    "-c:v", "libx264",
+                    "-preset", "fast",
+                    "-crf", "23",
+                    "-c:a", "aac",
+                    "-b:a", "128k",
+                    "-movflags", "+faststart",
+                    outputPath);
 
                 _hasBeenSaved = true;
                 _onSaved?.Invoke(outputPath);
-                ShowEditorStatus($"Saved \u2014 {Path.GetFileName(outputPath)}", false);
+                ShowEditorStatus($"Saved - {Path.GetFileName(outputPath)}", false);
             }
             catch (Exception ex)
             {
-                ShowEditorStatus($"Trim failed: {ex.Message}", true);
+                ShowEditorStatus(ToStatusMessage("Trim failed", ex), true);
             }
             finally
             {
                 BtnSaveTrimmed.IsEnabled = _ffmpegAvailable;
                 BtnSaveTrimmed.Content = "Save Trimmed";
+            }
+        }
+
+        private async void BtnSaveFrame_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_ffmpegAvailable)
+            {
+                ShowFFmpegRequired("save the current frame");
+                return;
+            }
+
+            if (VideoPlayer.Source == null)
+            {
+                ShowEditorStatus("Open a video before saving a frame.", true);
+                return;
+            }
+
+            try
+            {
+                BtnSaveFrame.IsEnabled = false;
+                BtnSaveFrame.Content = "Saving...";
+
+                TimeSpan position = ClampFramePosition(VideoPlayer.Position);
+                string outputPath = _fileService.GetImageFilePath("png");
+
+                await RunFFmpegAsync(
+                    "Save current frame",
+                    outputPath,
+                    "-n",
+                    "-ss", FormatFFmpegTime(position),
+                    "-i", _videoPath,
+                    "-frames:v", "1",
+                    outputPath);
+
+                ShowEditorStatus($"Frame saved - {Path.GetFileName(outputPath)}", false);
+            }
+            catch (Exception ex)
+            {
+                ShowEditorStatus(ToStatusMessage("Frame save failed", ex), true);
+            }
+            finally
+            {
+                BtnSaveFrame.IsEnabled = true;
+                BtnSaveFrame.Content = "Save Frame";
+            }
+        }
+
+        private async void BtnExportGif_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_ffmpegAvailable)
+            {
+                ShowFFmpegRequired("export a GIF");
+                return;
+            }
+
+            if (!TryGetValidatedTrimRange(out var trimStart, out var trimEnd, out var errorMessage))
+            {
+                MessageBox.Show(errorMessage, "Invalid GIF Range", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                BtnExportGif.IsEnabled = false;
+                BtnExportGif.Content = "Exporting...";
+
+                string outputPath = _fileService.GetVideoFilePath("gif");
+                string start = FormatFFmpegTime(trimStart);
+                string duration = FormatFFmpegTime(trimEnd - trimStart);
+
+                await RunFFmpegAsync(
+                    "Export GIF",
+                    outputPath,
+                    "-n",
+                    "-ss", start,
+                    "-i", _videoPath,
+                    "-t", duration,
+                    "-vf", "fps=12,scale=720:-1:flags=lanczos",
+                    "-loop", "0",
+                    outputPath);
+
+                ShowEditorStatus($"GIF exported - {Path.GetFileName(outputPath)}", false);
+            }
+            catch (Exception ex)
+            {
+                ShowEditorStatus(ToStatusMessage("GIF export failed", ex), true);
+            }
+            finally
+            {
+                BtnExportGif.IsEnabled = true;
+                BtnExportGif.Content = "Export GIF";
             }
         }
 
@@ -615,6 +865,365 @@ namespace parallax.UI.Windows
         // ────────────────────────────────────────────
         // UTILITY
         // ────────────────────────────────────────────
+
+        private static bool TryGetFFmpegPath(out string ffmpegPath)
+        {
+            if (File.Exists(FfmpegPath))
+            {
+                ffmpegPath = FfmpegPath;
+                return true;
+            }
+
+            string? globalPath = GlobalFFOptions.GetFFMpegBinaryPath();
+            if (!string.IsNullOrWhiteSpace(globalPath) && File.Exists(globalPath))
+            {
+                ffmpegPath = globalPath;
+                return true;
+            }
+
+            ffmpegPath = string.Empty;
+            return false;
+        }
+
+        private void SetFFmpegAvailableUi()
+        {
+            _ffmpegAvailable = true;
+            TxtFFmpegStatus.Text = "FFmpeg ready";
+            TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.LimeGreen;
+            BtnDownloadFFmpeg.Visibility = Visibility.Collapsed;
+            BtnSaveTrimmed.IsEnabled = true;
+            BtnSaveTrimmed.ToolTip = "Apply trim and save a new video";
+            BtnSaveFrame.ToolTip = "Save the current video frame as a PNG";
+            BtnExportGif.ToolTip = "Export the selected trim range as a GIF";
+        }
+
+        private void SetFFmpegMissingUi()
+        {
+            _ffmpegAvailable = false;
+            TxtFFmpegStatus.Text = "FFmpeg not found - trimming, frame saves, and GIF export need FFmpeg.";
+            TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.Orange;
+            BtnDownloadFFmpeg.Visibility = Visibility.Visible;
+            BtnSaveTrimmed.IsEnabled = false;
+            BtnSaveTrimmed.ToolTip = "Download FFmpeg to enable trimming";
+            BtnSaveFrame.ToolTip = "Download FFmpeg to save video frames";
+            BtnExportGif.ToolTip = "Download FFmpeg to export GIFs";
+        }
+
+        private static string CreateUniqueTempDirectory(string prefix)
+        {
+            string tempRoot = Path.Combine(Path.GetTempPath(), "parallax");
+            Directory.CreateDirectory(tempRoot);
+
+            string directory = Path.Combine(tempRoot, $"{prefix}_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(directory);
+            return directory;
+        }
+
+        private static async Task DownloadFileWithLimitAsync(Uri url, string destinationPath, long maxBytes)
+        {
+            using var cancellation = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+            using var client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+            using var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellation.Token);
+            response.EnsureSuccessStatusCode();
+
+            if (response.Content.Headers.ContentLength is long contentLength && contentLength > maxBytes)
+            {
+                throw new InvalidOperationException("The FFmpeg download is larger than the app safety limit. Install FFmpeg manually.");
+            }
+
+            await using Stream input = await response.Content.ReadAsStreamAsync(cancellation.Token);
+            await using var output = new FileStream(
+                destinationPath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 81920,
+                options: FileOptions.Asynchronous | FileOptions.SequentialScan);
+
+            byte[] buffer = new byte[81920];
+            long totalBytes = 0;
+            int bytesRead;
+            while ((bytesRead = await input.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellation.Token)) > 0)
+            {
+                totalBytes += bytesRead;
+                if (totalBytes > maxBytes)
+                {
+                    throw new InvalidOperationException("The FFmpeg download exceeded the app safety limit. Install FFmpeg manually.");
+                }
+
+                await output.WriteAsync(buffer.AsMemory(0, bytesRead), cancellation.Token);
+            }
+        }
+
+        private static bool CopyExpectedFFmpegBinaries(string extractDir)
+        {
+            bool foundFfmpeg = false;
+            foreach (string exeName in ExpectedFFmpegBinaries)
+            {
+                string? sourcePath = Directory
+                    .EnumerateFiles(extractDir, exeName, SearchOption.AllDirectories)
+                    .FirstOrDefault(path => string.Equals(Path.GetFileName(path), exeName, StringComparison.OrdinalIgnoreCase));
+
+                if (sourcePath == null)
+                {
+                    continue;
+                }
+
+                File.Copy(sourcePath, Path.Combine(ToolsDir, exeName), overwrite: true);
+                if (exeName.Equals("ffmpeg.exe", StringComparison.OrdinalIgnoreCase))
+                {
+                    foundFfmpeg = true;
+                }
+            }
+
+            return foundFfmpeg;
+        }
+
+        private static void TryDeleteFile(string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch
+            {
+                // Best-effort cleanup only.
+            }
+        }
+
+        private static void TryDeleteDirectory(string path)
+        {
+            try
+            {
+                if (Directory.Exists(path))
+                {
+                    Directory.Delete(path, recursive: true);
+                }
+            }
+            catch
+            {
+                // Best-effort cleanup only.
+            }
+        }
+
+        private async Task RunFFmpegAsync(string actionName, string outputPath, params string[] arguments)
+        {
+            if (!TryGetFFmpegPath(out string ffmpegPath))
+            {
+                throw new InvalidOperationException("FFmpeg is not available. Click Download FFmpeg or install FFmpeg manually.");
+            }
+
+            if (File.Exists(outputPath))
+            {
+                throw new IOException($"{actionName} could not start because the output file already exists.");
+            }
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = ffmpegPath,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardError = true
+            };
+
+            foreach (string argument in arguments)
+            {
+                startInfo.ArgumentList.Add(argument);
+            }
+
+            var stderr = new StringBuilder();
+            object stderrLock = new();
+
+            using var process = new Process
+            {
+                StartInfo = startInfo,
+                EnableRaisingEvents = true
+            };
+
+            process.ErrorDataReceived += (_, eventArgs) =>
+            {
+                if (!string.IsNullOrWhiteSpace(eventArgs.Data))
+                {
+                    AppendBoundedError(stderr, stderrLock, eventArgs.Data);
+                }
+            };
+
+            bool outputValid = false;
+            try
+            {
+                if (!process.Start())
+                {
+                    throw new InvalidOperationException($"{actionName} could not start FFmpeg.");
+                }
+
+                process.BeginErrorReadLine();
+                using var timeout = new CancellationTokenSource(FFmpegProcessTimeout);
+                try
+                {
+                    await process.WaitForExitAsync(timeout.Token);
+                    process.WaitForExit();
+                }
+                catch (OperationCanceledException ex)
+                {
+                    TryKillProcess(process);
+                    throw new TimeoutException($"{actionName} timed out after {FFmpegProcessTimeout.TotalMinutes:0} minutes. The source video was kept.", ex);
+                }
+
+                string boundedError = GetBoundedError(stderr, stderrLock);
+                if (process.ExitCode != 0)
+                {
+                    throw new InvalidOperationException($"{actionName} failed (FFmpeg exit code {process.ExitCode}). {FormatFFmpegError(boundedError)}");
+                }
+
+                ValidateFFmpegOutput(outputPath, actionName);
+                outputValid = true;
+            }
+            finally
+            {
+                if (!outputValid)
+                {
+                    TryDeleteFile(outputPath);
+                }
+            }
+        }
+
+        private static void TryKillProcess(Process process)
+        {
+            try
+            {
+                if (!process.HasExited)
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+            }
+            catch
+            {
+                // Best-effort cleanup after a timed-out export.
+            }
+
+            try
+            {
+                process.WaitForExit(5000);
+            }
+            catch
+            {
+                // Best-effort cleanup after a timed-out export.
+            }
+        }
+
+        private static void AppendBoundedError(StringBuilder stderr, object stderrLock, string line)
+        {
+            string normalized = NormalizeMessage(line);
+            lock (stderrLock)
+            {
+                if (stderr.Length >= MaxFFmpegErrorChars)
+                {
+                    return;
+                }
+
+                if (stderr.Length > 0)
+                {
+                    stderr.Append(' ');
+                }
+
+                int remainingChars = MaxFFmpegErrorChars - stderr.Length;
+                stderr.Append(normalized.Length > remainingChars ? normalized[..remainingChars] : normalized);
+            }
+        }
+
+        private static string GetBoundedError(StringBuilder stderr, object stderrLock)
+        {
+            lock (stderrLock)
+            {
+                return stderr.ToString();
+            }
+        }
+
+        private static void ValidateFFmpegOutput(string outputPath, string actionName)
+        {
+            var output = new FileInfo(outputPath);
+            if (!output.Exists || output.Length == 0)
+            {
+                throw new InvalidOperationException($"{actionName} finished, but no output file was created.");
+            }
+        }
+
+        private TimeSpan ClampFramePosition(TimeSpan position)
+        {
+            if (position < TimeSpan.Zero)
+            {
+                return TimeSpan.Zero;
+            }
+
+            if (_naturalDuration.HasTimeSpan && position >= _naturalDuration.TimeSpan)
+            {
+                if (_naturalDuration.TimeSpan <= TimeSpan.FromMilliseconds(10))
+                {
+                    return TimeSpan.Zero;
+                }
+
+                return _naturalDuration.TimeSpan - TimeSpan.FromMilliseconds(10);
+            }
+
+            return position;
+        }
+
+        private static string FormatFFmpegTime(TimeSpan value)
+        {
+            return $"{(int)value.TotalHours:D2}:{value.Minutes:D2}:{value.Seconds:D2}.{value.Milliseconds:D3}";
+        }
+
+        private void ShowFFmpegRequired(string action)
+        {
+            string message = $"FFmpeg is required to {action}. Click 'Download FFmpeg' or install FFmpeg manually.";
+            ShowEditorStatus(message, true);
+            MessageBox.Show(message, "FFmpeg Required", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void ShowFFmpegDownloadFailure(string message, Exception ex)
+        {
+            string status = ToStatusMessage(message, ex);
+            TxtFFmpegStatus.Text = TrimForStatus(status, MaxStatusMessageChars);
+            TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.Red;
+            ShowEditorStatus(status, true);
+        }
+
+        private static string FormatFFmpegError(string stderr)
+        {
+            return string.IsNullOrWhiteSpace(stderr)
+                ? "FFmpeg did not provide details."
+                : $"FFmpeg reported: {TrimForStatus(stderr, MaxStatusMessageChars)}";
+        }
+
+        private static string ToStatusMessage(string prefix, Exception ex)
+        {
+            string detail = TrimForStatus(NormalizeMessage(ex.Message), MaxStatusMessageChars);
+            return $"{prefix}: {detail}";
+        }
+
+        private static string TrimForStatus(string message, int maxChars)
+        {
+            if (message.Length <= maxChars)
+            {
+                return message;
+            }
+
+            return message[..Math.Max(0, maxChars - 3)] + "...";
+        }
+
+        private static string NormalizeMessage(string message)
+        {
+            string normalized = message.Replace('\r', ' ').Replace('\n', ' ').Trim();
+            while (normalized.Contains("  ", StringComparison.Ordinal))
+            {
+                normalized = normalized.Replace("  ", " ", StringComparison.Ordinal);
+            }
+
+            return normalized;
+        }
 
         private static string FormatTime(TimeSpan time)
         {

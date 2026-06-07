@@ -7,7 +7,7 @@
         Topmost="True"
         ShowInTaskbar="False"
         IsHitTestVisible="False"
-        Title="parallax Recording Border">
+        Title="Parallax Capture Recording Border">
     <!-- The window has 22px extra height at the top (TopPadding in code-behind)
          for the REC label. The border sits below that, aligned to the capture region. -->
     <Grid>

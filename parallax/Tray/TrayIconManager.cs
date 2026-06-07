@@ -20,12 +20,15 @@ namespace parallax.Tray
         private readonly SettingsService _settingsService;
         private AppSettings _settings;
 
+        public event Action<AppSettings>? SettingsChanged;
+
         // ── Dynamic menu item references for toggling recording state
         private MenuItem? _recordMenuItem;
         private MenuItem? _stopMenuItem;
 
-        // ── Recording border overlay window reference
+        // ── Recording overlay windows
         private RecordingBorderWindow? _recordingBorder;
+        private RecordingControlsWindow? _recordingControls;
 
         // ── Last recording path for video editor
         private string? _lastRecordingPath;
@@ -55,7 +58,7 @@ namespace parallax.Tray
         {
             _trayIcon = new TaskbarIcon
             {
-                ToolTipText = "parallax",
+                ToolTipText = "Parallax Capture",
                 Icon = LoadTrayIcon(),
                 MenuActivation = PopupActivationMode.RightClick,
                 ContextMenu = BuildContextMenu()
@@ -69,53 +72,53 @@ namespace parallax.Tray
 
             var header = new MenuItem
             {
-                Header = "parallax",
+                Header = "Parallax Capture",
                 IsEnabled = false,
                 FontWeight = FontWeights.Bold
             };
             menu.Items.Add(header);
             menu.Items.Add(new Separator());
 
-            var regionShot = new MenuItem { Header = "Region Screenshot   (Print Screen)" };
+            var regionShot = new MenuItem { Header = $"Capture region   {FormatHotkeyLabel(_settings.HotkeyScreenshotEnabled, _settings.HotkeyScreenshot)}" };
             regionShot.Click += (s, e) => TriggerRegionScreenshot();
             menu.Items.Add(regionShot);
 
-            var fullShot = new MenuItem { Header = "Full Screenshot      (Alt+PrtSc)" };
+            var fullShot = new MenuItem { Header = $"Capture full screen   {FormatHotkeyLabel(_settings.HotkeyFullscreenEnabled, _settings.HotkeyFullscreen)}" };
             fullShot.Click += (s, e) => TriggerFullScreenshot();
             menu.Items.Add(fullShot);
 
             menu.Items.Add(new Separator());
 
             // Dynamic recording items — only one visible at a time
-            _recordMenuItem = new MenuItem { Header = "Start Region Recording   (Alt+R)" };
+            _recordMenuItem = new MenuItem { Header = $"Record region   {FormatHotkeyLabel(_settings.HotkeyRegionVideoEnabled, _settings.HotkeyRegionVideo)}" };
             _recordMenuItem.Click += (s, e) => TriggerRegionVideo();
             menu.Items.Add(_recordMenuItem);
 
-            _stopMenuItem = new MenuItem { Header = "Stop Recording" };
+            _stopMenuItem = new MenuItem { Header = "Stop recording" };
             _stopMenuItem.Click += (s, e) => StopRecording();
             menu.Items.Add(_stopMenuItem);
 
             menu.Items.Add(new Separator());
 
-            _videoEditorMenuItem = new MenuItem { Header = "Open Video Editor..." };
+            _videoEditorMenuItem = new MenuItem { Header = "Open video editor" };
             _videoEditorMenuItem.Click += (s, e) => OpenVideoEditor();
             menu.Items.Add(_videoEditorMenuItem);
 
-            var openImage = new MenuItem { Header = "Open Image Editor..." };
+            var openImage = new MenuItem { Header = "Open image editor" };
             openImage.Click += (s, e) => OpenImageEditor();
             menu.Items.Add(openImage);
 
-            var openFolder = new MenuItem { Header = "Open Save Folder" };
-            openFolder.Click += (s, e) => _fileService.OpenSaveFolder();
+            var openFolder = new MenuItem { Header = "Open save folder" };
+            openFolder.Click += (s, e) => OpenSaveFolder();
             menu.Items.Add(openFolder);
 
-            var settings = new MenuItem { Header = "Settings" };
+            var settings = new MenuItem { Header = "Open settings" };
             settings.Click += (s, e) => OpenSettings();
             menu.Items.Add(settings);
 
             menu.Items.Add(new Separator());
 
-            var exit = new MenuItem { Header = "Exit" };
+            var exit = new MenuItem { Header = "Quit Parallax Capture" };
             exit.Click += (s, e) => ExitApp();
             menu.Items.Add(exit);
 
@@ -134,7 +137,7 @@ namespace parallax.Tray
 
             // Update tooltip to show recording state
             if (_trayIcon != null)
-                _trayIcon.ToolTipText = isRecording ? "parallax - RECORDING" : "parallax";
+                _trayIcon.ToolTipText = isRecording ? "Parallax Capture is recording" : "Parallax Capture";
         }
 
         // ────────────────────────────────────────────
@@ -271,17 +274,20 @@ namespace parallax.Tray
                     // Update menu state again now that IsRecording is true (KAM #6 — single source)
                     UpdateRecordingMenuState();
 
-                    ShowBalloon("Recording started", "Press Alt+R or use tray menu to stop.");
+                    ShowBalloon("Recording started", BuildRecordingStopHint());
                 }
                 catch (Exception ex)
                 {
+                    _recorderService.RecordingCompleted -= OnRecordingCompleted;
+                    _recorderService.RecordingFailed    -= OnRecordingFailed;
+
                     // Balloon tips are silently suppressed by Windows Focus Assist /
                     // notification settings. Use MessageBox so the user always sees errors.
                     HideRecordingBorder(); // KAM #1 — always clean up the border on failure
                     UpdateRecordingMenuState();
                     System.Windows.MessageBox.Show(
                         $"Recording failed: {ex.Message}",
-                        "parallax - Recording Error",
+                        "Parallax Capture - Recording issue",
                         System.Windows.MessageBoxButton.OK,
                         System.Windows.MessageBoxImage.Error);
                 }
@@ -307,7 +313,7 @@ namespace parallax.Tray
 
                 _lastRecordingPath = filePath;
 
-                ShowBalloon("Recording complete", "Open the video editor to save or trim.");
+                    ShowBalloon("Recording complete", "Open the video editor to save or trim the clip.");
 
                 // Auto-open the video editor with the temp recording
                 try
@@ -352,9 +358,14 @@ namespace parallax.Tray
         {
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
+                _recordingControls?.Close();
                 _recordingBorder?.Close();
+
                 _recordingBorder = new RecordingBorderWindow(x, y, width, height);
+                _recordingControls = new RecordingControlsWindow(x, y, width, height, StopRecording);
+
                 _recordingBorder.Show();
+                _recordingControls.Show();
             });
         }
 
@@ -362,6 +373,8 @@ namespace parallax.Tray
         {
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
+                _recordingControls?.Close();
+                _recordingControls = null;
                 _recordingBorder?.Close();
                 _recordingBorder = null;
             });
@@ -382,8 +395,8 @@ namespace parallax.Tray
 
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
-                Title = "Open Video",
-                Filter = "Video Files|*.mp4;*.avi;*.mov;*.wmv;*.mkv|All Files|*.*",
+                Title = "Open video",
+                Filter = "Video files|*.mp4;*.avi;*.mov;*.wmv;*.mkv|All files|*.*",
                 DefaultExt = "mp4"
             };
 
@@ -415,8 +428,8 @@ namespace parallax.Tray
         {
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
-                Title = "Open Image",
-                Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp|All Files|*.*",
+                Title = "Open image",
+                Filter = "Image files|*.png;*.jpg;*.jpeg;*.bmp|All files|*.*",
                 DefaultExt = "png"
             };
 
@@ -446,6 +459,18 @@ namespace parallax.Tray
         // UTILITY
         // ────────────────────────────────────────────
 
+        private void OpenSaveFolder()
+        {
+            try
+            {
+                _fileService.OpenSaveFolder();
+            }
+            catch (Exception ex)
+            {
+                ShowBalloon("Open folder failed", ex.Message);
+            }
+        }
+
         private void OpenSettings()
         {
             try
@@ -455,6 +480,13 @@ namespace parallax.Tray
                     var win = new SettingsWindow(_settingsService);
                     win.ShowDialog();
                     _settings = _settingsService.Load();
+                    _fileService.UpdateSettings(_settings);
+
+                    if (_trayIcon != null)
+                        _trayIcon.ContextMenu = BuildContextMenu();
+
+                    UpdateRecordingMenuState();
+                    SettingsChanged?.Invoke(_settings);
                 });
             }
             catch (Exception ex)
@@ -487,6 +519,25 @@ namespace parallax.Tray
             return System.Drawing.SystemIcons.Application;
         }
 
+        private static string FormatHotkeyLabel(bool enabled, string? gesture)
+        {
+            string display = HotkeyManager.FormatForDisplay(enabled, gesture);
+            return display switch
+            {
+                "disabled" => "(disabled)",
+                "invalid" => "(invalid)",
+                _ => $"({display})"
+            };
+        }
+
+        private string BuildRecordingStopHint()
+        {
+            string display = HotkeyManager.FormatForDisplay(_settings.HotkeyRegionVideoEnabled, _settings.HotkeyRegionVideo);
+            return display is "disabled" or "invalid"
+                ? "Use the on-screen stop button or tray menu to stop."
+                : $"Use the on-screen stop button, press {display}, or use the tray menu to stop.";
+        }
+
         private static void ExitApp()
         {
             try
@@ -502,7 +553,7 @@ namespace parallax.Tray
 
         public void Dispose()
         {
-            _recordingBorder?.Close();
+            HideRecordingBorder();
             _trayIcon?.Dispose();
         }
     }

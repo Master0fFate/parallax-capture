@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Reflection;
 using parallax.Core.Models;
 using parallax.Core.Services;
 using Parallax.Tests.Fixtures;
@@ -96,6 +97,52 @@ public class FileServiceTests : IClassFixture<TempFileFixture>, IDisposable
     }
 
     [Fact]
+    public void GetVideoFilePath_WithUnsafeExtension_ThrowsClearError()
+    {
+        var ex = Assert.Throws<InvalidOperationException>(() => _fixture.FileService.GetVideoFilePath(@"..\evil"));
+        Assert.Contains("File extension", ex.Message);
+    }
+
+    [Fact]
+    public void GetImageFilePath_WithMultipartExtension_ReturnsControlledPath()
+    {
+        string path = _fixture.FileService.GetImageFilePath("frame.png");
+        Assert.EndsWith(".frame.png", path);
+        Assert.DoesNotContain("..", Path.GetFileName(path));
+    }
+
+    [Fact]
+    public void GeneratedPaths_AvoidExistingFileCollisions()
+    {
+        string existing = Path.Combine(_fixture.TempDir, "parallax_fixed.png");
+        File.WriteAllText(existing, "already here");
+        _createdFiles.Add(existing);
+
+        string path = InvokeGetUniquePath(_fixture.TempDir, "parallax_fixed", "png");
+
+        Assert.EndsWith("parallax_fixed_1.png", path);
+    }
+
+    [Fact]
+    public void GeneratedPaths_AvoidExistingDirectoryCollisions()
+    {
+        string existingDirectory = Path.Combine(_fixture.TempDir, "parallax_fixed.mp4");
+        Directory.CreateDirectory(existingDirectory);
+
+        string path = InvokeGetUniquePath(_fixture.TempDir, "parallax_fixed", "mp4");
+
+        Assert.EndsWith("parallax_fixed_1.mp4", path);
+    }
+
+    [Fact]
+    public void GetSaveFolder_WithRelativePath_ThrowsClearError()
+    {
+        var service = new FileService(new AppSettings { SaveFolder = "relative-folder" });
+        var ex = Assert.Throws<InvalidOperationException>(() => service.GetSaveFolder());
+        Assert.Contains("full folder path", ex.Message);
+    }
+
+    [Fact]
     public void GetTempVideoPath_IsInTempDir()
     {
         string path = _fixture.FileService.GetTempVideoPath("mp4");
@@ -119,5 +166,14 @@ public class FileServiceTests : IClassFixture<TempFileFixture>, IDisposable
         _fixture.Settings.SeparateFolders = true;
         string path = _fixture.FileService.GetVideoFilePath("mp4");
         Assert.Contains("videos", path);
+    }
+
+    private static string InvokeGetUniquePath(string folder, string baseName, string extension)
+    {
+        var method = typeof(FileService).GetMethod("GetUniquePath", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(method);
+
+        object? result = method!.Invoke(null, [folder, baseName, extension]);
+        return Assert.IsType<string>(result);
     }
 }

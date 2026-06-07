@@ -68,15 +68,27 @@ public class AppSettingsTests
     }
 
     [Fact]
-    public void HotkeyFields_AreMarkedObsolete()
+    public void HotkeyFields_DefaultToEnabledConfiguredShortcuts()
     {
         var s = new AppSettings();
+
+        Assert.True(s.HotkeyScreenshotEnabled);
+        Assert.True(s.HotkeyFullscreenEnabled);
+        Assert.True(s.HotkeyRegionVideoEnabled);
+        Assert.Equal("PrintScreen", s.HotkeyScreenshot);
+        Assert.Equal("Alt+PrintScreen", s.HotkeyFullscreen);
+        Assert.Equal("Alt+R", s.HotkeyRegionVideo);
+    }
+
+    [Fact]
+    public void HotkeyFields_AreNoLongerObsolete()
+    {
         foreach (var name in new[] { "HotkeyScreenshot", "HotkeyFullscreen", "HotkeyRegionVideo" })
         {
             var prop = typeof(AppSettings).GetProperty(name);
             Assert.NotNull(prop);
             var obsolete = prop!.GetCustomAttributes(typeof(ObsoleteAttribute), false);
-            Assert.NotEmpty(obsolete);
+            Assert.Empty(obsolete);
         }
     }
 }

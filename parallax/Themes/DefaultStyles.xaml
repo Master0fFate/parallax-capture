@@ -1,6 +1,99 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+    <!-- Product color system: dark, quiet creator-tool surfaces with one restrained accent. -->
+    <SolidColorBrush x:Key="ProductWindowBrush" Color="#FF0F1720" />
+    <SolidColorBrush x:Key="ProductChromeBrush" Color="#FF111B26" />
+    <SolidColorBrush x:Key="ProductSurfaceBrush" Color="#FF16212D" />
+    <SolidColorBrush x:Key="ProductSurfaceRaisedBrush" Color="#FF1D2A37" />
+    <SolidColorBrush x:Key="ProductSurfaceHoverBrush" Color="#FF253546" />
+    <SolidColorBrush x:Key="ProductSurfacePressedBrush" Color="#FF0C131B" />
+    <SolidColorBrush x:Key="ProductInputBrush" Color="#FF101923" />
+    <SolidColorBrush x:Key="ProductInputHoverBrush" Color="#FF162331" />
+    <SolidColorBrush x:Key="ProductBorderBrush" Color="#FF314355" />
+    <SolidColorBrush x:Key="ProductBorderStrongBrush" Color="#FF4B647A" />
+    <SolidColorBrush x:Key="ProductSeparatorBrush" Color="#FF263647" />
+    <SolidColorBrush x:Key="ProductTextBrush" Color="#FFF4F7FB" />
+    <SolidColorBrush x:Key="ProductTextMutedBrush" Color="#FFB3BFCC" />
+    <SolidColorBrush x:Key="ProductTextSubtleBrush" Color="#FF7F8D9B" />
+    <SolidColorBrush x:Key="ProductAccentBrush" Color="#FF4EA1FF" />
+    <SolidColorBrush x:Key="ProductAccentHoverBrush" Color="#FF70B6FF" />
+    <SolidColorBrush x:Key="ProductAccentPressedBrush" Color="#FF2F7FD2" />
+    <SolidColorBrush x:Key="ProductAccentTextBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="ProductFocusBrush" Color="#FF7CC0FF" />
+    <SolidColorBrush x:Key="ProductDangerBrush" Color="#FFB94A4A" />
+    <SolidColorBrush x:Key="ProductDangerHoverBrush" Color="#FFD65C5C" />
+    <SolidColorBrush x:Key="ProductDangerPressedBrush" Color="#FF8F3535" />
+    <SolidColorBrush x:Key="ProductWarningBrush" Color="#FFFFB454" />
+    <SolidColorBrush x:Key="ProductSuccessBrush" Color="#FF57D08E" />
+    <SolidColorBrush x:Key="ProductDisabledBrush" Color="#FF26313D" />
+    <SolidColorBrush x:Key="ProductDisabledTextBrush" Color="#FF687786" />
+    <SolidColorBrush x:Key="ProductOverlayBrush" Color="#CC000000" />
+
+    <Style x:Key="ProductFocusVisualStyle" TargetType="Control">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Rectangle Margin="2"
+                               Stroke="{StaticResource ProductFocusBrush}"
+                               StrokeThickness="1"
+                               StrokeDashArray="1 2"
+                               SnapsToDevicePixels="True" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ProductWindowStyle" TargetType="Window">
+        <Setter Property="Background" Value="{StaticResource ProductWindowBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+    </Style>
+
+    <Style x:Key="ProductHeaderTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style x:Key="ProductSectionHeaderTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style x:Key="ProductSectionLabelStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource ProductTextMutedBrush}" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style x:Key="ProductBodyTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style x:Key="ProductCaptionTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource ProductTextSubtleBrush}" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="11" />
+    </Style>
+
+    <Style x:Key="ProductSectionBorderStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource ProductSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ProductBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="12" />
+    </Style>
+
     <!-- ─── TOOL ICONS ─── -->
     
     <!-- Pen Icon -->
@@ -77,49 +170,21 @@
         <Polygon Points="2,4 5,4 6,2 10,2 11,4 14,4 14,5 2,5" Fill="White" />
     </Canvas>
 
-    <!-- ─── TOOL BUTTON STYLE ─── -->
-    <Style x:Key="ToolButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="Width" Value="32" />
-        <Setter Property="Height" Value="28" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="border"
-                            Background="{TemplateBinding Background}"
-                            CornerRadius="4"
-                            Padding="2">
-                        <ContentPresenter HorizontalAlignment="Center"
-                                          VerticalAlignment="Center" />
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#FF4A4A6E" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#FF007ACC" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <!-- ─── ACTION BUTTON STYLE ─── -->
-    <Style x:Key="ActionButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="#FF2A2A4E" />
-        <Setter Property="Foreground" Value="White" />
+    <Style x:Key="ProductButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource ProductSurfaceRaisedBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ProductBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="BorderBrush" Value="#555577" />
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FontSize" Value="12" />
         <Setter Property="FontFamily" Value="Segoe UI" />
-        <Setter Property="Padding" Value="10,0" />
-        <Setter Property="MinWidth" Value="60" />
-        <Setter Property="Height" Value="28" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinWidth" Value="72" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Padding" Value="14,6" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource ProductFocusVisualStyle}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -127,20 +192,123 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4"
-                            Padding="{TemplateBinding Padding}">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <ContentPresenter Content="{TemplateBinding Content}"
-                                              VerticalAlignment="Center"
-                                              Margin="0,0,4,0" />
-                        </StackPanel>
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsDefaulted" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource ProductAccentBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource ProductSurfaceHoverBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ProductBorderStrongBrush}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="{StaticResource ProductSurfacePressedBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ProductAccentBrush}" />
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource ProductFocusBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Background" Value="{StaticResource ProductDisabledBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource ProductDisabledTextBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ProductDisabledBrush}" />
+                <Setter Property="Cursor" Value="Arrow" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="ProductPrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource ProductButtonStyle}">
+        <Setter Property="Background" Value="{StaticResource ProductAccentBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ProductAccentBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ProductAccentTextBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource ProductAccentHoverBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ProductAccentHoverBrush}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="{StaticResource ProductAccentPressedBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ProductAccentPressedBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Background" Value="{StaticResource ProductDisabledBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource ProductDisabledTextBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ProductDisabledBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="ProductDangerButtonStyle" TargetType="Button" BasedOn="{StaticResource ProductButtonStyle}">
+        <Setter Property="Background" Value="{StaticResource ProductDangerBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ProductDangerBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ProductAccentTextBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource ProductDangerHoverBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ProductDangerHoverBrush}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="{StaticResource ProductDangerPressedBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ProductDangerPressedBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Background" Value="{StaticResource ProductDisabledBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource ProductDisabledTextBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ProductDisabledBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="ProductTextBoxStyle" TargetType="TextBox">
+        <Setter Property="Background" Value="{StaticResource ProductInputBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ProductBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CaretBrush" Value="{StaticResource ProductTextBrush}" />
+        <Setter Property="SelectionBrush" Value="{StaticResource ProductAccentBrush}" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource ProductFocusVisualStyle}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6"
+                            SnapsToDevicePixels="True">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      Margin="{TemplateBinding Padding}"
+                                      SnapsToDevicePixels="True" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#FF3A3A6E" />
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource ProductInputHoverBrush}" />
+                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource ProductBorderStrongBrush}" />
                         </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#FF007ACC" />
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource ProductFocusBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource ProductDisabledBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource ProductDisabledTextBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -148,13 +316,320 @@
         </Setter>
     </Style>
 
-    <!-- ─── SLIDER STYLE ─── -->
+    <Style x:Key="ProductComboBoxItemStyle" TargetType="ComboBoxItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="itemBorder"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="4"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="itemBorder" Property="Background" Value="{StaticResource ProductSurfaceHoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="itemBorder" Property="Background" Value="{StaticResource ProductAccentPressedBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource ProductAccentTextBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{StaticResource ProductDisabledTextBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ProductComboBoxStyle" TargetType="ComboBox">
+        <Setter Property="Background" Value="{StaticResource ProductInputBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ProductBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Padding" Value="10,6,34,6" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource ProductFocusVisualStyle}" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource ProductComboBoxItemStyle}" />
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid SnapsToDevicePixels="True">
+                        <Border x:Name="rootBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <Grid>
+                                <ToggleButton x:Name="toggleButton"
+                                              Background="Transparent"
+                                              BorderThickness="0"
+                                              ClickMode="Press"
+                                              Focusable="False"
+                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="Transparent" />
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <ContentPresenter x:Name="contentSite"
+                                                  Content="{TemplateBinding SelectionBoxItem}"
+                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                  ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                  IsHitTestVisible="False"
+                                                  Margin="{TemplateBinding Padding}"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Center" />
+                                <TextBox x:Name="PART_EditableTextBox"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         Foreground="{TemplateBinding Foreground}"
+                                         IsReadOnly="{TemplateBinding IsReadOnly}"
+                                         Margin="{TemplateBinding Padding}"
+                                         Style="{x:Null}"
+                                         Visibility="Hidden" />
+                                <Path x:Name="arrow"
+                                      Data="M 0 0 L 4 4 L 8 0 Z"
+                                      Fill="{StaticResource ProductTextMutedBrush}"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,12,0" />
+                            </Grid>
+                        </Border>
+                        <Popup x:Name="popup"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               Placement="Bottom"
+                               PopupAnimation="Fade">
+                            <Grid MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                  MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                <Border Background="{StaticResource ProductSurfaceBrush}"
+                                        BorderBrush="{StaticResource ProductBorderStrongBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Padding="4">
+                                    <ScrollViewer SnapsToDevicePixels="True">
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    </ScrollViewer>
+                                </Border>
+                            </Grid>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="rootBorder" Property="Background" Value="{StaticResource ProductInputHoverBrush}" />
+                            <Setter TargetName="rootBorder" Property="BorderBrush" Value="{StaticResource ProductBorderStrongBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="rootBorder" Property="BorderBrush" Value="{StaticResource ProductFocusBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsDropDownOpen" Value="True">
+                            <Setter TargetName="rootBorder" Property="BorderBrush" Value="{StaticResource ProductFocusBrush}" />
+                            <Setter TargetName="arrow" Property="Fill" Value="{StaticResource ProductAccentBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="contentSite" Property="Visibility" Value="Hidden" />
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="rootBorder" Property="Background" Value="{StaticResource ProductDisabledBrush}" />
+                            <Setter TargetName="rootBorder" Property="BorderBrush" Value="{StaticResource ProductDisabledBrush}" />
+                            <Setter TargetName="arrow" Property="Fill" Value="{StaticResource ProductDisabledTextBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource ProductDisabledTextBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ProductCheckBoxStyle" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource ProductFocusVisualStyle}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Grid MinHeight="{TemplateBinding MinHeight}" SnapsToDevicePixels="True">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border x:Name="box"
+                                Width="18"
+                                Height="18"
+                                Background="{StaticResource ProductInputBrush}"
+                                BorderBrush="{StaticResource ProductBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                VerticalAlignment="Center">
+                            <Path x:Name="check"
+                                  Data="M 4 9 L 7 12 L 14 5"
+                                  Stroke="{StaticResource ProductAccentTextBrush}"
+                                  StrokeThickness="2"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round"
+                                  Visibility="Collapsed" />
+                        </Border>
+                        <ContentPresenter Grid.Column="1"
+                                          Margin="10,0,0,0"
+                                          HorizontalAlignment="Left"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="box" Property="BorderBrush" Value="{StaticResource ProductBorderStrongBrush}" />
+                            <Setter TargetName="box" Property="Background" Value="{StaticResource ProductInputHoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="box" Property="BorderBrush" Value="{StaticResource ProductFocusBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="box" Property="Background" Value="{StaticResource ProductAccentBrush}" />
+                            <Setter TargetName="box" Property="BorderBrush" Value="{StaticResource ProductAccentBrush}" />
+                            <Setter TargetName="check" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{StaticResource ProductDisabledTextBrush}" />
+                            <Setter TargetName="box" Property="Background" Value="{StaticResource ProductDisabledBrush}" />
+                            <Setter TargetName="box" Property="BorderBrush" Value="{StaticResource ProductDisabledBrush}" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ProductTabItemStyle" TargetType="TabItem">
+        <Setter Property="Background" Value="{StaticResource ProductChromeBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ProductTextMutedBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="Padding" Value="14,8" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource ProductFocusVisualStyle}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Border x:Name="tabBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6,6,0,0"
+                            Margin="0,0,4,0"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter ContentSource="Header"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="tabBorder" Property="Background" Value="{StaticResource ProductSurfaceRaisedBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="tabBorder" Property="Background" Value="{StaticResource ProductSurfaceBrush}" />
+                            <Setter TargetName="tabBorder" Property="BorderBrush" Value="{StaticResource ProductBorderBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
+                            <Setter Property="Panel.ZIndex" Value="1" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{StaticResource ProductDisabledTextBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ProductTabControlStyle" TargetType="TabControl">
+        <Setter Property="Background" Value="{StaticResource ProductSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ProductBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="12" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource ProductTabItemStyle}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabControl">
+                    <Grid KeyboardNavigation.TabNavigation="Local" SnapsToDevicePixels="True">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TabPanel x:Name="headerPanel"
+                                  Grid.Row="0"
+                                  IsItemsHost="True"
+                                  KeyboardNavigation.TabIndex="1"
+                                  Panel.ZIndex="1" />
+                        <Border Grid.Row="1"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="0,0,8,8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter x:Name="PART_SelectedContentHost"
+                                              ContentSource="SelectedContent"
+                                              Margin="0" />
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Existing keys retained for current windows. -->
+    <Style x:Key="ToolButtonStyle" TargetType="Button" BasedOn="{StaticResource ProductButtonStyle}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="MinWidth" Value="32" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Padding" Value="4" />
+    </Style>
+
+    <Style x:Key="ActionButtonStyle" TargetType="Button" BasedOn="{StaticResource ProductButtonStyle}">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="MinWidth" Value="72" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="Padding" Value="12,6" />
+    </Style>
+
     <Style x:Key="CustomSliderStyle" TargetType="Slider">
         <Setter Property="Minimum" Value="1" />
         <Setter Property="Maximum" Value="20" />
         <Setter Property="Value" Value="2" />
-        <Setter Property="Width" Value="80" />
+        <Setter Property="Width" Value="96" />
+        <Setter Property="Height" Value="32" />
         <Setter Property="Margin" Value="0,2" />
+        <Setter Property="Foreground" Value="{StaticResource ProductAccentBrush}" />
+        <Setter Property="Background" Value="{StaticResource ProductInputBrush}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource ProductFocusVisualStyle}" />
     </Style>
 
 </ResourceDictionary>

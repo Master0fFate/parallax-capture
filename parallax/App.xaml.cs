@@ -31,7 +31,7 @@ namespace parallax
                 var ex = args.ExceptionObject as Exception;
                 System.Windows.MessageBox.Show(
                     $"Unhandled exception: {ex?.Message}\n\n{ex?.StackTrace}",
-                    "parallax - Fatal Error",
+                    "Parallax Capture - Fatal error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             };
@@ -40,7 +40,7 @@ namespace parallax
             {
                 System.Windows.MessageBox.Show(
                     $"UI thread exception: {args.Exception.Message}\n\n{args.Exception.StackTrace}",
-                    "parallax - Error",
+                    "Parallax Capture - Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
                 args.Handled = true;
@@ -65,6 +65,7 @@ namespace parallax
                 _settingsService,
                 _settings
             );
+            _trayManager.SettingsChanged += OnSettingsChanged;
             _trayManager.Initialize();
 
             // 4. Create hidden background window for hotkey HWND
@@ -82,53 +83,101 @@ namespace parallax
             // 5. Register global hotkeys
             _hotkeyManager = new HotkeyManager();
             _hotkeyManager.Initialize(_backgroundWindow);
-
-            bool printScreenOk = _hotkeyManager.RegisterPrintScreen(() =>
-                _trayManager.TriggerRegionScreenshot()
-            );
-
-            bool altPrintScreenOk = _hotkeyManager.RegisterAltPrintScreen(() =>
-                _trayManager.TriggerFullScreenshot()
-            );
-
-            bool altROk = _hotkeyManager.RegisterAltR(() =>
-            {
-                if (_recorderService.IsRecording)
-                    _trayManager.StopRecording();
-                else
-                    _trayManager.TriggerRegionVideo();
-            });
-
-            // KAM #10 — check hotkey registration and notify user if any failed
-            if (!printScreenOk)
-                System.Windows.MessageBox.Show(
-                    "Hotkey Print Screen could not be registered. It may be in use by another application.\n\n" +
-                    "Region screenshot via Print Screen will not work until you close the conflicting application.",
-                    "parallax - Hotkey Warning",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-
-            if (!altPrintScreenOk)
-                System.Windows.MessageBox.Show(
-                    "Hotkey Alt+Print Screen could not be registered. It may be in use by another application.\n\n" +
-                    "Full screenshot via Alt+Print Screen will not work.",
-                    "parallax - Hotkey Warning",
-                    System.Windows.MessageBoxButton.OK,
-                    System.Windows.MessageBoxImage.Warning);
-
-            if (!altROk)
-                System.Windows.MessageBox.Show(
-                    "Hotkey Alt+R could not be registered. It may be in use by another application.\n\n" +
-                    "Region video recording via Alt+R will not work.",
-                    "parallax - Hotkey Warning",
-                    System.Windows.MessageBoxButton.OK,
-                    System.Windows.MessageBoxImage.Warning);
+            var warnings = RegisterConfiguredHotkeys(showWarnings: true);
 
             // 6. Show welcome balloon — note which hotkeys are actually active
-            string balloonMsg = printScreenOk
-                ? "Press Print Screen to capture a region."
-                : "Some hotkeys could not be registered — check the warning message.";
-            _trayManager.ShowBalloon("parallax is running", balloonMsg);
+            string balloonMsg = warnings.Count == 0
+                ? BuildHotkeyStatusMessage()
+                : "Some enabled shortcuts could not be registered. Open Settings > Hotkeys to change them.";
+            _trayManager.ShowBalloon("Parallax Capture is running", balloonMsg);
+        }
+
+        private void OnSettingsChanged(AppSettings settings)
+        {
+            _settings = settings;
+            RegisterConfiguredHotkeys(showWarnings: true);
+        }
+
+        private List<string> RegisterConfiguredHotkeys(bool showWarnings)
+        {
+            var warnings = new List<string>();
+            if (_hotkeyManager == null || _trayManager == null || _settings == null)
+                return warnings;
+
+            _hotkeyManager.UnregisterAll();
+
+            RegisterHotkey(
+                "Capture region",
+                HotkeyManager.ID_REGION_SCREENSHOT,
+                _settings.HotkeyScreenshotEnabled,
+                _settings.HotkeyScreenshot,
+                () => _trayManager.TriggerRegionScreenshot(),
+                warnings);
+
+            RegisterHotkey(
+                "Capture full screen",
+                HotkeyManager.ID_FULLSCREEN,
+                _settings.HotkeyFullscreenEnabled,
+                _settings.HotkeyFullscreen,
+                () => _trayManager.TriggerFullScreenshot(),
+                warnings);
+
+            RegisterHotkey(
+                "Start or stop recording",
+                HotkeyManager.ID_REGION_VIDEO,
+                _settings.HotkeyRegionVideoEnabled,
+                _settings.HotkeyRegionVideo,
+                () =>
+                {
+                    if (_recorderService?.IsRecording == true)
+                        _trayManager.StopRecording();
+                    else
+                        _trayManager.TriggerRegionVideo();
+                },
+                warnings);
+
+            if (showWarnings && warnings.Count > 0)
+            {
+                System.Windows.MessageBox.Show(
+                    string.Join("\n\n", warnings),
+                    "Parallax Capture - Shortcut warning",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+
+            return warnings;
+        }
+
+        private void RegisterHotkey(
+            string actionName,
+            int id,
+            bool enabled,
+            string? gesture,
+            Action callback,
+            List<string> warnings)
+        {
+            if (_hotkeyManager == null)
+                return;
+
+            if (!_hotkeyManager.RegisterConfigured(id, enabled, gesture, callback, out string message))
+                warnings.Add($"{actionName}: {message}");
+        }
+
+        private string BuildHotkeyStatusMessage()
+        {
+            if (_settings == null)
+                return "Parallax Capture shortcuts are ready.";
+
+            return "Shortcuts: " +
+                $"capture region {FormatHotkey(_settings.HotkeyScreenshotEnabled, _settings.HotkeyScreenshot)}, " +
+                $"capture full screen {FormatHotkey(_settings.HotkeyFullscreenEnabled, _settings.HotkeyFullscreen)}, " +
+                $"start or stop recording {FormatHotkey(_settings.HotkeyRegionVideoEnabled, _settings.HotkeyRegionVideo)}.";
+        }
+
+        private static string FormatHotkey(bool enabled, string? gesture)
+        {
+            string display = HotkeyManager.FormatForDisplay(enabled, gesture);
+            return display == "disabled" ? "disabled" : display;
         }
 
         protected override void OnExit(ExitEventArgs e)

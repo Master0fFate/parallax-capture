@@ -81,33 +81,32 @@ public class Kam008_DeadCodeCleanupTests
     }
 
     [Fact]
-    public void AppDotXaml_ChecksHotkeyRegistration()
+    public void AppDotXaml_ChecksConfiguredHotkeyRegistration()
     {
         var sourcePath = FindFile("App.xaml.cs")!;
         var source = File.ReadAllText(sourcePath);
 
-        // KAM #10: Must check return values
+        // KAM #10 evolved: registration is now settings-driven, but App.xaml.cs
+        // must still collect failures and warn the user for enabled shortcuts.
         Assert.True(
-            source.Contains("bool printScreenOk"),
-            "KAM #10 FAIL: App.xaml.cs must capture RegisterPrintScreen return value"
+            source.Contains("RegisterConfiguredHotkeys"),
+            "KAM #10 FAIL: App.xaml.cs must use configured hotkey registration"
         );
         Assert.True(
-            source.Contains("bool altPrintScreenOk"),
-            "KAM #10 FAIL: App.xaml.cs must capture RegisterAltPrintScreen return value"
+            source.Contains("RegisterConfigured") && source.Contains("warnings"),
+            "KAM #10 FAIL: App.xaml.cs must collect configured hotkey registration warnings"
         );
         Assert.True(
-            source.Contains("bool altROk"),
-            "KAM #10 FAIL: App.xaml.cs must capture RegisterAltR return value"
+            source.Contains("HotkeyScreenshotEnabled") &&
+            source.Contains("HotkeyFullscreenEnabled") &&
+            source.Contains("HotkeyRegionVideoEnabled"),
+            "KAM #10 FAIL: App.xaml.cs must respect per-action enabled flags"
         );
 
         // Must show MessageBox on failure
         Assert.True(
-            source.Contains("if (!printScreenOk)"),
-            "KAM #10 FAIL: App.xaml.cs must check printScreenOk"
-        );
-        Assert.True(
-            source.Contains("if (!altROk)"),
-            "KAM #10 FAIL: App.xaml.cs must check altROk"
+            source.Contains("warnings.Count > 0") && source.Contains("MessageBox.Show"),
+            "KAM #10 FAIL: App.xaml.cs must warn when configured hotkey registration fails"
         );
     }
 
@@ -117,11 +116,12 @@ public class Kam008_DeadCodeCleanupTests
         var sourcePath = FindFile("App.xaml.cs")!;
         var source = File.ReadAllText(sourcePath);
 
-        // Balloon message should indicate if hotkeys are unavailable
+        // Balloon message should indicate if configured hotkeys are unavailable.
         Assert.True(
-            source.Contains("printScreenOk") &&
+            source.Contains("warnings.Count == 0") &&
             source.Contains("?") &&
-            source.Contains(":"),
+            source.Contains(":") &&
+            source.Contains("BuildHotkeyStatusMessage"),
             "KAM #10 FAIL: App.xaml.cs should conditionally set balloon message based on hotkey status"
         );
     }

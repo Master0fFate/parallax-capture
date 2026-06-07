@@ -6,116 +6,148 @@
         Background="Transparent"
         Topmost="True"
         ShowInTaskbar="True"
-        ResizeMode="NoResize"
-        Width="880" Height="660"
+        ResizeMode="CanResizeWithGrip"
+        Width="1040" Height="720"
+        MinWidth="760" MinHeight="560"
         WindowStartupLocation="CenterScreen"
-        Title="parallax - Video Editor"
-        KeyDown="Window_KeyDown">
+        Title="Parallax Video Editor"
+        KeyDown="Window_KeyDown"
+        Style="{StaticResource ProductWindowStyle}">
 
     <Window.Resources>
-        <Style x:Key="EditorButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#FF2A2A4E" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="FontFamily" Value="Segoe UI" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Padding" Value="10,4" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="4"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#FF3A3A7E" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#FF007ACC" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+        <Style x:Key="EditorButtonStyle" TargetType="Button" BasedOn="{StaticResource ProductButtonStyle}">
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="12,6" />
         </Style>
 
-        <Style x:Key="TrimTextBoxStyle" TargetType="TextBox">
-            <Setter Property="Width" Value="80" />
-            <Setter Property="Height" Value="26" />
-            <Setter Property="Background" Value="#1A1A2E" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="#555" />
-            <Setter Property="BorderThickness" Value="1" />
+        <Style x:Key="EditorPrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource ProductPrimaryButtonStyle}">
+            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="16,8" />
+        </Style>
+
+        <Style x:Key="EditorWarningButtonStyle" TargetType="Button" BasedOn="{StaticResource ProductButtonStyle}">
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Background" Value="#FF3A2A12" />
+            <Setter Property="BorderBrush" Value="{StaticResource ProductWarningBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style x:Key="EditorChromeButtonStyle" TargetType="Button" BasedOn="{StaticResource ProductButtonStyle}">
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="MinWidth" Value="36" />
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+
+        <Style x:Key="TrimTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource ProductTextBoxStyle}">
+            <Setter Property="Width" Value="86" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Height" Value="36" />
             <Setter Property="FontFamily" Value="Consolas" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="TextAlignment" Value="Center" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Padding" Value="8,6" />
+        </Style>
+
+        <Style x:Key="EditorFieldGroupStyle" TargetType="Border" BasedOn="{StaticResource ProductSectionBorderStyle}">
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="Margin" Value="0,0,8,8" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="EditorMonoTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource ProductTextMutedBrush}" />
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
     </Window.Resources>
 
-    <Border CornerRadius="6"
-            Background="#FF1E1E2E"
+    <Border CornerRadius="10"
+            Background="{StaticResource ProductWindowBrush}"
+            BorderBrush="{StaticResource ProductBorderStrongBrush}"
+            BorderThickness="1"
             Margin="8">
         <Border.Effect>
-            <DropShadowEffect Color="Black" Opacity="0.4"
-                              BlurRadius="16" ShadowDepth="4" />
+            <DropShadowEffect Color="Black" Opacity="0.45"
+                              BlurRadius="18" ShadowDepth="4" />
         </Border.Effect>
 
-        <Grid Margin="0">
+        <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />   <!-- Title bar -->
-                <RowDefinition Height="*"    />   <!-- Video area -->
-                <RowDefinition Height="Auto" />   <!-- Timeline + playback controls -->
-                <RowDefinition Height="Auto" />   <!-- Trim controls -->
-                <RowDefinition Height="Auto" />   <!-- Action bar -->
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- ════ TITLE BAR ════ -->
             <Border Grid.Row="0"
-                    Background="#FF151525"
-                    CornerRadius="6,6,0,0"
+                    Background="{StaticResource ProductChromeBrush}"
+                    CornerRadius="10,10,0,0"
                     MouseDown="TitleBar_MouseDown"
-                    Padding="14,10">
+                    Padding="16,10">
                 <Grid>
-                    <TextBlock Text="parallax -- Video Editor"
-                               Foreground="#DDD"
-                               FontSize="14"
-                               FontWeight="SemiBold"
-                               FontFamily="Segoe UI"
-                               VerticalAlignment="Center" />
-                    <StackPanel Orientation="Horizontal"
-                                HorizontalAlignment="Right">
-                        <TextBlock x:Name="TxtFileName"
-                                   Text=""
-                                   Foreground="#888"
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="Parallax Video Editor"
+                                   Style="{StaticResource ProductSectionHeaderTextStyle}"
+                                   FontSize="14"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="Space: play/pause   M: mute   Esc: close"
+                                   Foreground="{StaticResource ProductTextSubtleBrush}"
                                    FontSize="11"
                                    FontFamily="Segoe UI"
-                                   VerticalAlignment="Center"
-                                   Margin="0,0,14,0" />
-                        <Button x:Name="BtnClose"
-                                Content="X"
-                                Width="26" Height="22"
-                                Background="Transparent"
-                                Foreground="White"
-                                BorderThickness="0"
-                                FontSize="11"
-                                Click="BtnClose_Click"
-                                Cursor="Hand" />
+                                   Margin="14,1,0,0"
+                                   VerticalAlignment="Center" />
                     </StackPanel>
+
+                    <TextBlock x:Name="TxtFileName"
+                               Grid.Column="1"
+                               Text=""
+                               Foreground="{StaticResource ProductTextSubtleBrush}"
+                               FontSize="12"
+                               FontFamily="Segoe UI"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Right"
+                               TextTrimming="CharacterEllipsis"
+                               Margin="16,0,12,0" />
+
+                    <Button x:Name="BtnClose"
+                            Grid.Column="2"
+                            Content="X"
+                            ToolTip="Close editor (Esc)"
+                            Click="BtnClose_Click"
+                            Style="{StaticResource EditorChromeButtonStyle}" />
                 </Grid>
             </Border>
 
-            <!-- ════ VIDEO PLAYBACK ════ -->
             <Border Grid.Row="1"
-                    Background="#0A0A1A"
-                    BorderThickness="0">
+                    Background="{StaticResource ProductInputBrush}"
+                    BorderBrush="{StaticResource ProductSeparatorBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Margin="12,12,12,0"
+                    ClipToBounds="True">
                 <Grid>
                     <MediaElement x:Name="VideoPlayer"
                                   LoadedBehavior="Manual"
@@ -128,293 +160,406 @@
                                   HorizontalAlignment="Center"
                                   VerticalAlignment="Center" />
 
-                    <!-- Center play overlay (shown when paused) -->
                     <Border x:Name="PlayOverlay"
-                            Background="#88000000"
-                            CornerRadius="40"
-                            Width="72" Height="72"
+                            Background="{StaticResource ProductOverlayBrush}"
+                            BorderBrush="{StaticResource ProductBorderStrongBrush}"
+                            BorderThickness="1"
+                            CornerRadius="42"
+                            Width="84" Height="84"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Cursor="Hand"
                             MouseDown="PlayOverlay_MouseDown">
                         <TextBlock Text="▶"
-                                   Foreground="White"
+                                   Foreground="{StaticResource ProductTextBrush}"
                                    FontSize="32"
                                    HorizontalAlignment="Center"
-                                   VerticalAlignment="Center" />
+                                   VerticalAlignment="Center"
+                                   Margin="4,0,0,2" />
                     </Border>
                 </Grid>
             </Border>
 
-            <!-- ════ TIMELINE + PLAYBACK CONTROLS ════ -->
             <Border Grid.Row="2"
-                    Background="#FF151525"
-                    Padding="14,8">
+                    Background="{StaticResource ProductSurfaceBrush}"
+                    BorderBrush="{StaticResource ProductSeparatorBrush}"
+                    BorderThickness="0,1,0,1"
+                    Padding="14,10"
+                    Margin="0,12,0,0">
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                    <!-- Play/Pause + Restart -->
-                    <StackPanel Grid.Column="0"
-                                Orientation="Horizontal">
-                        <Button x:Name="BtnPlayPause"
-                                Content="▶  Play"
-                                ToolTip="Play/Pause (Space)"
-                                Click="BtnPlayPause_Click"
-                                Style="{StaticResource EditorButtonStyle}"
-                                Width="90" />
-                        <Button x:Name="BtnRestart"
-                                Content="⏮"
-                                ToolTip="Restart"
-                                Click="BtnRestart_Click"
-                                Style="{StaticResource EditorButtonStyle}"
-                                Width="40" Margin="4,0,0,0" />
-                        <Separator Width="1" Background="#444"
-                                   Margin="8,0" />
-                        <!-- Mute toggle (moved here to avoid trim row clutter) -->
-                        <Button x:Name="BtnMute"
-                                Content="🔊  Mute"
-                                ToolTip="Toggle mute (M)"
-                                Click="BtnMute_Click"
-                                Style="{StaticResource EditorButtonStyle}"
-                                Width="90" />
-                    </StackPanel>
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                    <!-- Timeline slider -->
-                    <Slider x:Name="TimelineSlider"
-                            Grid.Column="1"
-                            Minimum="0" Maximum="1" Value="0"
-                            Margin="14,0"
-                            VerticalAlignment="Center"
-                            ValueChanged="TimelineSlider_ValueChanged"
-                            PreviewMouseDown="TimelineSlider_PreviewMouseDown"
-                            PreviewMouseUp="TimelineSlider_PreviewMouseUp"
-                            Cursor="Hand" />
-
-                    <!-- Time labels -->
-                    <StackPanel Grid.Column="2"
-                                Orientation="Horizontal"
-                                VerticalAlignment="Center"
-                                Margin="0,0,10,0">
-                        <TextBlock x:Name="TxtCurrentTime"
-                                   Text="00:00"
-                                   Foreground="#AAA"
-                                   FontSize="12"
-                                   FontFamily="Consolas"
+                        <TextBlock Grid.Column="0"
+                                   Text="Playback"
+                                   Style="{StaticResource ProductSectionLabelStyle}"
                                    VerticalAlignment="Center" />
-                        <TextBlock Text=" / "
-                                   Foreground="#666"
-                                   FontSize="12"
-                                   FontFamily="Consolas"
-                                   VerticalAlignment="Center" />
-                        <TextBlock x:Name="TxtTotalTime"
-                                   Text="00:00"
-                                   Foreground="#AAA"
-                                   FontSize="12"
-                                   FontFamily="Consolas"
-                                   VerticalAlignment="Center" />
-                    </StackPanel>
 
-                    <!-- FFmpeg status -->
-                    <TextBlock x:Name="TxtFFmpegStatus"
-                               Grid.Column="3"
-                               Text=""
-                               Foreground="#FFAA33"
-                               FontSize="11"
-                               FontFamily="Segoe UI"
-                               VerticalAlignment="Center" />
-                </Grid>
-            </Border>
-
-            <!-- ════ TRIM CONTROLS (spacious two-section layout) ════ -->
-            <Border Grid.Row="3"
-                    Background="#FF1A1A2E"
-                    Padding="14,8">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <!-- ── TRIM FROM section ── -->
-                    <Border Grid.Column="0"
-                            BorderBrush="#444"
-                            BorderThickness="1"
-                            CornerRadius="4"
-                            Padding="8,4"
-                            Margin="0,0,6,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="From"
-                                       Foreground="#CCC"
-                                       FontSize="11"
-                                       FontWeight="SemiBold"
-                                       FontFamily="Segoe UI"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,6,0" />
-                            <TextBox x:Name="TxtTrimStart"
-                                     Text="00:00"
-                                     VerticalAlignment="Center"
-                                     Style="{StaticResource TrimTextBoxStyle}"
-                                     Width="70" />
-                            <Button Content="◀ Mark"
-                                    ToolTip="Set start to current position"
-                                    Click="BtnSetTrimIn_Click"
-                                    Style="{StaticResource EditorButtonStyle}"
-                                    Width="70" Margin="4,0,0,0"
-                                    FontSize="11" />
-                        </StackPanel>
-                    </Border>
-
-                    <!-- ── TRIM TO section ── -->
-                    <Border Grid.Column="1"
-                            BorderBrush="#444"
-                            BorderThickness="1"
-                            CornerRadius="4"
-                            Padding="8,4"
-                            Margin="0,0,6,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="To"
-                                       Foreground="#CCC"
-                                       FontSize="11"
-                                       FontWeight="SemiBold"
-                                       FontFamily="Segoe UI"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,6,0" />
-                            <TextBox x:Name="TxtTrimOut"
-                                     Text="00:00"
-                                     VerticalAlignment="Center"
-                                     Style="{StaticResource TrimTextBoxStyle}"
-                                     Width="70" />
-                            <Button Content="▶ Mark"
-                                    ToolTip="Set end to current position"
-                                    Click="BtnSetTrimOut_Click"
-                                    Style="{StaticResource EditorButtonStyle}"
-                                    Width="70" Margin="4,0,0,0"
-                                    FontSize="11" />
-                        </StackPanel>
-                    </Border>
-
-                    <!-- ── QUICK TRIM BUTTONS ── -->
-                    <StackPanel Grid.Column="2"
-                                Orientation="Horizontal"
-                                Margin="0,0,10,0">
-                        <Button Content="⏪ 5s"
-                                ToolTip="Move trim start back 5 seconds"
-                                Style="{StaticResource EditorButtonStyle}"
-                                Width="55" FontSize="11"
-                                Click="BtnTrimMinus5_Click" Margin="0,0,2,0" />
-                        <Button Content="5s ⏩"
-                                ToolTip="Move trim end forward 5 seconds"
-                                Style="{StaticResource EditorButtonStyle}"
-                                Width="55" FontSize="11"
-                                Click="BtnTrimPlus5_Click" Margin="0,0,2,0" />
-                    </StackPanel>
-
-                    <!-- ── DURATION DISPLAY ── -->
-                    <Border Grid.Column="3"
-                            BorderBrush="#333"
-                            BorderThickness="1"
-                            CornerRadius="4"
-                            Padding="8,4"
-                            Margin="0,0,6,0"
-                            Background="#151525"
-                            VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Duration:"
-                                       Foreground="#888"
-                                       FontSize="11"
-                                       FontFamily="Segoe UI"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,6,0" />
-                            <TextBlock x:Name="TxtTrimDuration"
+                        <StackPanel Grid.Column="2"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="12,0">
+                            <TextBlock x:Name="TxtCurrentTime"
                                        Text="00:00"
-                                       Foreground="#4F4"
-                                       FontSize="12"
-                                       FontWeight="Bold"
+                                       Style="{StaticResource EditorMonoTextStyle}" />
+                            <TextBlock Text=" / "
+                                       Foreground="{StaticResource ProductTextSubtleBrush}"
+                                       FontSize="13"
                                        FontFamily="Consolas"
                                        VerticalAlignment="Center" />
+                            <TextBlock x:Name="TxtTotalTime"
+                                       Text="00:00"
+                                       Style="{StaticResource EditorMonoTextStyle}" />
                         </StackPanel>
-                    </Border>
 
-                    <!-- DOWNLOAD FFMPEG button - shown only when needed -->
-                    <Button x:Name="BtnDownloadFFmpeg"
-                            Grid.Column="5"
-                            Content="Download FFmpeg"
-                            ToolTip="Download FFmpeg for video trimming"
-                            Click="BtnDownloadFFmpeg_Click"
-                            Style="{StaticResource EditorButtonStyle}"
-                            Visibility="Collapsed"
-                            Width="130"
-                            Background="#FF553300"
-                            HorizontalAlignment="Right" />
+                        <TextBlock x:Name="TxtFFmpegStatus"
+                                   Grid.Column="3"
+                                   Text=""
+                                   Foreground="{StaticResource ProductWarningBrush}"
+                                   FontSize="12"
+                                   FontFamily="Segoe UI"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" />
+                    </Grid>
+
+                    <Grid Grid.Row="1" Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <Button x:Name="BtnPlayPause"
+                                    Content="▶  Play"
+                                    ToolTip="Play or pause video (Space)"
+                                    Click="BtnPlayPause_Click"
+                                    Style="{StaticResource EditorPrimaryButtonStyle}"
+                                    Width="112" />
+                            <Button x:Name="BtnRestart"
+                                    Content="Restart"
+                                    ToolTip="Restart video from the beginning"
+                                    Click="BtnRestart_Click"
+                                    Style="{StaticResource EditorButtonStyle}"
+                                    Width="92"
+                                    Margin="8,0,0,0" />
+                            <Button x:Name="BtnMute"
+                                    Content="🔊  Mute"
+                                    ToolTip="Toggle audio (M)"
+                                    Click="BtnMute_Click"
+                                    Style="{StaticResource EditorButtonStyle}"
+                                    Width="104"
+                                    Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <Slider x:Name="TimelineSlider"
+                                Grid.Column="1"
+                                Minimum="0" Maximum="1" Value="0"
+                                Height="36"
+                                Margin="16,0,0,0"
+                                VerticalAlignment="Center"
+                                ValueChanged="TimelineSlider_ValueChanged"
+                                PreviewMouseDown="TimelineSlider_PreviewMouseDown"
+                                PreviewMouseUp="TimelineSlider_PreviewMouseUp"
+                                Cursor="Hand"
+                                Foreground="{StaticResource ProductAccentBrush}"
+                                Background="{StaticResource ProductInputBrush}" />
+                    </Grid>
                 </Grid>
             </Border>
 
-            <!-- ════ ACTION BAR ════ -->
-            <Border Grid.Row="4"
-                    Background="#FF151525"
-                    Padding="14,10"
-                    CornerRadius="0,0,6,6">
+            <Border Grid.Row="3"
+                    Background="{StaticResource ProductSurfaceRaisedBrush}"
+                    BorderBrush="{StaticResource ProductSeparatorBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="14,12">
                 <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="Trim Selection"
+                                       Style="{StaticResource ProductSectionLabelStyle}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Set in/out points or type exact times."
+                                       Foreground="{StaticResource ProductTextSubtleBrush}"
+                                       FontSize="11"
+                                       FontFamily="Segoe UI"
+                                       VerticalAlignment="Center"
+                                       Margin="10,0,0,0" />
+                        </StackPanel>
+
+                        <Button x:Name="BtnDownloadFFmpeg"
+                                Grid.Column="2"
+                                Content="Download FFmpeg"
+                                ToolTip="Download FFmpeg for video trimming"
+                                Click="BtnDownloadFFmpeg_Click"
+                                Style="{StaticResource EditorWarningButtonStyle}"
+                                Visibility="Collapsed"
+                                Width="150"
+                                Margin="12,0,12,0" />
+
+                        <Border Grid.Column="3"
+                                BorderBrush="{StaticResource ProductBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="10,5"
+                                Background="{StaticResource ProductInputBrush}"
+                                VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Duration"
+                                           Foreground="{StaticResource ProductTextSubtleBrush}"
+                                           FontSize="11"
+                                           FontFamily="Segoe UI"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,8,0" />
+                                <TextBlock x:Name="TxtTrimDuration"
+                                           Text="00:00"
+                                           Foreground="{StaticResource ProductSuccessBrush}"
+                                           FontSize="13"
+                                           FontWeight="Bold"
+                                           FontFamily="Consolas"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <WrapPanel Grid.Row="1"
+                               Margin="0,10,0,0">
+                        <Border Style="{StaticResource EditorFieldGroupStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Start"
+                                           Style="{StaticResource ProductSectionLabelStyle}"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,8,0" />
+                                <TextBox x:Name="TxtTrimStart"
+                                         Text="00:00"
+                                         Style="{StaticResource TrimTextBoxStyle}" />
+                                 <Button Content="Mark In"
+                                         ToolTip="Set trim start to current position"
+                                         Click="BtnSetTrimIn_Click"
+                                         Style="{StaticResource EditorButtonStyle}"
+                                         Width="86"
+                                         Margin="8,0,0,0" />
+                                 <Button Content="Jump In"
+                                         ToolTip="Jump playback to trim start"
+                                         Click="BtnJumpTrimIn_Click"
+                                         Style="{StaticResource EditorButtonStyle}"
+                                         Width="82"
+                                         Margin="8,0,0,0" />
+                             </StackPanel>
+                         </Border>
+
+                         <Border Style="{StaticResource EditorFieldGroupStyle}">
+                             <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="End"
+                                           Style="{StaticResource ProductSectionLabelStyle}"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,8,0" />
+                                <TextBox x:Name="TxtTrimOut"
+                                         Text="00:00"
+                                         Style="{StaticResource TrimTextBoxStyle}" />
+                                 <Button Content="Mark Out"
+                                         ToolTip="Set trim end to current position"
+                                         Click="BtnSetTrimOut_Click"
+                                         Style="{StaticResource EditorButtonStyle}"
+                                         Width="92"
+                                         Margin="8,0,0,0" />
+                                 <Button Content="Jump Out"
+                                         ToolTip="Jump playback to trim end"
+                                         Click="BtnJumpTrimOut_Click"
+                                         Style="{StaticResource EditorButtonStyle}"
+                                         Width="88"
+                                         Margin="8,0,0,0" />
+                             </StackPanel>
+                         </Border>
+
+                         <Border Style="{StaticResource EditorFieldGroupStyle}">
+                             <StackPanel Orientation="Horizontal">
+                                 <TextBlock Text="Preview"
+                                            Style="{StaticResource ProductSectionLabelStyle}"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,8,0" />
+                                 <Button Content="Preview Trim"
+                                         ToolTip="Play only the selected trim range"
+                                         Style="{StaticResource EditorButtonStyle}"
+                                         Width="112"
+                                         Click="BtnPreviewTrim_Click" />
+                             </StackPanel>
+                         </Border>
+
+                         <Border Style="{StaticResource EditorFieldGroupStyle}">
+                             <StackPanel Orientation="Horizontal">
+                                 <TextBlock Text="Start Nudge"
+                                            Style="{StaticResource ProductSectionLabelStyle}"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,8,0" />
+                                 <Button Content="Start -5s"
+                                         ToolTip="Move trim start back 5 seconds"
+                                         Style="{StaticResource EditorButtonStyle}"
+                                         Width="94"
+                                         Click="BtnTrimMinus5_Click"
+                                         Margin="0,0,8,0" />
+                                 <Button Content="Start -1s"
+                                         ToolTip="Move trim start back 1 second"
+                                         Style="{StaticResource EditorButtonStyle}"
+                                         Width="92"
+                                         Click="BtnTrimStartMinus1_Click"
+                                         Margin="0,0,8,0" />
+                                 <Button Content="Start +1s"
+                                         ToolTip="Move trim start forward 1 second"
+                                         Style="{StaticResource EditorButtonStyle}"
+                                         Width="94"
+                                         Click="BtnTrimStartPlus1_Click" />
+                             </StackPanel>
+                         </Border>
+
+                         <Border Style="{StaticResource EditorFieldGroupStyle}">
+                             <StackPanel Orientation="Horizontal">
+                                 <TextBlock Text="End Nudge"
+                                            Style="{StaticResource ProductSectionLabelStyle}"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,8,0" />
+                                 <Button Content="End -1s"
+                                         ToolTip="Move trim end back 1 second"
+                                         Style="{StaticResource EditorButtonStyle}"
+                                         Width="82"
+                                         Click="BtnTrimEndMinus1_Click"
+                                         Margin="0,0,8,0" />
+                                 <Button Content="End +1s"
+                                         ToolTip="Move trim end forward 1 second"
+                                         Style="{StaticResource EditorButtonStyle}"
+                                         Width="82"
+                                         Click="BtnTrimEndPlus1_Click"
+                                         Margin="0,0,8,0" />
+                                 <Button Content="End +5s"
+                                         ToolTip="Move trim end forward 5 seconds"
+                                         Style="{StaticResource EditorButtonStyle}"
+                                         Width="88"
+                                         Click="BtnTrimPlus5_Click" />
+                             </StackPanel>
+                        </Border>
+                    </WrapPanel>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="4"
+                    Background="{StaticResource ProductChromeBrush}"
+                    Padding="14,12"
+                    CornerRadius="0,0,10,10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <Button x:Name="BtnOpenVideo"
+                            Grid.Row="0"
                             Grid.Column="0"
-                            Content="Open"
+                            Content="Open Video"
                             ToolTip="Open a video file for editing"
                             Click="BtnOpenVideo_Click"
                             Style="{StaticResource EditorButtonStyle}"
-                            Width="60" Margin="0,0,10,0" />
+                            Width="110"
+                            Margin="0,0,12,0" />
 
-                    <TextBlock x:Name="TxtEditorStatus"
-                               Grid.Column="1"
-                               Text="Save to keep this recording, or close to discard."
-                               Foreground="#666"
-                               FontSize="11"
-                               FontFamily="Segoe UI"
-                               VerticalAlignment="Center" />
+                    <Border Grid.Column="1"
+                            Grid.Row="0"
+                            Background="{StaticResource ProductInputBrush}"
+                            BorderBrush="{StaticResource ProductBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="10,7">
+                        <TextBlock x:Name="TxtEditorStatus"
+                                   Text="Save to keep this recording, or close to discard."
+                                   Foreground="{StaticResource ProductTextSubtleBrush}"
+                                   FontSize="12"
+                                   FontFamily="Segoe UI"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" />
+                    </Border>
 
-                    <Button x:Name="BtnSaveTrimmed"
-                            Grid.Column="2"
-                            Content="Save Trimmed"
-                            ToolTip="Apply trim and save"
-                            Click="BtnSaveTrimmed_Click"
-                            Style="{StaticResource EditorButtonStyle}"
-                            Width="120" Margin="0,0,8,0"
-                            Background="#FF006644" />
+                    <WrapPanel Grid.Row="1"
+                               Grid.ColumnSpan="2"
+                               HorizontalAlignment="Right"
+                               Margin="0,10,0,0">
+                        <Button x:Name="BtnSaveTrimmed"
+                                Content="Save Trimmed"
+                                ToolTip="Apply trim and save a new video"
+                                Click="BtnSaveTrimmed_Click"
+                                Style="{StaticResource EditorPrimaryButtonStyle}"
+                                Width="142"
+                                Margin="0,0,8,0" />
 
-                    <Button x:Name="BtnSaveOriginal"
-                            Grid.Column="3"
-                            Content="Save Original"
-                            ToolTip="Save without trimming"
-                            Click="BtnSaveOriginal_Click"
-                            Style="{StaticResource EditorButtonStyle}"
-                            Width="100" Margin="0,0,8,0" />
+                        <Button x:Name="BtnSaveFrame"
+                                Content="Save Frame"
+                                ToolTip="Save the current video frame as a PNG"
+                                Click="BtnSaveFrame_Click"
+                                Style="{StaticResource EditorButtonStyle}"
+                                Width="116"
+                                Margin="0,0,8,0" />
 
-                    <Button x:Name="BtnCloseEditor"
-                            Grid.Column="4"
-                            Content="Close"
-                            Click="BtnCloseEditor_Click"
-                            Style="{StaticResource EditorButtonStyle}"
-                            Width="80" />
+                        <Button x:Name="BtnExportGif"
+                                Content="Export GIF"
+                                ToolTip="Export the selected trim range as a GIF"
+                                Click="BtnExportGif_Click"
+                                Style="{StaticResource EditorButtonStyle}"
+                                Width="112"
+                                Margin="0,0,8,0" />
+
+                        <Button x:Name="BtnSaveOriginal"
+                                Content="Save Original"
+                                ToolTip="Save without trimming"
+                                Click="BtnSaveOriginal_Click"
+                                Style="{StaticResource EditorButtonStyle}"
+                                Width="128"
+                                Margin="0,0,8,0" />
+
+                        <Button x:Name="BtnCloseEditor"
+                                Content="Close"
+                                ToolTip="Close editor (Esc)"
+                                Click="BtnCloseEditor_Click"
+                                Style="{StaticResource EditorButtonStyle}"
+                                Width="88" />
+                    </WrapPanel>
                 </Grid>
             </Border>
 
+            <ResizeGrip Grid.Row="4"
+                        Width="18" Height="18"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Margin="0,0,4,4"
+                        Panel.ZIndex="10"
+                        Opacity="0.65" />
         </Grid>
     </Border>
 </Window>

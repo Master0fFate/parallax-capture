@@ -8,7 +8,7 @@
         Topmost="True"
         ShowInTaskbar="True"
         ResizeMode="CanResizeWithGrip"
-        Title="parallax - Annotate"
+        Title="Parallax Capture - Annotate"
         Width="950" Height="700"
         MinWidth="600" MinHeight="400"
         KeyDown="Window_KeyDown">
@@ -51,16 +51,22 @@
 
         <Style x:Key="ToolButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Width" Value="32" />
-            <Setter Property="Height" Value="28" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="MinWidth" Value="32" />
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource ProductFocusVisualStyle}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="border"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="4"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
                                 Padding="2">
                             <Viewbox Width="16" Height="16"
                                      HorizontalAlignment="Center"
@@ -71,10 +77,15 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#FF4A4A6E" />
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource ProductSurfaceHoverBrush}" />
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource ProductBorderStrongBrush}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#FF007ACC" />
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource ProductAccentPressedBrush}" />
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource ProductAccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource ProductFocusBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="border" Property="Opacity" Value="0.4" />
@@ -87,44 +98,16 @@
 
         <Style x:Key="ToolButtonIconStyle" TargetType="Button"
                BasedOn="{StaticResource ToolButtonStyle}">
-            <Setter Property="Width" Value="28" />
-            <Setter Property="Height" Value="28" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
         </Style>
 
-        <Style x:Key="ActionButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#FF2A2A4E" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="#555577" />
-            <Setter Property="Cursor" Value="Hand" />
+        <Style x:Key="ActionButtonStyle" TargetType="Button" BasedOn="{StaticResource ProductButtonStyle}">
             <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontFamily" Value="Segoe UI" />
-            <Setter Property="Padding" Value="12,0" />
-            <Setter Property="MinWidth" Value="75" />
-            <Setter Property="Height" Value="28" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#FF3A3A6E" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#FF007ACC" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="MinWidth" Value="72" />
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="12,6" />
         </Style>
 
         <Style x:Key="UndoClearButtonStyle" TargetType="Button"
@@ -135,12 +118,13 @@
         </Style>
 
         <Style x:Key="ColorSwatchStyle" TargetType="Button">
-            <Setter Property="Width" Value="20" />
-            <Setter Property="Height" Value="20" />
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="#666" />
-            <Setter Property="Margin" Value="1,0" />
+            <Setter Property="BorderBrush" Value="{StaticResource ProductBorderBrush}" />
+            <Setter Property="Margin" Value="2,0" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource ProductFocusVisualStyle}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -148,14 +132,14 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="2"
+                                CornerRadius="4"
                                 Width="{TemplateBinding Width}"
                                 Height="{TemplateBinding Height}">
                             <Border.Style>
                                 <Style TargetType="Border">
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="BorderBrush" Value="White" />
+                                            <Setter Property="BorderBrush" Value="{StaticResource ProductFocusBrush}" />
                                             <Setter Property="BorderThickness" Value="2" />
                                         </Trigger>
                                     </Style.Triggers>
@@ -164,7 +148,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="White" />
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource ProductFocusBrush}" />
                                 <Setter TargetName="border" Property="BorderThickness" Value="2" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -175,14 +159,16 @@
     </Window.Resources>
 
     <Grid>
-        <Border CornerRadius="4"
-                Background="White"
+        <Border CornerRadius="6"
+                Background="{StaticResource ProductSurfaceBrush}"
+                BorderBrush="{StaticResource ProductBorderStrongBrush}"
+                BorderThickness="1"
                 Margin="6">
             <Border.Effect>
                 <DropShadowEffect Color="Black"
-                                  Opacity="0.35"
-                                  BlurRadius="12"
-                                  ShadowDepth="3" />
+                                  Opacity="0.2"
+                                  BlurRadius="8"
+                                  ShadowDepth="2" />
             </Border.Effect>
 
             <Grid>
@@ -195,33 +181,28 @@
 
                 <!-- TITLE BAR (draggable) -->
                 <Border Grid.Row="0"
-                        Background="#FF1E1E2E"
-                        CornerRadius="4,4,0,0"
+                        Background="{StaticResource ProductChromeBrush}"
+                        CornerRadius="6,6,0,0"
                         MouseDown="TitleBar_MouseDown"
-                        Padding="10,8">
+                        Padding="12,8">
                     <Grid>
-                        <TextBlock Text="parallax -- Annotation"
-                                   Foreground="White"
-                                   FontSize="12"
-                                   FontFamily="Segoe UI"
+                        <TextBlock Text="Parallax Capture - Annotate"
+                                   Style="{StaticResource ProductSectionHeaderTextStyle}"
                                    VerticalAlignment="Center" />
                         <Button x:Name="BtnClose"
-                                Content="X"
-                                Width="28" Height="22"
-                                Background="Transparent"
-                                Foreground="White"
-                                BorderThickness="0"
-                                FontSize="11"
+                                Content="Close"
+                                MinWidth="64"
+                                Height="30"
                                 Click="BtnClose_Click"
-                                Cursor="Hand"
-                                HorizontalAlignment="Right" />
+                                HorizontalAlignment="Right"
+                                Style="{StaticResource ProductButtonStyle}" />
                     </Grid>
                 </Border>
 
                 <!-- TOOLBAR ROW -->
                 <Border Grid.Row="1"
-                        Background="#FF2A2A3E"
-                        Padding="6,4">
+                        Background="{StaticResource ProductSurfaceRaisedBrush}"
+                        Padding="8,6">
                     <StackPanel Orientation="Horizontal">
 
                         <!-- ── Tool Buttons with icons ── -->
@@ -297,7 +278,7 @@
                                   Opacity="0.8" />
                         </Button>
 
-                        <Separator Width="1" Background="#555" Margin="4,0" />
+                        <Separator Width="1" Background="{StaticResource ProductSeparatorBrush}" Margin="6,0" />
 
                         <!-- ── Color Picker ── -->
                         <ItemsControl x:Name="ColorSwatches"
@@ -310,48 +291,43 @@
                         </ItemsControl>
 
                         <Button x:Name="BtnMoreColors"
-                                ToolTip="More Colors..."
-                                Width="22" Height="20"
-                                Margin="1,0"
+                                Content="Colors"
+                                ToolTip="Choose custom color"
+                                MinWidth="66"
+                                Height="32"
+                                Margin="4,0,0,0"
                                 Click="MoreColors_Click"
-                                Cursor="Hand"
-                                BorderThickness="1"
-                                BorderBrush="#666"
-                                Background="#FF2A2A3E"
-                                Foreground="White"
-                                FontSize="10"
-                                FontFamily="Segoe UI"
-                                Content="..."
-                                VerticalAlignment="Center" />
+                                VerticalAlignment="Center"
+                                Style="{StaticResource ActionButtonStyle}" />
 
-                        <Separator Width="1" Background="#555" Margin="4,0" />
+                        <Separator Width="1" Background="{StaticResource ProductSeparatorBrush}" Margin="6,0" />
 
                         <!-- ── Stroke Thickness ── -->
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Size:"
-                                       Foreground="#AAA"
-                                       FontSize="11"
-                                       FontFamily="Segoe UI"
+                            <TextBlock Text="Stroke"
+                                       Foreground="{StaticResource ProductTextMutedBrush}"
+                                       FontSize="12"
                                        VerticalAlignment="Center"
-                                       Margin="0,0,4,0" />
-                            <Border BorderBrush="#555" BorderThickness="1"
-                                    CornerRadius="3"
-                                    Background="#1A1A2E"
-                                    Padding="4,0">
+                                       Margin="0,0,6,0" />
+                            <Border BorderBrush="{StaticResource ProductBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Background="{StaticResource ProductInputBrush}"
+                                    Padding="6,0">
                                 <Grid>
                                     <Slider x:Name="ThicknessSlider"
-                                            Minimum="1" Maximum="20" Value="2"
-                                            Width="72" Height="22"
-                                            VerticalAlignment="Center"
-                                            ToolTip="Stroke Thickness: 2"
-                                            ValueChanged="ThicknessSlider_ValueChanged"
-                                            Style="{StaticResource CustomSliderStyle}" />
+                                             Minimum="1" Maximum="20" Value="2"
+                                             Width="88" Height="28"
+                                             VerticalAlignment="Center"
+                                             ToolTip="Stroke size: 2"
+                                             ValueChanged="ThicknessSlider_ValueChanged"
+                                             Style="{StaticResource CustomSliderStyle}" />
                                 </Grid>
                             </Border>
                             <TextBlock x:Name="ThicknessValue"
                                        Text="2"
-                                       Foreground="#CCC"
-                                       FontSize="10"
+                                       Foreground="{StaticResource ProductTextMutedBrush}"
+                                       FontSize="11"
                                        FontFamily="Segoe UI"
                                        VerticalAlignment="Center"
                                        MinWidth="14"
@@ -359,59 +335,44 @@
                                        Margin="3,0,0,0" />
                         </StackPanel>
 
-                        <Separator Width="1" Background="#555" Margin="4,0" />
+                        <Separator Width="1" Background="{StaticResource ProductSeparatorBrush}" Margin="6,0" />
 
                         <!-- ── Zoom Controls ── -->
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Button x:Name="BtnZoomOut"
-                                    Content="-"
-                                    ToolTip="Zoom Out"
-                                    Width="24" Height="22"
-                                    Click="BtnZoomOut_Click"
-                                    Foreground="White"
-                                    Background="#FF2A2A3E"
-                                    BorderBrush="#555"
-                                    BorderThickness="1"
-                                    FontSize="14" FontWeight="Bold"
-                                    Cursor="Hand"
-                                    VerticalAlignment="Center"
-                                    Margin="0,0,2,0" />
+                                     Content="-"
+                                     ToolTip="Zoom out"
+                                     Click="BtnZoomOut_Click"
+                                     FontSize="14" FontWeight="Bold"
+                                     VerticalAlignment="Center"
+                                     Margin="0,0,2,0"
+                                     Style="{StaticResource ToolButtonIconStyle}" />
                             <TextBlock x:Name="TxtZoomLevel"
                                        Text="100%"
-                                       Foreground="#CCC"
+                                       Foreground="{StaticResource ProductTextMutedBrush}"
                                        FontSize="10"
                                        FontFamily="Segoe UI"
                                        Width="38"
                                        TextAlignment="Center"
                                        VerticalAlignment="Center" />
                             <Button x:Name="BtnZoomIn"
-                                    Content="+"
-                                    ToolTip="Zoom In"
-                                    Width="24" Height="22"
-                                    Click="BtnZoomIn_Click"
-                                    Foreground="White"
-                                    Background="#FF2A2A3E"
-                                    BorderBrush="#555"
-                                    BorderThickness="1"
-                                    FontSize="14" FontWeight="Bold"
-                                    Cursor="Hand"
-                                    VerticalAlignment="Center"
-                                    Margin="2,0,2,0" />
+                                     Content="+"
+                                     ToolTip="Zoom in"
+                                     Click="BtnZoomIn_Click"
+                                     FontSize="14" FontWeight="Bold"
+                                     VerticalAlignment="Center"
+                                     Margin="2,0,2,0"
+                                     Style="{StaticResource ToolButtonIconStyle}" />
                             <Button x:Name="BtnZoomReset"
-                                    Content="1:1"
-                                    ToolTip="Reset Zoom"
-                                    Width="28" Height="22"
-                                    Click="BtnZoomReset_Click"
-                                    Foreground="#AAA"
-                                    Background="#FF2A2A3E"
-                                    BorderBrush="#555"
-                                    BorderThickness="1"
-                                    FontSize="10"
-                                    Cursor="Hand"
-                                    VerticalAlignment="Center" />
+                                     Content="1:1"
+                                     ToolTip="Reset zoom"
+                                     Click="BtnZoomReset_Click"
+                                     FontSize="10"
+                                     VerticalAlignment="Center"
+                                     Style="{StaticResource ToolButtonIconStyle}" />
                         </StackPanel>
 
-                        <Separator Width="1" Background="#555" Margin="4,0" />
+                        <Separator Width="1" Background="{StaticResource ProductSeparatorBrush}" Margin="6,0" />
 
                         <!-- ── Undo (wider with icon) ── -->
                         <Button x:Name="BtnUndo"
@@ -431,7 +392,7 @@
 
                         <!-- ── Clear (wider with icon) ── -->
                         <Button x:Name="BtnClear"
-                                ToolTip="Clear All"
+                                ToolTip="Clear all annotations"
                                 Click="BtnClear_Click"
                                 Style="{StaticResource UndoClearButtonStyle}">
                             <StackPanel Orientation="Horizontal">
@@ -440,7 +401,7 @@
                                       Fill="White"
                                       Width="12" Height="12"
                                       Margin="0,0,4,0" />
-                                <TextBlock Text="Clear" FontSize="11" />
+                                <TextBlock Text="Clear all" FontSize="11" />
                             </StackPanel>
                         </Button>
 
@@ -449,7 +410,7 @@
 
                 <!-- ANNOTATION CANVAS AREA -->
                 <ScrollViewer Grid.Row="2"
-                              Background="#FF151525"
+                              Background="{StaticResource ProductInputBrush}"
                               HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto">
                     <Grid x:Name="ContentGrid">
@@ -475,9 +436,9 @@
 
                 <!-- BOTTOM ACTION BAR -->
                 <Border Grid.Row="3"
-                        Background="#FF1E1E2E"
-                        Padding="8,6"
-                        CornerRadius="0,0,4,4">
+                        Background="{StaticResource ProductChromeBrush}"
+                        Padding="10,8"
+                        CornerRadius="0,0,6,6">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -488,8 +449,8 @@
                         <TextBlock x:Name="TxtStatus"
                                    Grid.Column="0"
                                    Text=""
-                                   Foreground="#4F4"
-                                   FontSize="11"
+                                   Foreground="{StaticResource ProductSuccessBrush}"
+                                   FontSize="12"
                                    FontFamily="Segoe UI"
                                    VerticalAlignment="Center"
                                    Opacity="0" />
@@ -499,20 +460,22 @@
                                     HorizontalAlignment="Right">
 
                             <Button x:Name="BtnCopyClipboard"
-                                    Content="Copy"
-                                    Height="28" Padding="12,0"
+                                    Content="Copy image"
+                                    Height="32" Padding="12,6"
                                     Click="BtnCopyClipboard_Click"
                                     Style="{StaticResource ActionButtonStyle}" />
 
                             <Button x:Name="BtnSave"
-                                    Content="Save"
-                                    Height="28" Padding="12,0"
+                                    Content="Save image"
+                                    Height="32" Padding="12,6"
+                                    Margin="6,0,0,0"
                                     Click="BtnSave_Click"
                                     Style="{StaticResource ActionButtonStyle}" />
 
                             <Button x:Name="BtnSaveAs"
-                                    Content="Save As..."
-                                    Height="28" Padding="12,0"
+                                    Content="Save as"
+                                    Height="32" Padding="12,6"
+                                    Margin="6,0,0,0"
                                     Click="BtnSaveAs_Click"
                                     Style="{StaticResource ActionButtonStyle}" />
 

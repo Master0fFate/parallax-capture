@@ -168,7 +168,7 @@ namespace parallax.UI.Windows
             {
                 System.Windows.MessageBox.Show(
                     $"Could not convert selection to screen coordinates: {ex.Message}",
-                    "parallax",
+                    "Parallax Capture",
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Error);
                 SelectionConfirmed = false;

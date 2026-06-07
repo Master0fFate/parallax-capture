@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Interop;
+using System.Runtime.InteropServices;
 
 namespace parallax.UI.Windows
 {
@@ -8,12 +9,18 @@ namespace parallax.UI.Windows
         private const int WS_EX_TRANSPARENT = 0x00000020;
         private const int WS_EX_TOOLWINDOW = 0x00000080;
         private const int GWL_EXSTYLE = -20;
+        private const uint WDA_EXCLUDEFROMCAPTURE = 0x00000011;
 
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public bool IsCaptureExcluded { get; private set; }
+
+        [DllImport("user32.dll")]
         private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
 
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        [DllImport("user32.dll")]
         private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        [DllImport("user32.dll")]
+        private static extern bool SetWindowDisplayAffinity(IntPtr hWnd, uint dwAffinity);
 
         // Extra space above the border for the REC label
         private const int TopPadding = 22;
@@ -46,14 +53,25 @@ namespace parallax.UI.Windows
             // Position REC label inside window bounds at (4, 4)
             RecLabel.Margin = new Thickness(4, 4, 0, 0);
 
-            Loaded += (s, e) => MakeClickThrough();
+            SourceInitialized += (s, e) => ApplyWindowAttributes();
         }
 
-        private void MakeClickThrough()
+        private void ApplyWindowAttributes()
         {
             var hwnd = new WindowInteropHelper(this).Handle;
+            if (hwnd == IntPtr.Zero) return;
+
             int exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
             SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW);
+
+            try
+            {
+                IsCaptureExcluded = SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE);
+            }
+            catch
+            {
+                IsCaptureExcluded = false;
+            }
         }
     }
 }

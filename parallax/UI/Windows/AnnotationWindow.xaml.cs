@@ -135,12 +135,14 @@ namespace parallax.UI.Windows
             {
                 var btn = new Button
                 {
-                    Width = 20, Height = 20,
+                    Width = 24, Height = 24,
                     Background = new SolidColorBrush(color),
                     BorderBrush = new SolidColorBrush(Colors.Gray),
                     BorderThickness = new Thickness(1),
-                    Margin = new Thickness(1, 0, 1, 0),
-                    Tag = color
+                    Margin = new Thickness(2, 0, 2, 0),
+                    Tag = color,
+                    ToolTip = "Set annotation color",
+                    Style = (Style)FindResource("ColorSwatchStyle")
                 };
                 btn.Click += ColorSwatch_Click;
                 ColorSwatches.Items.Add(btn);
@@ -177,7 +179,7 @@ namespace parallax.UI.Windows
             _currentThickness = e.NewValue;
             int val = (int)Math.Round(e.NewValue);
             ThicknessValue.Text = val.ToString();
-            ThicknessSlider.ToolTip = $"Stroke Thickness: {val}";
+            ThicknessSlider.ToolTip = $"Stroke size: {val}";
         }
 
         // Opens the Windows Forms ColorDialog for full color selection
@@ -621,7 +623,7 @@ namespace parallax.UI.Windows
                 _fileService.GetSaveFolder(),
                 $"parallax_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.{ext}");
             BitmapHelper.SaveBitmapSource(rendered, actualPath, ext);
-            ShowStatus($"Saved \u2014 {System.IO.Path.GetFileName(actualPath)}");
+            ShowStatus($"Saved: {System.IO.Path.GetFileName(actualPath)}");
         }
 
         private void BtnSaveAs_Click(object sender, RoutedEventArgs e)
@@ -629,8 +631,8 @@ namespace parallax.UI.Windows
             FinalizeTextBox();
             var dialog = new SaveFileDialog
             {
-                Title = "Save Screenshot",
-                Filter = "PNG Image|*.png|JPEG Image|*.jpg|Bitmap|*.bmp",
+                Title = "Save screenshot",
+                Filter = "PNG image|*.png|JPEG image|*.jpg|Bitmap|*.bmp",
                 DefaultExt = "png",
                 FileName = $"parallax_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}"
             };
@@ -640,7 +642,7 @@ namespace parallax.UI.Windows
                 var rendered = RenderFinalImage();
                 string ext = System.IO.Path.GetExtension(dialog.FileName).TrimStart('.').ToLower();
                 BitmapHelper.SaveBitmapSource(rendered, dialog.FileName, ext);
-                ShowStatus($"Saved \u2014 {System.IO.Path.GetFileName(dialog.FileName)}");
+                ShowStatus($"Saved: {System.IO.Path.GetFileName(dialog.FileName)}");
             }
         }
 
