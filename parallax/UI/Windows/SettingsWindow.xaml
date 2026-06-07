@@ -81,7 +81,7 @@
                             <StackPanel>
                                 <TextBlock Text="Capture behavior"
                                            Style="{StaticResource ProductSectionHeaderTextStyle}" />
-                                <TextBlock Text="Control what happens after a capture is taken."
+                                <TextBlock Text="Control what opens after screenshots and recordings."
                                            TextWrapping="Wrap"
                                            Style="{StaticResource ProductCaptionTextStyle}"
                                            Margin="0,4,0,10" />
@@ -90,9 +90,23 @@
                                           Style="{StaticResource ProductCheckBoxStyle}"
                                           IsChecked="True" />
                                 <CheckBox x:Name="ChkAutoSave"
-                                          Content="Save captures automatically"
+                                           Content="Save captures automatically"
+                                           Style="{StaticResource ProductCheckBoxStyle}" />
+                                <TextBlock Text="When enabled, screenshots are saved immediately. Editor toggles below decide whether review windows also open."
+                                            TextWrapping="Wrap"
+                                            Style="{StaticResource ProductCaptionTextStyle}"
+                                            Margin="28,0,0,8" />
+                                <CheckBox x:Name="ChkOpenAnnotationEditor"
+                                          Content="Open annotation editor after screenshots"
                                           Style="{StaticResource ProductCheckBoxStyle}" />
-                                <TextBlock Text="The editor still opens so you can review, annotate, or copy."
+                                <TextBlock Text="Turn this off for one-step screenshots. Images save to the capture folder instead."
+                                           TextWrapping="Wrap"
+                                           Style="{StaticResource ProductCaptionTextStyle}"
+                                           Margin="28,0,0,8" />
+                                <CheckBox x:Name="ChkOpenVideoEditor"
+                                          Content="Open video editor after recordings"
+                                          Style="{StaticResource ProductCheckBoxStyle}" />
+                                <TextBlock Text="Turn this off for one-step recordings. Clips save to the capture folder instead."
                                            TextWrapping="Wrap"
                                            Style="{StaticResource ProductCaptionTextStyle}"
                                            Margin="28,0,0,8" />

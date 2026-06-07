@@ -46,6 +46,14 @@ public class AppSettingsTests
         Assert.False(s.StartWithWindows);
     }
 
+    [Fact]
+    public void EditorAutoOpenFlags_DefaultTrue()
+    {
+        var s = new AppSettings();
+        Assert.True(s.OpenAnnotationEditorAfterScreenshot);
+        Assert.True(s.OpenVideoEditorAfterRecording);
+    }
+
     // KAM #2 — dead fields: verify they still exist (backward compat) but are marked [Obsolete]
     [Fact]
     public void ShowToolbarAfterCapture_IsMarkedObsolete()

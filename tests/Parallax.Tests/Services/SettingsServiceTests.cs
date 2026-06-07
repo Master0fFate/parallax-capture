@@ -64,6 +64,8 @@ public class SettingsServiceTests : IDisposable
             ImageFormat = "jpg",
             CopyToClipboardAfterCapture = false,
             SaveAutomatically = true,
+            OpenAnnotationEditorAfterScreenshot = false,
+            OpenVideoEditorAfterRecording = false,
             SeparateFolders = true,
             StartWithWindows = true,
             HotkeyScreenshotEnabled = false,
@@ -82,6 +84,8 @@ public class SettingsServiceTests : IDisposable
         Assert.Equal(original.ImageFormat, loaded.ImageFormat);
         Assert.Equal(original.CopyToClipboardAfterCapture, loaded.CopyToClipboardAfterCapture);
         Assert.Equal(original.SaveAutomatically, loaded.SaveAutomatically);
+        Assert.Equal(original.OpenAnnotationEditorAfterScreenshot, loaded.OpenAnnotationEditorAfterScreenshot);
+        Assert.Equal(original.OpenVideoEditorAfterRecording, loaded.OpenVideoEditorAfterRecording);
         Assert.Equal(original.SeparateFolders, loaded.SeparateFolders);
         Assert.Equal(original.StartWithWindows, loaded.StartWithWindows);
         Assert.Equal(original.HotkeyScreenshotEnabled, loaded.HotkeyScreenshotEnabled);
@@ -143,6 +147,8 @@ public class SettingsServiceTests : IDisposable
             ImageFormat = "jpeg",
             CopyToClipboardAfterCapture = false,
             SaveAutomatically = true,
+            OpenAnnotationEditorAfterScreenshot = false,
+            OpenVideoEditorAfterRecording = false,
             SeparateFolders = true,
             StartWithWindows = true,
             HotkeyScreenshotEnabled = false,
@@ -158,6 +164,8 @@ public class SettingsServiceTests : IDisposable
         Assert.Equal("jpeg", settings.ImageFormat);
         Assert.False(settings.CopyToClipboardAfterCapture);
         Assert.True(settings.SaveAutomatically);
+        Assert.False(settings.OpenAnnotationEditorAfterScreenshot);
+        Assert.False(settings.OpenVideoEditorAfterRecording);
         Assert.False(settings.HotkeyScreenshotEnabled);
         Assert.True(settings.HotkeyFullscreenEnabled);
         Assert.False(settings.HotkeyRegionVideoEnabled);

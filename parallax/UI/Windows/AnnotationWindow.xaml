@@ -50,8 +50,9 @@
         <PathGeometry x:Key="IconClearGeo">M4,14 L5.5,14 L5.5,6 L4,6 Z M7,14 L8.5,14 L8.5,6 L7,6 Z M10,14 L11.5,14 L11.5,6 L10,6 Z M2,4 L5,4 L6,2 L10,2 L11,4 L14,4 L14,5 L2,5 Z</PathGeometry>
 
         <Style x:Key="ToolButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Background" Value="{StaticResource ProductSurfaceRaisedBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource ProductBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Width" Value="32" />
@@ -340,13 +341,18 @@
                         <!-- ── Zoom Controls ── -->
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Button x:Name="BtnZoomOut"
-                                     Content="-"
                                      ToolTip="Zoom out"
                                      Click="BtnZoomOut_Click"
                                      FontSize="14" FontWeight="Bold"
                                      VerticalAlignment="Center"
                                      Margin="0,0,2,0"
-                                     Style="{StaticResource ToolButtonIconStyle}" />
+                                     Style="{StaticResource ToolButtonIconStyle}">
+                                <Path Data="M 2 8 L 14 8"
+                                      Stroke="{StaticResource ProductTextBrush}"
+                                      StrokeThickness="2"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round" />
+                            </Button>
                             <TextBlock x:Name="TxtZoomLevel"
                                        Text="100%"
                                        Foreground="{StaticResource ProductTextMutedBrush}"
@@ -356,20 +362,30 @@
                                        TextAlignment="Center"
                                        VerticalAlignment="Center" />
                             <Button x:Name="BtnZoomIn"
-                                     Content="+"
                                      ToolTip="Zoom in"
                                      Click="BtnZoomIn_Click"
                                      FontSize="14" FontWeight="Bold"
                                      VerticalAlignment="Center"
                                      Margin="2,0,2,0"
-                                     Style="{StaticResource ToolButtonIconStyle}" />
+                                     Style="{StaticResource ToolButtonIconStyle}">
+                                <Path Data="M 8 2 L 8 14 M 2 8 L 14 8"
+                                      Stroke="{StaticResource ProductTextBrush}"
+                                      StrokeThickness="2"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round" />
+                            </Button>
                             <Button x:Name="BtnZoomReset"
-                                     Content="1:1"
                                      ToolTip="Reset zoom"
                                      Click="BtnZoomReset_Click"
                                      FontSize="10"
                                      VerticalAlignment="Center"
-                                     Style="{StaticResource ToolButtonIconStyle}" />
+                                     Style="{StaticResource ToolButtonIconStyle}">
+                                <TextBlock Text="1:1"
+                                           Foreground="{StaticResource ProductTextBrush}"
+                                           FontFamily="Segoe UI"
+                                           FontSize="10"
+                                           FontWeight="SemiBold" />
+                            </Button>
                         </StackPanel>
 
                         <Separator Width="1" Background="{StaticResource ProductSeparatorBrush}" Margin="6,0" />
@@ -431,6 +447,112 @@
                                 MouseMove="AnnotationCanvas_MouseMove"
                                 MouseUp="AnnotationCanvas_MouseUp"
                                 Cursor="Cross" />
+
+                        <Canvas x:Name="TextAdornerCanvas"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Panel.ZIndex="20">
+                            <Border x:Name="FloatingTextToolbar"
+                                    Visibility="Collapsed"
+                                    Background="{StaticResource ProductChromeBrush}"
+                                    BorderBrush="{StaticResource ProductBorderStrongBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="7"
+                                    Padding="6"
+                                    Canvas.Left="0"
+                                    Canvas.Top="0">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button x:Name="BtnTextColor"
+                                            ToolTip="Apply text color"
+                                            Width="32"
+                                            Height="32"
+                                            Margin="0,0,6,0"
+                                            Click="TextColorButton_Click"
+                                            Style="{StaticResource ToolButtonStyle}">
+                                        <Grid Width="18" Height="18">
+                                            <Ellipse Stroke="{StaticResource ProductTextBrush}"
+                                                     StrokeThickness="1"
+                                                     Fill="Transparent" />
+                                            <Rectangle x:Name="TextColorPreview"
+                                                       Width="10"
+                                                       Height="10"
+                                                       RadiusX="2"
+                                                       RadiusY="2"
+                                                       Fill="Red"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Button>
+                                    <ComboBox x:Name="CmbTextFontFamily"
+                                              Width="132"
+                                              Height="32"
+                                              Margin="0,0,6,0"
+                                              Style="{StaticResource ProductComboBoxStyle}"
+                                              SelectionChanged="TextFontFamily_SelectionChanged">
+                                        <ComboBoxItem Content="Segoe UI" IsSelected="True" />
+                                        <ComboBoxItem Content="Arial" />
+                                        <ComboBoxItem Content="Calibri" />
+                                        <ComboBoxItem Content="Consolas" />
+                                        <ComboBoxItem Content="Georgia" />
+                                    </ComboBox>
+                                    <Button Content="B"
+                                            Tag="Bold"
+                                            ToolTip="Bold selected text"
+                                            Width="32"
+                                            Height="32"
+                                            FontWeight="Bold"
+                                            Margin="0,0,4,0"
+                                            Click="TextFormatButton_Click"
+                                            Style="{StaticResource ToolButtonStyle}" />
+                                    <Button Content="I"
+                                            Tag="Italic"
+                                            ToolTip="Italic selected text"
+                                            Width="32"
+                                            Height="32"
+                                            FontStyle="Italic"
+                                            Margin="0,0,4,0"
+                                            Click="TextFormatButton_Click"
+                                            Style="{StaticResource ToolButtonStyle}" />
+                                    <Button Content="U"
+                                            Tag="Underline"
+                                            ToolTip="Underline selected text"
+                                            Width="32"
+                                            Height="32"
+                                            Margin="0,0,4,0"
+                                            Click="TextFormatButton_Click"
+                                            Style="{StaticResource ToolButtonStyle}" />
+                                    <Button Content="S"
+                                            Tag="Strike"
+                                            ToolTip="Strikethrough selected text"
+                                            Width="32"
+                                            Height="32"
+                                            Click="TextFormatButton_Click"
+                                            Style="{StaticResource ToolButtonStyle}" />
+                                </StackPanel>
+                            </Border>
+
+                            <Button x:Name="TextMoveHandle"
+                                    Visibility="Collapsed"
+                                    Width="24"
+                                    Height="24"
+                                    Padding="0"
+                                    Cursor="SizeAll"
+                                    ToolTip="Move text"
+                                    PreviewMouseLeftButtonDown="TextMoveHandle_MouseLeftButtonDown"
+                                    PreviewMouseMove="TextMoveHandle_MouseMove"
+                                    PreviewMouseLeftButtonUp="TextMoveHandle_MouseLeftButtonUp"
+                                    Style="{StaticResource ToolButtonStyle}">
+                                <Path Data="M 8 2 L 8 14 M 2 8 L 14 8 M 8 2 L 5 5 M 8 2 L 11 5 M 14 8 L 11 5 M 14 8 L 11 11 M 8 14 L 5 11 M 8 14 L 11 11 M 2 8 L 5 5 M 2 8 L 5 11"
+                                      Stroke="{StaticResource ProductTextBrush}"
+                                      StrokeThickness="1.4"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"
+                                      Width="16"
+                                      Height="16"
+                                      Stretch="Uniform" />
+                            </Button>
+                        </Canvas>
                     </Grid>
                 </ScrollViewer>
 

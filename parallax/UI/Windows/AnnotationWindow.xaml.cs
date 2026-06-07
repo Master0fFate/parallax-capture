@@ -2,6 +2,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -39,7 +40,12 @@ namespace parallax.UI.Windows
         private readonly Stack<List<UIElement>> _undoStack = new();
 
         // ── Text editing
-        private TextBox? _activeTextBox;
+        private RichTextBox? _activeTextBox;
+        private bool _isUpdatingTextToolbar;
+        private bool _isMovingText;
+        private RichTextBox? _movingTextBox;
+        private System.Windows.Point _textMoveStart;
+        private System.Windows.Point _textMoveOrigin;
 
         // ── Status feedback
         private readonly System.Windows.Threading.DispatcherTimer _statusTimer = new()
@@ -90,6 +96,8 @@ namespace parallax.UI.Windows
                 // zoom is applied via LayoutTransform on the parent ContentGrid)
                 AnnotationCanvas.Width  = _sourceBitmap.Width;
                 AnnotationCanvas.Height = _sourceBitmap.Height;
+                TextAdornerCanvas.Width = _sourceBitmap.Width;
+                TextAdornerCanvas.Height = _sourceBitmap.Height;
 
                 // Build color swatches
                 BuildColorSwatches();
@@ -115,6 +123,8 @@ namespace parallax.UI.Windows
                 AnnotationCanvas.Children.Add(errorText);
                 AnnotationCanvas.Width = 400;
                 AnnotationCanvas.Height = 200;
+                TextAdornerCanvas.Width = 400;
+                TextAdornerCanvas.Height = 200;
                 Width = 420;
                 Height = 330;
                 Activate();
@@ -167,7 +177,11 @@ namespace parallax.UI.Windows
         private void ColorSwatch_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is System.Windows.Media.Color c)
+            {
                 _currentColor = c;
+                UpdateTextColorPreview();
+                ApplyTextSelectionValue(TextElement.ForegroundProperty, new SolidColorBrush(_currentColor));
+            }
         }
 
         private void ThicknessSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -180,6 +194,12 @@ namespace parallax.UI.Windows
             int val = (int)Math.Round(e.NewValue);
             ThicknessValue.Text = val.ToString();
             ThicknessSlider.ToolTip = $"Stroke size: {val}";
+
+            if (!_isUpdatingTextToolbar && _activeTextBox != null)
+            {
+                ApplyTextSelectionValue(TextElement.FontSizeProperty, GetTextFontSize(e.NewValue));
+                UpdateTextAdorners();
+            }
         }
 
         // Opens the Windows Forms ColorDialog for full color selection
@@ -197,17 +217,23 @@ namespace parallax.UI.Windows
                     colorDialog.Color.R,
                     colorDialog.Color.G,
                     colorDialog.Color.B);
+                UpdateTextColorPreview();
+                ApplyTextSelectionValue(TextElement.ForegroundProperty, new SolidColorBrush(_currentColor));
             }
         }
 
         private void BtnUndo_Click(object sender, RoutedEventArgs e)
         {
+            HideTextAdorners();
+            _activeTextBox = null;
             if (AnnotationCanvas.Children.Count > 0)
                 AnnotationCanvas.Children.RemoveAt(AnnotationCanvas.Children.Count - 1);
         }
 
         private void BtnClear_Click(object sender, RoutedEventArgs e)
         {
+            HideTextAdorners();
+            _activeTextBox = null;
             AnnotationCanvas.Children.Clear();
         }
 
@@ -257,6 +283,7 @@ namespace parallax.UI.Windows
         private void AnnotationCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton != MouseButtonState.Pressed) return;
+            if (IsTextInteractionSource(e.OriginalSource)) return;
 
             FinalizeTextBox();
             // GetPosition(AnnotationCanvas) already traverses the visual tree including
@@ -344,16 +371,18 @@ namespace parallax.UI.Windows
 
                 case AnnotationTool.Blur:
                 {
-                    // Create a rectangle with VisualBrush sampling the image behind it + blur effect
+                    // Snapshot the current pixel stack before placing the blur rectangle.
+                    // This blurs screenshot pixels and any existing annotations without
+                    // recursively sampling the blur rectangle itself.
+                    var blurSnapshot = RenderFinalImage();
                     var blurRect = new System.Windows.Shapes.Rectangle
                     {
                         StrokeThickness = 0,
-                        Fill = new VisualBrush
+                        Fill = new ImageBrush(blurSnapshot)
                         {
-                            Visual = ScreenshotImage,
                             ViewboxUnits = BrushMappingMode.Absolute,
                             ViewportUnits = BrushMappingMode.Absolute,
-                            Stretch = Stretch.None,
+                            Stretch = Stretch.Fill,
                             AlignmentX = AlignmentX.Left,
                             AlignmentY = AlignmentY.Top
                         },
@@ -362,7 +391,7 @@ namespace parallax.UI.Windows
                             Radius = 12,
                             KernelType = System.Windows.Media.Effects.KernelType.Gaussian
                         },
-                        Opacity = 0.9
+                        Opacity = 1.0
                     };
                     Canvas.SetLeft(blurRect, _drawStart.X);
                     Canvas.SetTop(blurRect, _drawStart.Y);
@@ -372,25 +401,11 @@ namespace parallax.UI.Windows
                 }
 
                 case AnnotationTool.Text:
-                    var tb = new TextBox
-                    {
-                        Background = System.Windows.Media.Brushes.Transparent,
-                        Foreground = brush,
-                        BorderThickness = new Thickness(1),
-                        BorderBrush = brush,
-                        FontSize = Math.Max(_currentThickness * 2, 10),
-                        FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
-                        MinWidth = Math.Max(_currentThickness * 8, 60),
-                        MinHeight = Math.Max(_currentThickness * 2, 24),
-                        AcceptsReturn = true,
-                        Cursor = Cursors.IBeam,
-                        CaretBrush = brush
-                    };
+                    var tb = CreateRichTextAnnotationBox(brush);
                     Canvas.SetLeft(tb, _drawStart.X);
                     Canvas.SetTop(tb, _drawStart.Y);
-                    _activeTextBox = tb;
                     AnnotationCanvas.Children.Add(tb);
-                    tb.Focus();
+                    SetActiveTextBox(tb, focus: true);
                     _isDrawing = false;
                     AnnotationCanvas.ReleaseMouseCapture();
                     break;
@@ -458,8 +473,8 @@ namespace parallax.UI.Windows
                         Canvas.SetTop(bl, y);
                         bl.Width  = Math.Abs(pos.X - _drawStart.X);
                         bl.Height = Math.Abs(pos.Y - _drawStart.Y);
-                        // Update the VisualBrush viewbox to track the image behind
-                        if (bl.Fill is VisualBrush vb)
+                        // Update the ImageBrush crop to track the snapshotted pixels behind the blur.
+                        if (bl.Fill is ImageBrush vb)
                         {
                             vb.Viewbox = new Rect(x, y, bl.Width, bl.Height);
                             vb.Viewport = new Rect(0, 0, bl.Width, bl.Height);
@@ -481,12 +496,12 @@ namespace parallax.UI.Windows
                 DrawArrowhead(arrowLine.X1, arrowLine.Y1, arrowLine.X2, arrowLine.Y2);
             }
 
-            // For blur: finalize the VisualBrush viewbox to match the final rectangle position
+            // For blur: finalize the ImageBrush viewbox to match the final rectangle position
             if (_currentTool == AnnotationTool.Blur && _currentShape is System.Windows.Shapes.Rectangle blurRect)
             {
                 double x = Canvas.GetLeft(blurRect);
                 double y = Canvas.GetTop(blurRect);
-                if (blurRect.Fill is VisualBrush vb)
+                if (blurRect.Fill is ImageBrush vb)
                 {
                     vb.Viewbox = new Rect(x, y, blurRect.Width, blurRect.Height);
                     vb.Viewport = new Rect(0, 0, blurRect.Width, blurRect.Height);
@@ -549,15 +564,396 @@ namespace parallax.UI.Windows
         // TEXT BOX MANAGEMENT
         // ────────────────────────────────────────────
 
-        // Finalizes any active text box (removes border, makes it non-editable looking)
+        private RichTextBox CreateRichTextAnnotationBox(SolidColorBrush brush)
+        {
+            double fontSize = GetTextFontSize(_currentThickness);
+            string fontFamilyName = GetSelectedFontFamilyName();
+            var fontFamily = new System.Windows.Media.FontFamily(fontFamilyName);
+
+            var paragraph = new Paragraph(new Run())
+            {
+                Margin = new Thickness(0),
+                LineHeight = fontSize * 1.25
+            };
+
+            var document = new FlowDocument(paragraph)
+            {
+                PagePadding = new Thickness(0),
+                Background = System.Windows.Media.Brushes.Transparent,
+                FontFamily = fontFamily,
+                FontSize = fontSize,
+                Foreground = brush
+            };
+
+            var textBox = new RichTextBox
+            {
+                Background = System.Windows.Media.Brushes.Transparent,
+                Foreground = brush,
+                BorderThickness = new Thickness(1),
+                BorderBrush = brush,
+                FontSize = fontSize,
+                FontFamily = fontFamily,
+                MinWidth = Math.Max(_currentThickness * 16, 120),
+                Width = Math.Max(_currentThickness * 24, 180),
+                MinHeight = Math.Max(_currentThickness * 2.5, 28),
+                Padding = new Thickness(4),
+                Cursor = Cursors.IBeam,
+                CaretBrush = brush,
+                AcceptsTab = true,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                Document = document
+            };
+
+            textBox.PreviewMouseLeftButtonDown += TextBox_PreviewMouseLeftButtonDown;
+            textBox.GotKeyboardFocus += TextBox_GotKeyboardFocus;
+            textBox.SelectionChanged += TextBox_SelectionChanged;
+            textBox.TextChanged += TextBox_TextChanged;
+
+            return textBox;
+        }
+
+        private static double GetTextFontSize(double thickness) => Math.Max(thickness * 2, 10);
+
+        private string GetSelectedFontFamilyName()
+        {
+            if (CmbTextFontFamily?.SelectedItem is ComboBoxItem item && item.Content is string selected)
+                return selected;
+
+            return "Segoe UI";
+        }
+
+        private void TextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is not RichTextBox textBox) return;
+
+            if (_activeTextBox != textBox)
+            {
+                SetActiveTextBox(textBox, focus: true);
+                e.Handled = true;
+                return;
+            }
+
+            SetActiveTextBox(textBox, focus: false);
+        }
+
+        private void TextBox_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (sender is RichTextBox textBox)
+                SetActiveTextBox(textBox, focus: false);
+        }
+
+        private void TextBox_SelectionChanged(object sender, RoutedEventArgs e)
+        {
+            if (sender == _activeTextBox)
+            {
+                UpdateTextToolbarFromSelection();
+                UpdateTextAdorners();
+            }
+        }
+
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender == _activeTextBox)
+                UpdateTextAdorners();
+        }
+
+        private void SetActiveTextBox(RichTextBox textBox, bool focus)
+        {
+            if (_activeTextBox != null && _activeTextBox != textBox)
+                DeactivateTextBox(_activeTextBox);
+
+            _activeTextBox = textBox;
+            textBox.IsReadOnly = false;
+            textBox.BorderThickness = new Thickness(1);
+            textBox.BorderBrush = new SolidColorBrush(_currentColor);
+            textBox.Focusable = true;
+
+            FloatingTextToolbar.Visibility = Visibility.Visible;
+            TextMoveHandle.Visibility = Visibility.Visible;
+
+            if (focus && !textBox.IsKeyboardFocusWithin)
+                textBox.Focus();
+
+            UpdateTextColorPreview();
+            UpdateTextToolbarFromSelection();
+            UpdateTextAdorners();
+        }
+
+        private static void DeactivateTextBox(RichTextBox textBox)
+        {
+            textBox.Selection.Select(textBox.Document.ContentEnd, textBox.Document.ContentEnd);
+            textBox.BorderThickness = new Thickness(0);
+            textBox.IsReadOnly = true;
+        }
+
+        // Finalizes any active text box (removes editing chrome and hides adorners).
         private void FinalizeTextBox()
         {
             if (_activeTextBox != null)
             {
-                _activeTextBox.BorderThickness = new Thickness(0);
-                _activeTextBox.IsReadOnly = true;
+                if (IsRichTextBoxEmpty(_activeTextBox))
+                {
+                    AnnotationCanvas.Children.Remove(_activeTextBox);
+                }
+                else
+                {
+                    DeactivateTextBox(_activeTextBox);
+                }
+
                 _activeTextBox = null;
             }
+
+            HideTextAdorners();
+        }
+
+        private static bool IsRichTextBoxEmpty(RichTextBox textBox)
+        {
+            string text = new TextRange(textBox.Document.ContentStart, textBox.Document.ContentEnd).Text;
+            return string.IsNullOrWhiteSpace(text);
+        }
+
+        private void HideTextAdorners()
+        {
+            FloatingTextToolbar.Visibility = Visibility.Collapsed;
+            TextMoveHandle.Visibility = Visibility.Collapsed;
+            _isMovingText = false;
+            _movingTextBox = null;
+        }
+
+        private void UpdateTextColorPreview()
+        {
+            if (TextColorPreview != null)
+                TextColorPreview.Fill = new SolidColorBrush(_currentColor);
+        }
+
+        private void UpdateTextToolbarFromSelection()
+        {
+            if (_activeTextBox == null || _isUpdatingTextToolbar) return;
+
+            try
+            {
+                _isUpdatingTextToolbar = true;
+                var range = GetTextFormattingRange();
+
+                var familyValue = range.GetPropertyValue(TextElement.FontFamilyProperty);
+                if (familyValue is System.Windows.Media.FontFamily family)
+                    SelectFontFamily(family.Source);
+
+                var sizeValue = range.GetPropertyValue(TextElement.FontSizeProperty);
+                if (sizeValue is double fontSize && ThicknessSlider != null)
+                {
+                    double thickness = Math.Max(ThicknessSlider.Minimum, Math.Min(ThicknessSlider.Maximum, fontSize / 2));
+                    if (Math.Abs(ThicknessSlider.Value - thickness) > 0.01)
+                        ThicknessSlider.Value = thickness;
+                }
+            }
+            finally
+            {
+                _isUpdatingTextToolbar = false;
+            }
+        }
+
+        private void SelectFontFamily(string familyName)
+        {
+            foreach (var item in CmbTextFontFamily.Items)
+            {
+                if (item is ComboBoxItem comboItem
+                    && comboItem.Content is string itemFamily
+                    && string.Equals(itemFamily, familyName, StringComparison.OrdinalIgnoreCase))
+                {
+                    CmbTextFontFamily.SelectedItem = comboItem;
+                    return;
+                }
+            }
+        }
+
+        private TextRange GetTextFormattingRange()
+        {
+            if (_activeTextBox == null)
+                throw new InvalidOperationException("No active text annotation is selected.");
+
+            if (!_activeTextBox.Selection.IsEmpty)
+                return _activeTextBox.Selection;
+
+            return new TextRange(_activeTextBox.Document.ContentStart, _activeTextBox.Document.ContentEnd);
+        }
+
+        private void ApplyTextSelectionValue(DependencyProperty property, object value)
+        {
+            if (_activeTextBox == null || _isUpdatingTextToolbar) return;
+
+            var range = GetTextFormattingRange();
+            range.ApplyPropertyValue(property, value);
+            _activeTextBox.Focus();
+            UpdateTextToolbarFromSelection();
+            UpdateTextAdorners();
+        }
+
+        private void TextColorButton_Click(object sender, RoutedEventArgs e)
+        {
+            MoreColors_Click(sender, e);
+        }
+
+        private void TextFontFamily_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isUpdatingTextToolbar || _activeTextBox == null) return;
+
+            ApplyTextSelectionValue(TextElement.FontFamilyProperty, new System.Windows.Media.FontFamily(GetSelectedFontFamilyName()));
+        }
+
+        private void TextFormatButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_activeTextBox == null || sender is not Button button || button.Tag is not string action) return;
+
+            switch (action)
+            {
+                case "Bold":
+                    ToggleTextProperty(TextElement.FontWeightProperty, FontWeights.Bold, FontWeights.Normal);
+                    break;
+                case "Italic":
+                    ToggleTextProperty(TextElement.FontStyleProperty, FontStyles.Italic, FontStyles.Normal);
+                    break;
+                case "Underline":
+                    ToggleTextDecoration(TextDecorationLocation.Underline);
+                    break;
+                case "Strike":
+                    ToggleTextDecoration(TextDecorationLocation.Strikethrough);
+                    break;
+            }
+
+            _activeTextBox.Focus();
+            UpdateTextAdorners();
+        }
+
+        private void ToggleTextProperty(DependencyProperty property, object enabledValue, object disabledValue)
+        {
+            var range = GetTextFormattingRange();
+            object current = range.GetPropertyValue(property);
+            object next = Equals(current, enabledValue) ? disabledValue : enabledValue;
+            range.ApplyPropertyValue(property, next);
+        }
+
+        private void ToggleTextDecoration(TextDecorationLocation location)
+        {
+            var range = GetTextFormattingRange();
+            object currentValue = range.GetPropertyValue(Inline.TextDecorationsProperty);
+            var current = currentValue as TextDecorationCollection;
+            bool hasDecoration = current?.Any(decoration => decoration.Location == location) == true;
+
+            var next = new TextDecorationCollection();
+            if (current != null)
+            {
+                foreach (var decoration in current.Where(decoration => decoration.Location != location))
+                    next.Add(decoration.Clone());
+            }
+
+            if (!hasDecoration)
+                next.Add(new TextDecoration { Location = location });
+
+            range.ApplyPropertyValue(Inline.TextDecorationsProperty, next);
+        }
+
+        private void UpdateTextAdorners()
+        {
+            if (_activeTextBox == null)
+            {
+                HideTextAdorners();
+                return;
+            }
+
+            _activeTextBox.UpdateLayout();
+            FloatingTextToolbar.UpdateLayout();
+
+            double textLeft = SafeCanvasValue(Canvas.GetLeft(_activeTextBox));
+            double textTop = SafeCanvasValue(Canvas.GetTop(_activeTextBox));
+            double textWidth = Math.Max(_activeTextBox.ActualWidth, _activeTextBox.Width);
+            double textHeight = Math.Max(_activeTextBox.ActualHeight, _activeTextBox.MinHeight);
+            double toolbarWidth = Math.Max(FloatingTextToolbar.ActualWidth, 260);
+            double toolbarHeight = Math.Max(FloatingTextToolbar.ActualHeight, 44);
+
+            double toolbarLeft = Clamp(textLeft, 0, Math.Max(0, AnnotationCanvas.Width - toolbarWidth));
+            double toolbarTop = textTop - toolbarHeight - 8;
+            if (toolbarTop < 0)
+                toolbarTop = Math.Min(AnnotationCanvas.Height - toolbarHeight, textTop + textHeight + 8);
+
+            Canvas.SetLeft(FloatingTextToolbar, toolbarLeft);
+            Canvas.SetTop(FloatingTextToolbar, Math.Max(0, toolbarTop));
+            Canvas.SetLeft(TextMoveHandle, Clamp(textLeft - 12, 0, Math.Max(0, AnnotationCanvas.Width - TextMoveHandle.Width)));
+            Canvas.SetTop(TextMoveHandle, Clamp(textTop - 12, 0, Math.Max(0, AnnotationCanvas.Height - TextMoveHandle.Height)));
+        }
+
+        private void TextMoveHandle_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (_activeTextBox == null) return;
+
+            _isMovingText = true;
+            _movingTextBox = _activeTextBox;
+            _textMoveStart = e.GetPosition(AnnotationCanvas);
+            _textMoveOrigin = new System.Windows.Point(
+                SafeCanvasValue(Canvas.GetLeft(_movingTextBox)),
+                SafeCanvasValue(Canvas.GetTop(_movingTextBox)));
+            TextMoveHandle.CaptureMouse();
+            e.Handled = true;
+        }
+
+        private void TextMoveHandle_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_isMovingText || _movingTextBox == null || e.LeftButton != MouseButtonState.Pressed) return;
+
+            var current = e.GetPosition(AnnotationCanvas);
+            double nextLeft = _textMoveOrigin.X + current.X - _textMoveStart.X;
+            double nextTop = _textMoveOrigin.Y + current.Y - _textMoveStart.Y;
+            double maxLeft = Math.Max(0, AnnotationCanvas.Width - Math.Max(_movingTextBox.ActualWidth, _movingTextBox.Width));
+            double maxTop = Math.Max(0, AnnotationCanvas.Height - Math.Max(_movingTextBox.ActualHeight, _movingTextBox.MinHeight));
+
+            Canvas.SetLeft(_movingTextBox, Clamp(nextLeft, 0, maxLeft));
+            Canvas.SetTop(_movingTextBox, Clamp(nextTop, 0, maxTop));
+            UpdateTextAdorners();
+            e.Handled = true;
+        }
+
+        private void TextMoveHandle_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (!_isMovingText) return;
+
+            _isMovingText = false;
+            _movingTextBox = null;
+            TextMoveHandle.ReleaseMouseCapture();
+            UpdateTextAdorners();
+            e.Handled = true;
+        }
+
+        private bool IsTextInteractionSource(object? source)
+        {
+            if (source is not DependencyObject current) return false;
+            DependencyObject? walker = current;
+
+            while (walker != null)
+            {
+                if (walker is RichTextBox)
+                    return true;
+
+                walker = GetParent(walker);
+            }
+
+            return false;
+        }
+
+        private static DependencyObject? GetParent(DependencyObject current)
+        {
+            if (current is Visual || current is System.Windows.Media.Media3D.Visual3D)
+                return VisualTreeHelper.GetParent(current);
+
+            return LogicalTreeHelper.GetParent(current);
+        }
+
+        private static double SafeCanvasValue(double value) => double.IsNaN(value) ? 0 : value;
+
+        private static double Clamp(double value, double min, double max)
+        {
+            if (max < min) max = min;
+            return Math.Max(min, Math.Min(max, value));
         }
 
         // ────────────────────────────────────────────

@@ -18,6 +18,14 @@
 - **Clipboard auto-copy:** screenshots land on your clipboard instantly
 - **No admin required:** installs per-user, no elevation needed
 
+## Version 1.1.0 Updates
+
+- Fixed annotation blur to blur both the screenshot and existing annotation strokes
+- Reworked text annotation into a rich-text flow: partial selection formatting, improved toolbar controls, and color/size controls that affect selected text
+- Added a dedicated move handle for repositioning annotation text with improved interaction affordances
+- Updated stroke slider visuals for better precision and centered thumb behavior
+- Kept all capture/recording/video workflows unchanged to minimize regression risk
+
 ## Screenshots
 
 | Annotation Editor | Video Editor |

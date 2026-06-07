@@ -26,6 +26,8 @@ namespace parallax.UI.Windows
             TxtSaveFolder.Text = _settings.SaveFolder;
             ChkCopyClipboard.IsChecked = _settings.CopyToClipboardAfterCapture;
             ChkAutoSave.IsChecked = _settings.SaveAutomatically;
+            ChkOpenAnnotationEditor.IsChecked = _settings.OpenAnnotationEditorAfterScreenshot;
+            ChkOpenVideoEditor.IsChecked = _settings.OpenVideoEditorAfterRecording;
             ChkSeparateFolders.IsChecked = _settings.SeparateFolders;
             ChkStartWindows.IsChecked = _settings.StartWithWindows;
             ChkHotkeyScreenshotEnabled.IsChecked = _settings.HotkeyScreenshotEnabled;
@@ -92,6 +94,8 @@ namespace parallax.UI.Windows
             _settings.SaveFolder = TxtSaveFolder.Text;
             _settings.CopyToClipboardAfterCapture = ChkCopyClipboard.IsChecked == true;
             _settings.SaveAutomatically = ChkAutoSave.IsChecked == true;
+            _settings.OpenAnnotationEditorAfterScreenshot = ChkOpenAnnotationEditor.IsChecked == true;
+            _settings.OpenVideoEditorAfterRecording = ChkOpenVideoEditor.IsChecked == true;
             _settings.SeparateFolders = ChkSeparateFolders.IsChecked == true;
             _settings.StartWithWindows = requestedStartWithWindows;
             _settings.HotkeyScreenshotEnabled = IsActiveHotkey(ChkHotkeyScreenshotEnabled.IsChecked == true, TxtHotkeyScreenshot.Text);

@@ -8,6 +8,9 @@
     <SolidColorBrush x:Key="ProductSurfaceRaisedBrush" Color="#FF1D2A37" />
     <SolidColorBrush x:Key="ProductSurfaceHoverBrush" Color="#FF253546" />
     <SolidColorBrush x:Key="ProductSurfacePressedBrush" Color="#FF0C131B" />
+    <SolidColorBrush x:Key="ProductButtonBrush" Color="#FF263747" />
+    <SolidColorBrush x:Key="ProductButtonHoverBrush" Color="#FF31485D" />
+    <SolidColorBrush x:Key="ProductButtonPressedBrush" Color="#FF172230" />
     <SolidColorBrush x:Key="ProductInputBrush" Color="#FF101923" />
     <SolidColorBrush x:Key="ProductInputHoverBrush" Color="#FF162331" />
     <SolidColorBrush x:Key="ProductBorderBrush" Color="#FF314355" />
@@ -171,7 +174,7 @@
     </Canvas>
 
     <Style x:Key="ProductButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource ProductSurfaceRaisedBrush}" />
+        <Setter Property="Background" Value="{StaticResource ProductButtonBrush}" />
         <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource ProductBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
@@ -209,11 +212,11 @@
         </Setter>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{StaticResource ProductSurfaceHoverBrush}" />
+                <Setter Property="Background" Value="{StaticResource ProductButtonHoverBrush}" />
                 <Setter Property="BorderBrush" Value="{StaticResource ProductBorderStrongBrush}" />
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-                <Setter Property="Background" Value="{StaticResource ProductSurfacePressedBrush}" />
+                <Setter Property="Background" Value="{StaticResource ProductButtonPressedBrush}" />
                 <Setter Property="BorderBrush" Value="{StaticResource ProductAccentBrush}" />
             </Trigger>
             <Trigger Property="IsKeyboardFocused" Value="True">
@@ -620,16 +623,115 @@
         <Setter Property="Padding" Value="12,6" />
     </Style>
 
+    <Style x:Key="CustomSliderThumbStyle" TargetType="Thumb">
+        <Setter Property="Width" Value="14" />
+        <Setter Property="Height" Value="14" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border x:Name="thumb"
+                            Width="14"
+                            Height="14"
+                            Background="{StaticResource ProductTextBrush}"
+                            BorderBrush="{StaticResource ProductAccentBrush}"
+                            BorderThickness="2"
+                            CornerRadius="7"
+                            SnapsToDevicePixels="True" />
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="thumb" Property="Background" Value="{StaticResource ProductAccentHoverBrush}" />
+                            <Setter TargetName="thumb" Property="BorderBrush" Value="{StaticResource ProductTextBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsDragging" Value="True">
+                            <Setter TargetName="thumb" Property="Background" Value="{StaticResource ProductAccentBrush}" />
+                            <Setter TargetName="thumb" Property="BorderBrush" Value="{StaticResource ProductTextBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="CustomSliderFilledTrackStyle" TargetType="RepeatButton">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Height" Value="4" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Border Height="4"
+                            VerticalAlignment="Center"
+                            Background="{StaticResource ProductAccentBrush}"
+                            CornerRadius="2" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="CustomSliderEmptyTrackStyle" TargetType="RepeatButton">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Height" Value="4" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Border Height="4"
+                            VerticalAlignment="Center"
+                            Background="Transparent"
+                            CornerRadius="2" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="CustomSliderStyle" TargetType="Slider">
         <Setter Property="Minimum" Value="1" />
         <Setter Property="Maximum" Value="20" />
         <Setter Property="Value" Value="2" />
         <Setter Property="Width" Value="96" />
         <Setter Property="Height" Value="32" />
-        <Setter Property="Margin" Value="0,2" />
+        <Setter Property="Margin" Value="0" />
         <Setter Property="Foreground" Value="{StaticResource ProductAccentBrush}" />
-        <Setter Property="Background" Value="{StaticResource ProductInputBrush}" />
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="FocusVisualStyle" Value="{StaticResource ProductFocusVisualStyle}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid MinHeight="28" SnapsToDevicePixels="True">
+                        <Border x:Name="rail"
+                                Height="4"
+                                Background="{StaticResource ProductBorderBrush}"
+                                CornerRadius="2"
+                                VerticalAlignment="Center" />
+                        <Track x:Name="PART_Track"
+                               Height="20"
+                               VerticalAlignment="Center">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="Slider.DecreaseLarge"
+                                              Style="{StaticResource CustomSliderFilledTrackStyle}" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="Slider.IncreaseLarge"
+                                              Style="{StaticResource CustomSliderEmptyTrackStyle}" />
+                            </Track.IncreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource CustomSliderThumbStyle}" />
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="rail" Property="Background" Value="{StaticResource ProductBorderStrongBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="rail" Property="Background" Value="{StaticResource ProductDisabledBrush}" />
+                            <Setter Property="Opacity" Value="0.55" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
 </ResourceDictionary>

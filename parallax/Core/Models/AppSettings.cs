@@ -8,6 +8,8 @@ namespace parallax.Core.Models
         [Obsolete("Reserved for future use. Annotation window always opens. Will be wired when skip-annotation mode is implemented.")]
         public bool ShowToolbarAfterCapture { get; set; } = true;
         public bool SaveAutomatically { get; set; } = false;
+        public bool OpenAnnotationEditorAfterScreenshot { get; set; } = true;
+        public bool OpenVideoEditorAfterRecording { get; set; } = true;
         public bool SeparateFolders { get; set; } = false;
         public bool StartWithWindows { get; set; } = false;
         [Obsolete("Reserved for future use. Overlay opacity is fixed in XAML. Will be wired when per-user opacity setting is implemented.")]

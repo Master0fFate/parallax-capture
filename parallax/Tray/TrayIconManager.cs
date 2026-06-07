@@ -172,15 +172,23 @@ namespace parallax.Tray
                     if (_settings.CopyToClipboardAfterCapture)
                         _clipboardService.CopyBitmapToClipboard(bitmap);
 
-                    if (_settings.SaveAutomatically)
+                    bool openEditor = _settings.OpenAnnotationEditorAfterScreenshot;
+                    if (_settings.SaveAutomatically || !openEditor)
                     {
                         string path = _fileService.SaveScreenshot(bitmap);
                         ShowBalloon("Screenshot saved", path);
                     }
 
-                    var annotWindow = new AnnotationWindow(bitmap, _clipboardService, _fileService, _settings.ImageFormat);
-                    annotWindow.Show();
-                    annotWindow.Activate();
+                    if (openEditor)
+                    {
+                        var annotWindow = new AnnotationWindow(bitmap, _clipboardService, _fileService, _settings.ImageFormat);
+                        annotWindow.Show();
+                        annotWindow.Activate();
+                    }
+                    else
+                    {
+                        bitmap.Dispose();
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -211,16 +219,24 @@ namespace parallax.Tray
                     if (_settings.CopyToClipboardAfterCapture)
                         _clipboardService.CopyBitmapToClipboard(bitmap);
 
-                    if (_settings.SaveAutomatically)
+                    bool openEditor = _settings.OpenAnnotationEditorAfterScreenshot;
+                    if (_settings.SaveAutomatically || !openEditor)
                     {
                         string path = _fileService.SaveScreenshot(bitmap);
                         ShowBalloon("Screenshot saved", path);
                     }
 
-                    // Show annotation window directly (no ShowDialog before this, so no flush needed)
-                    var annotWindow = new AnnotationWindow(bitmap, _clipboardService, _fileService, _settings.ImageFormat);
-                    annotWindow.Show();
-                    annotWindow.Activate();
+                    if (openEditor)
+                    {
+                        // Show annotation window directly (no ShowDialog before this, so no flush needed)
+                        var annotWindow = new AnnotationWindow(bitmap, _clipboardService, _fileService, _settings.ImageFormat);
+                        annotWindow.Show();
+                        annotWindow.Activate();
+                    }
+                    else
+                    {
+                        bitmap.Dispose();
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -235,6 +251,13 @@ namespace parallax.Tray
             if (_recorderService.IsRecording)
             {
                 ShowBalloon("Already recording", "Stop the current recording first.");
+                return;
+            }
+
+            if (IsVideoEditorOpen())
+            {
+                _openVideoEditor?.Activate();
+                ShowBalloon("Video editor is open", "Save or close the current edit before starting another recording.");
                 return;
             }
 
@@ -311,31 +334,35 @@ namespace parallax.Tray
                 HideRecordingBorder();
                 UpdateRecordingMenuState();
 
-                _lastRecordingPath = filePath;
-
-                    ShowBalloon("Recording complete", "Open the video editor to save or trim the clip.");
-
-                // Auto-open the video editor with the temp recording
-                try
-                {
-                    // Close previous editor if still open
-                    _openVideoEditor?.Close();
-
-                    // Callback when user saves inside the editor: track the permanent path
-                    var editor = new VideoEditorWindow(filePath, _fileService, permanentPath =>
-                    {
-                        _lastRecordingPath = permanentPath;
-                    });
-                    editor.Closed += (s, e) => _openVideoEditor = null;
-                    _openVideoEditor = editor;
-                    editor.Show();
-                    editor.Activate();
-                }
-                catch (Exception ex)
-                {
-                    ShowBalloon("Video editor error", ex.Message);
-                }
+                HandleRecordingCompletedOnUi(filePath);
             });
+        }
+
+        private async void HandleRecordingCompletedOnUi(string filePath)
+        {
+            _lastRecordingPath = filePath;
+
+            if (!_settings.OpenVideoEditorAfterRecording)
+            {
+                SaveCompletedRecording(filePath, "Recording saved", "Video editor auto-open is off.");
+                return;
+            }
+
+            var ffmpeg = await VideoEditorWindow.EnsureFFmpegReadyWithConsentAsync();
+            if (!ffmpeg.Available)
+            {
+                SaveCompletedRecording(filePath, "Recording saved", ffmpeg.Message);
+                return;
+            }
+
+            try
+            {
+                OpenVideoEditorForPath(filePath, fromRecording: true);
+            }
+            catch (Exception ex)
+            {
+                SaveCompletedRecording(filePath, "Recording saved", $"Video editor could not open: {ex.Message}");
+            }
         }
 
         private void OnRecordingFailed(string error)
@@ -384,12 +411,19 @@ namespace parallax.Tray
         // VIDEO EDITOR
         // ────────────────────────────────────────────
 
-        private void OpenVideoEditor()
+        private async void OpenVideoEditor()
         {
             // If editor is already open (from auto-open after recording), bring to front
-            if (_openVideoEditor != null && _openVideoEditor.IsLoaded)
+            if (IsVideoEditorOpen())
             {
-                _openVideoEditor.Activate();
+                _openVideoEditor?.Activate();
+                return;
+            }
+
+            var ffmpeg = await VideoEditorWindow.EnsureFFmpegReadyWithConsentAsync();
+            if (!ffmpeg.Available)
+            {
+                ShowBalloon("Video editor unavailable", ffmpeg.Message);
                 return;
             }
 
@@ -408,19 +442,57 @@ namespace parallax.Tray
 
             try
             {
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    _openVideoEditor?.Close();
-                    var editor = new VideoEditorWindow(dialog.FileName, _fileService);
-                    editor.Closed += (s, e) => _openVideoEditor = null;
-                    _openVideoEditor = editor;
-                    editor.Show();
-                    editor.Activate();
-                });
+                OpenVideoEditorForPath(dialog.FileName, fromRecording: false);
             }
             catch (Exception ex)
             {
                 ShowBalloon("Video editor error", ex.Message);
+            }
+        }
+
+        private bool IsVideoEditorOpen()
+        {
+            return _openVideoEditor != null && _openVideoEditor.IsLoaded;
+        }
+
+        private void OpenVideoEditorForPath(string filePath, bool fromRecording)
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                _openVideoEditor?.Close();
+                var editor = new VideoEditorWindow(filePath, _fileService, permanentPath =>
+                {
+                    _lastRecordingPath = permanentPath;
+                });
+                editor.Closed += (s, e) => _openVideoEditor = null;
+                _openVideoEditor = editor;
+                editor.Show();
+                editor.Activate();
+                if (fromRecording)
+                {
+                    ShowBalloon("Recording complete", "Video editor is ready.");
+                }
+            });
+        }
+
+        private string? SaveCompletedRecording(string sourcePath, string title, string reason)
+        {
+            try
+            {
+                string savedPath = _fileService.GetVideoFilePath("mp4");
+                System.IO.File.Copy(sourcePath, savedPath, overwrite: false);
+                _lastRecordingPath = savedPath;
+
+                try { System.IO.File.Delete(sourcePath); }
+                catch { /* best-effort cleanup only */ }
+
+                ShowBalloon(title, $"{reason} Saved to {System.IO.Path.GetFileName(savedPath)}.");
+                return savedPath;
+            }
+            catch (Exception ex)
+            {
+                ShowBalloon("Recording kept", $"{reason} Could not move the recording: {ex.Message}");
+                return null;
             }
         }
 

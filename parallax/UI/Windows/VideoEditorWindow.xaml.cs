@@ -11,14 +11,18 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using FFMpegCore;
 using parallax.Core.Services;
+using ShapePath = System.Windows.Shapes.Path;
 
 namespace parallax.UI.Windows
 {
     public partial class VideoEditorWindow : Window, IDisposable
     {
+        public sealed record FFmpegEnsureResult(bool Available, bool UserDeclined, string Message);
+
         // ── File state
         private string _videoPath;
         private readonly FileService _fileService;
@@ -28,7 +32,7 @@ namespace parallax.UI.Windows
         private bool _hasBeenSaved;
 #pragma warning restore CS0414
         private bool _isPlaying = false;
-        private bool _isDraggingSlider = false;
+        private TimelineDragMode _timelineDragMode = TimelineDragMode.None;
         private bool _mediaEnded = false;
         private Duration _naturalDuration = Duration.Automatic;
         private bool _isMuted = false;
@@ -57,6 +61,24 @@ namespace parallax.UI.Windows
         // ── Status auto-fade timer (KAM #4c): stored as field so we cancel before starting a new one
         private DispatcherTimer? _statusTimer;
 
+        private enum TimelineDragMode
+        {
+            None,
+            Playhead,
+            TrimStart,
+            TrimEnd
+        }
+
+        private static readonly Geometry PlayIconGeometry = Geometry.Parse("M 3 2 L 14 8 L 3 14 Z");
+        private static readonly Geometry PauseIconGeometry = Geometry.Parse("M 3 2 H 6 V 14 H 3 Z M 10 2 H 13 V 14 H 10 Z");
+        private static readonly Geometry RestartIconGeometry = Geometry.Parse("M 4 4 V 1 L 1 4 L 4 7 V 5 C 6 3 10 3 12 6 C 14 9 12 13 8 13 C 5.5 13 3.5 11.8 2.5 10");
+        private static readonly Geometry VolumeIconGeometry = Geometry.Parse("M 2 6 H 5 L 9 3 V 13 L 5 10 H 2 Z M 11 5 C 12 6 12.5 7 12.5 8 C 12.5 9 12 10 11 11");
+        private static readonly Geometry MutedIconGeometry = Geometry.Parse("M 2 6 H 5 L 9 3 V 13 L 5 10 H 2 Z M 11 6 L 15 10 M 15 6 L 11 10");
+        private static readonly Geometry SaveIconGeometry = Geometry.Parse("M 3 2 H 13 L 15 4 V 14 H 1 V 2 Z M 4 3 V 6 H 12 V 3 Z M 4 10 H 12 V 14 H 4 Z");
+        private static readonly Geometry FrameIconGeometry = Geometry.Parse("M 2 3 H 14 V 13 H 2 Z M 4 5 H 12 V 11 H 4 Z");
+        private static readonly Geometry GifIconGeometry = Geometry.Parse("M 2 4 H 14 V 12 H 2 Z M 5 6 H 11 M 5 8 H 9 M 5 10 H 12");
+        private static readonly Geometry OpenIconGeometry = Geometry.Parse("M 2 5 H 7 L 8.5 7 H 14 V 13 H 2 Z M 2 4 H 7 L 8 5 H 14");
+
         public VideoEditorWindow(string videoPath, FileService fileService, Action<string>? onSaved = null)
         {
             InitializeComponent();
@@ -74,6 +96,7 @@ namespace parallax.UI.Windows
             // Set default trim to full video
             TxtTrimStart.Text = "00:00";
             TxtTrimOut.Text = "00:00";
+            InitializeIconContent();
 
             _playbackTimer = new DispatcherTimer
             {
@@ -112,6 +135,126 @@ namespace parallax.UI.Windows
         private static string FfplayPath => Path.Combine(ToolsDir, "ffplay.exe");
         private static string FfprobePath => Path.Combine(ToolsDir, "ffprobe.exe");
 
+        public static bool IsFFmpegReady()
+        {
+            try
+            {
+                return TryGetFFmpegPath(out _);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static async Task<FFmpegEnsureResult> EnsureFFmpegReadyWithConsentAsync(Window? owner = null)
+        {
+            if (IsFFmpegReady())
+            {
+                return new FFmpegEnsureResult(true, false, "FFmpeg ready.");
+            }
+
+            MessageBoxResult consent = owner == null
+                ? MessageBox.Show(
+                    "The video editor needs FFmpeg before it can open. Download FFmpeg now?",
+                    "Download FFmpeg?",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question)
+                : MessageBox.Show(
+                    owner,
+                    "The video editor needs FFmpeg before it can open. Download FFmpeg now?",
+                    "Download FFmpeg?",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+            if (consent != MessageBoxResult.Yes)
+            {
+                return new FFmpegEnsureResult(false, true, "Video editor closed because FFmpeg is required.");
+            }
+
+            Window? progressWindow = null;
+            TextBlock? progressText = null;
+            try
+            {
+                progressWindow = CreateFFmpegProgressWindow(owner, out progressText);
+                progressWindow.Show();
+
+                await DownloadFFmpegToolsAsync(status =>
+                {
+                    if (progressText.Dispatcher.CheckAccess())
+                    {
+                        progressText.Text = status;
+                    }
+                    else
+                    {
+                        progressText.Dispatcher.Invoke(() => progressText.Text = status);
+                    }
+                });
+
+                return IsFFmpegReady()
+                    ? new FFmpegEnsureResult(true, false, "FFmpeg ready.")
+                    : new FFmpegEnsureResult(false, false, "FFmpeg install did not produce a working ffmpeg.exe.");
+            }
+            catch (Exception ex)
+            {
+                return new FFmpegEnsureResult(false, false, ToStatusMessage("FFmpeg install failed", ex));
+            }
+            finally
+            {
+                progressWindow?.Close();
+            }
+        }
+
+        private static Window CreateFFmpegProgressWindow(Window? owner, out TextBlock progressText)
+        {
+            progressText = new TextBlock
+            {
+                Text = "Preparing FFmpeg download...",
+                Foreground = System.Windows.Media.Brushes.White,
+                FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
+                FontSize = 13,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 12)
+            };
+
+            var panel = new StackPanel
+            {
+                Margin = new Thickness(18)
+            };
+            panel.Children.Add(new TextBlock
+            {
+                Text = "Installing FFmpeg",
+                Foreground = System.Windows.Media.Brushes.White,
+                FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
+                FontSize = 16,
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 0, 0, 8)
+            });
+            panel.Children.Add(progressText);
+            panel.Children.Add(new ProgressBar
+            {
+                IsIndeterminate = true,
+                Height = 8,
+                Minimum = 0,
+                Maximum = 100
+            });
+
+            var window = new Window
+            {
+                Title = "Installing FFmpeg",
+                Width = 420,
+                Height = 170,
+                ResizeMode = ResizeMode.NoResize,
+                WindowStartupLocation = owner == null ? WindowStartupLocation.CenterScreen : WindowStartupLocation.CenterOwner,
+                Owner = owner,
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(15, 23, 32)),
+                Content = panel,
+                ShowInTaskbar = false
+            };
+
+            return window;
+        }
+
         private Task CheckFFmpegAvailability()
         {
             try
@@ -148,45 +291,18 @@ namespace parallax.UI.Windows
 
             try
             {
-                Directory.CreateDirectory(ToolsDir);
-                string tempRoot = CreateUniqueTempDirectory("ffmpeg");
-                string zipPath = Path.Combine(tempRoot, "ffmpeg.zip");
-                string extractDir = Path.Combine(tempRoot, "extract");
-                Directory.CreateDirectory(extractDir);
+                bool foundFfmpeg = await DownloadFFmpegToolsAsync(status => TxtFFmpegStatus.Text = status);
 
-                TxtFFmpegStatus.Text = "Downloading FFmpeg...";
-
-                try
+                if (foundFfmpeg)
                 {
-                    await DownloadFileWithLimitAsync(FFmpegDownloadUri, zipPath, MaxFFmpegDownloadBytes);
-
-                    TxtFFmpegStatus.Text = "Extracting FFmpeg...";
-                    await Task.Run(() =>
-                    {
-                        System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, extractDir);
-                    });
-
-                    bool foundFfmpeg = await Task.Run(() => CopyExpectedFFmpegBinaries(extractDir));
-
-                    if (foundFfmpeg)
-                    {
-                        GlobalFFOptions.Configure(opt => opt.BinaryFolder = ToolsDir);
-
-                        SetFFmpegAvailableUi();
-                        ShowEditorStatus("FFmpeg and ffplay installed. All codecs supported.", false);
-                    }
-                    else
-                    {
-                        TxtFFmpegStatus.Text = "Extraction failed. Try manual install.";
-                        TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.Red;
-                        ShowEditorStatus("FFmpeg install failed. The archive did not contain ffmpeg.exe.", true);
-                    }
+                    SetFFmpegAvailableUi();
+                    ShowEditorStatus("FFmpeg and ffplay installed. All codecs supported.", false);
                 }
-                finally
+                else
                 {
-                    TryDeleteFile(zipPath);
-                    TryDeleteDirectory(extractDir);
-                    TryDeleteDirectory(tempRoot);
+                    TxtFFmpegStatus.Text = "Extraction failed. Try manual install.";
+                    TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.Red;
+                    ShowEditorStatus("FFmpeg install failed. The archive did not contain ffmpeg.exe.", true);
                 }
             }
             catch (HttpRequestException ex)
@@ -222,11 +338,10 @@ namespace parallax.UI.Windows
             _naturalDuration = VideoPlayer.NaturalDuration;
             if (_naturalDuration.HasTimeSpan)
             {
-                double totalSec = _naturalDuration.TimeSpan.TotalSeconds;
-                TimelineSlider.Maximum = totalSec;
                 TxtTotalTime.Text = FormatTime(_naturalDuration.TimeSpan);
                 TxtTrimOut.Text = FormatTime(_naturalDuration.TimeSpan);
                 UpdateTrimDuration();
+                UpdateTimelineVisuals();
             }
         }
 
@@ -291,16 +406,15 @@ namespace parallax.UI.Windows
 
         private void PlaybackTimer_Tick(object? sender, EventArgs e)
         {
-            if (_isDraggingSlider) return;
+            if (_timelineDragMode != TimelineDragMode.None) return;
             if (VideoPlayer.Source == null) return;
 
             try
             {
                 if (_naturalDuration.HasTimeSpan)
                 {
-                    double pos = VideoPlayer.Position.TotalSeconds;
-                    TimelineSlider.Value = pos;
                     TxtCurrentTime.Text = FormatTime(VideoPlayer.Position);
+                    UpdateTimelineVisuals();
 
                     if (_isPreviewingTrim && VideoPlayer.Position >= _previewTrimEnd)
                     {
@@ -311,21 +425,71 @@ namespace parallax.UI.Windows
             catch { /* clock drift after media end */ }
         }
 
+        private void InitializeIconContent()
+        {
+            BtnRestart.Content = CreateIconLabel(RestartIconGeometry, "Restart");
+            BtnMute.Content = CreateIconLabel(VolumeIconGeometry, "Mute");
+            BtnPreviewTrim.Content = CreateIconLabel(PlayIconGeometry, "Preview");
+            BtnOpenVideo.Content = CreateIconLabel(OpenIconGeometry, "Open");
+            BtnSaveTrimmed.Content = CreateIconLabel(SaveIconGeometry, "Save trim");
+            BtnSaveFrame.Content = CreateIconLabel(FrameIconGeometry, "Frame");
+            BtnExportGif.Content = CreateIconLabel(GifIconGeometry, "GIF");
+            BtnSaveOriginal.Content = CreateIconLabel(SaveIconGeometry, "Save original");
+            UpdatePlayButton();
+        }
+
+        private static StackPanel CreateIconLabel(Geometry iconGeometry, string label)
+        {
+            return new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Children =
+                {
+                    new ShapePath
+                    {
+                        Data = iconGeometry,
+                        Width = 14,
+                        Height = 14,
+                        Stretch = Stretch.Uniform,
+                        Stroke = System.Windows.Media.Brushes.White,
+                        Fill = System.Windows.Media.Brushes.Transparent,
+                        StrokeThickness = 1.8,
+                        StrokeStartLineCap = PenLineCap.Round,
+                        StrokeEndLineCap = PenLineCap.Round,
+                        StrokeLineJoin = PenLineJoin.Round,
+                        Margin = new Thickness(0, 0, 7, 0),
+                        VerticalAlignment = VerticalAlignment.Center
+                    },
+                    new TextBlock
+                    {
+                        Text = label,
+                        Foreground = System.Windows.Media.Brushes.White,
+                        FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
+                        FontSize = 12,
+                        FontWeight = FontWeights.SemiBold,
+                        VerticalAlignment = VerticalAlignment.Center
+                    }
+                }
+            };
+        }
+
         private void UpdatePlayButton()
         {
             if (_mediaEnded)
             {
-                BtnPlayPause.Content = "\u25B6  Replay";
+                BtnPlayPause.Content = CreateIconLabel(PlayIconGeometry, "Replay");
                 PlayOverlay.Visibility = Visibility.Visible;
             }
             else if (_isPlaying)
             {
-                BtnPlayPause.Content = "\u23F8  Pause";
+                BtnPlayPause.Content = CreateIconLabel(PauseIconGeometry, "Pause");
                 PlayOverlay.Visibility = Visibility.Collapsed;
             }
             else
             {
-                BtnPlayPause.Content = "\u25B6  Play";
+                BtnPlayPause.Content = CreateIconLabel(PlayIconGeometry, "Play");
                 PlayOverlay.Visibility = Visibility.Visible;
             }
         }
@@ -383,29 +547,143 @@ namespace parallax.UI.Windows
         // TIMELINE SEEKING
         // ────────────────────────────────────────────
 
-        private void TimelineSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (_isDraggingSlider && _naturalDuration.HasTimeSpan)
-            {
-                var pos = TimeSpan.FromSeconds(e.NewValue);
-                VideoPlayer.Position = pos;
-                TxtCurrentTime.Text = FormatTime(pos);
-            }
-        }
+        private void TrimTimelineCanvas_SizeChanged(object sender, SizeChangedEventArgs e) => UpdateTimelineVisuals();
 
-        // We track mouse down/up on the slider for scrubbing
-        private void TimelineSlider_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        private void TrimTimelineCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            if (!_naturalDuration.HasTimeSpan) return;
+
             _isPreviewingTrim = false;
-            _isDraggingSlider = true;
             _playbackTimer.Stop();
+            System.Windows.Point point = e.GetPosition(TrimTimelineCanvas);
+            double startX = TimeToTimelineX(ParseTrimTime(TxtTrimStart.Text) ?? TimeSpan.Zero);
+            double endX = TimeToTimelineX(ParseTrimTime(TxtTrimOut.Text) ?? _naturalDuration.TimeSpan);
+
+            if (Math.Abs(point.X - startX) <= 14)
+                _timelineDragMode = TimelineDragMode.TrimStart;
+            else if (Math.Abs(point.X - endX) <= 14)
+                _timelineDragMode = TimelineDragMode.TrimEnd;
+            else
+                _timelineDragMode = TimelineDragMode.Playhead;
+
+            TrimTimelineCanvas.CaptureMouse();
+            UpdateTimelineFromPoint(point.X);
+            e.Handled = true;
         }
 
-        private void TimelineSlider_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+        private void TrimTimelineCanvas_MouseMove(object sender, MouseEventArgs e)
         {
-            _isDraggingSlider = false;
+            if (_timelineDragMode == TimelineDragMode.None || !_naturalDuration.HasTimeSpan) return;
+            UpdateTimelineFromPoint(e.GetPosition(TrimTimelineCanvas).X);
+            e.Handled = true;
+        }
+
+        private void TrimTimelineCanvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (_timelineDragMode == TimelineDragMode.None) return;
+
+            _timelineDragMode = TimelineDragMode.None;
+            TrimTimelineCanvas.ReleaseMouseCapture();
             if (_isPlaying)
                 _playbackTimer.Start();
+            e.Handled = true;
+        }
+
+        private void UpdateTimelineFromPoint(double x)
+        {
+            if (!_naturalDuration.HasTimeSpan) return;
+
+            TimeSpan value = TimelineXToTime(x);
+            TimeSpan start = ParseTrimTime(TxtTrimStart.Text) ?? TimeSpan.Zero;
+            TimeSpan end = ParseTrimTime(TxtTrimOut.Text) ?? _naturalDuration.TimeSpan;
+            TimeSpan minGap = TimeSpan.FromMilliseconds(100);
+
+            switch (_timelineDragMode)
+            {
+                case TimelineDragMode.TrimStart:
+                    value = ClampTime(value, TimeSpan.Zero, end - minGap);
+                    TxtTrimStart.Text = FormatTime(value);
+                    break;
+                case TimelineDragMode.TrimEnd:
+                    value = ClampTime(value, start + minGap, _naturalDuration.TimeSpan);
+                    TxtTrimOut.Text = FormatTime(value);
+                    break;
+                case TimelineDragMode.Playhead:
+                    SetPlaybackPosition(value);
+                    break;
+            }
+
+            UpdateTrimDuration();
+            UpdateTimelineVisuals();
+        }
+
+        private void SetPlaybackPosition(TimeSpan position)
+        {
+            TimeSpan clamped = ClampTime(position, TimeSpan.Zero, _naturalDuration.HasTimeSpan ? _naturalDuration.TimeSpan : position);
+            _mediaEnded = false;
+            VideoPlayer.Position = clamped;
+            TxtCurrentTime.Text = FormatTime(clamped);
+            UpdatePlayButton();
+            UpdateTimelineVisuals();
+        }
+
+        private void UpdateTimelineVisuals()
+        {
+            if (TrimTimelineCanvas == null || TimelineTrack == null) return;
+
+            double width = Math.Max(1, TrimTimelineCanvas.ActualWidth - 24);
+            const double left = 12;
+            Canvas.SetLeft(TimelineTrack, left);
+            TimelineTrack.Width = width;
+
+            TimeSpan duration = _naturalDuration.HasTimeSpan && _naturalDuration.TimeSpan > TimeSpan.Zero
+                ? _naturalDuration.TimeSpan
+                : TimeSpan.FromSeconds(1);
+            TimeSpan trimStart = ClampTime(ParseTrimTime(TxtTrimStart.Text) ?? TimeSpan.Zero, TimeSpan.Zero, duration);
+            TimeSpan trimEnd = ClampTime(ParseTrimTime(TxtTrimOut.Text) ?? duration, TimeSpan.Zero, duration);
+            if (trimEnd < trimStart)
+            {
+                (trimStart, trimEnd) = (trimEnd, trimStart);
+            }
+
+            double startX = TimeToTimelineX(trimStart);
+            double endX = TimeToTimelineX(trimEnd);
+            double playheadX = TimeToTimelineX(ClampTime(VideoPlayer.Position, TimeSpan.Zero, duration));
+
+            Canvas.SetLeft(TimelineSelectedRange, startX);
+            TimelineSelectedRange.Width = Math.Max(2, endX - startX);
+            Canvas.SetLeft(TrimInHandle, startX - (TrimInHandle.Width / 2));
+            Canvas.SetLeft(TrimOutHandle, endX - (TrimOutHandle.Width / 2));
+            TimelinePlayhead.X1 = playheadX;
+            TimelinePlayhead.X2 = playheadX;
+        }
+
+        private double TimeToTimelineX(TimeSpan time)
+        {
+            double width = Math.Max(1, TrimTimelineCanvas.ActualWidth - 24);
+            double durationSeconds = _naturalDuration.HasTimeSpan && _naturalDuration.TimeSpan.TotalSeconds > 0
+                ? _naturalDuration.TimeSpan.TotalSeconds
+                : 1;
+            double ratio = Math.Clamp(time.TotalSeconds / durationSeconds, 0, 1);
+            return 12 + (ratio * width);
+        }
+
+        private TimeSpan TimelineXToTime(double x)
+        {
+            double width = Math.Max(1, TrimTimelineCanvas.ActualWidth - 24);
+            double ratio = Math.Clamp((x - 12) / width, 0, 1);
+            double durationSeconds = _naturalDuration.HasTimeSpan && _naturalDuration.TimeSpan.TotalSeconds > 0
+                ? _naturalDuration.TimeSpan.TotalSeconds
+                : 1;
+            return TimeSpan.FromSeconds(ratio * durationSeconds);
+        }
+
+        private static TimeSpan ClampTime(TimeSpan value, TimeSpan min, TimeSpan max)
+        {
+            if (max < min) max = min;
+            if (value < min) return min;
+            if (value > max) return max;
+            return value;
         }
 
         // ────────────────────────────────────────────
@@ -416,7 +694,9 @@ namespace parallax.UI.Windows
         {
             _isMuted = !_isMuted;
             VideoPlayer.Volume = _isMuted ? 0.0 : 1.0;
-            BtnMute.Content = _isMuted ? "🔇  Unmute" : "🔊  Mute";
+            BtnMute.Content = _isMuted
+                ? CreateIconLabel(MutedIconGeometry, "Unmute")
+                : CreateIconLabel(VolumeIconGeometry, "Mute");
         }
 
         // ────────────────────────────────────────────
@@ -453,9 +733,7 @@ namespace parallax.UI.Windows
             _previewTrimEnd = trimEnd;
             _mediaEnded = false;
 
-            VideoPlayer.Position = trimStart;
-            TimelineSlider.Value = trimStart.TotalSeconds;
-            TxtCurrentTime.Text = FormatTime(trimStart);
+            SetPlaybackPosition(trimStart);
             VideoPlayer.Play();
             _isPlaying = true;
             _playbackTimer.Start();
@@ -503,11 +781,7 @@ namespace parallax.UI.Windows
             }
 
             _isPreviewingTrim = false;
-            _mediaEnded = false;
-            VideoPlayer.Position = position.Value;
-            TimelineSlider.Value = position.Value.TotalSeconds;
-            TxtCurrentTime.Text = FormatTime(position.Value);
-            UpdatePlayButton();
+            SetPlaybackPosition(position.Value);
         }
 
         private void NudgeTrimStart(double seconds)
@@ -545,9 +819,7 @@ namespace parallax.UI.Windows
         {
             _isPreviewingTrim = false;
             VideoPlayer.Pause();
-            VideoPlayer.Position = _previewTrimEnd;
-            TimelineSlider.Value = _previewTrimEnd.TotalSeconds;
-            TxtCurrentTime.Text = FormatTime(_previewTrimEnd);
+            SetPlaybackPosition(_previewTrimEnd);
             _isPlaying = false;
             _playbackTimer.Stop();
             UpdatePlayButton();
@@ -615,6 +887,13 @@ namespace parallax.UI.Windows
         }
 
         // Updates the trim duration display based on current From/To values
+        private void TrimTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!IsLoaded) return;
+            UpdateTrimDuration();
+            UpdateTimelineVisuals();
+        }
+
         private void UpdateTrimDuration()
         {
             var start = ParseTrimTime(TxtTrimStart.Text);
@@ -744,7 +1023,7 @@ namespace parallax.UI.Windows
             finally
             {
                 BtnSaveTrimmed.IsEnabled = _ffmpegAvailable;
-                BtnSaveTrimmed.Content = "Save Trimmed";
+                BtnSaveTrimmed.Content = CreateIconLabel(SaveIconGeometry, "Save trim");
             }
         }
 
@@ -788,7 +1067,7 @@ namespace parallax.UI.Windows
             finally
             {
                 BtnSaveFrame.IsEnabled = true;
-                BtnSaveFrame.Content = "Save Frame";
+                BtnSaveFrame.Content = CreateIconLabel(FrameIconGeometry, "Frame");
             }
         }
 
@@ -819,10 +1098,10 @@ namespace parallax.UI.Windows
                     "Export GIF",
                     outputPath,
                     "-n",
-                    "-ss", start,
                     "-i", _videoPath,
+                    "-ss", start,
                     "-t", duration,
-                    "-vf", "fps=12,scale=720:-1:flags=lanczos",
+                    "-filter_complex", "[0:v]fps=12,scale=720:-2:flags=lanczos,split[v1][v2];[v1]palettegen=max_colors=128[p];[v2][p]paletteuse=dither=bayer:bayer_scale=5",
                     "-loop", "0",
                     outputPath);
 
@@ -835,7 +1114,7 @@ namespace parallax.UI.Windows
             finally
             {
                 BtnExportGif.IsEnabled = true;
-                BtnExportGif.Content = "Export GIF";
+                BtnExportGif.Content = CreateIconLabel(GifIconGeometry, "GIF");
             }
         }
 
@@ -917,6 +1196,42 @@ namespace parallax.UI.Windows
             string directory = Path.Combine(tempRoot, $"{prefix}_{Guid.NewGuid():N}");
             Directory.CreateDirectory(directory);
             return directory;
+        }
+
+        private static async Task<bool> DownloadFFmpegToolsAsync(Action<string>? reportStatus = null)
+        {
+            Directory.CreateDirectory(ToolsDir);
+            string tempRoot = CreateUniqueTempDirectory("ffmpeg");
+            string zipPath = Path.Combine(tempRoot, "ffmpeg.zip");
+            string extractDir = Path.Combine(tempRoot, "extract");
+            Directory.CreateDirectory(extractDir);
+
+            try
+            {
+                reportStatus?.Invoke("Downloading FFmpeg...");
+                await DownloadFileWithLimitAsync(FFmpegDownloadUri, zipPath, MaxFFmpegDownloadBytes);
+
+                reportStatus?.Invoke("Extracting FFmpeg...");
+                await Task.Run(() =>
+                {
+                    System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, extractDir);
+                });
+
+                reportStatus?.Invoke("Installing FFmpeg tools...");
+                bool foundFfmpeg = await Task.Run(() => CopyExpectedFFmpegBinaries(extractDir));
+                if (foundFfmpeg)
+                {
+                    GlobalFFOptions.Configure(opt => opt.BinaryFolder = ToolsDir);
+                }
+
+                return foundFfmpeg;
+            }
+            finally
+            {
+                TryDeleteFile(zipPath);
+                TryDeleteDirectory(extractDir);
+                TryDeleteDirectory(tempRoot);
+            }
         }
 
         private static async Task DownloadFileWithLimitAsync(Uri url, string destinationPath, long maxBytes)
@@ -1294,8 +1609,7 @@ namespace parallax.UI.Windows
             TxtTrimDuration.Text = "00:00";
             TxtCurrentTime.Text = "00:00";
             TxtTotalTime.Text = "00:00";
-            TimelineSlider.Value = 0;
-            TimelineSlider.Maximum = 1;
+            UpdateTimelineVisuals();
             PlayOverlay.Visibility = Visibility.Visible;
 
             // Update display

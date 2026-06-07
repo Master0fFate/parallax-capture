@@ -95,6 +95,107 @@ public class ReleaseVerificationTests
         Assert.Contains("Until signature or hash verification exists", design);
     }
 
+    [Fact]
+    public void Tray_UsesEditorAutoOpenSettingsAndFfmpegGate()
+    {
+        string tray = ReadSource("TrayIconManager.cs");
+
+        Assert.Contains("OpenAnnotationEditorAfterScreenshot", tray);
+        Assert.Contains("OpenVideoEditorAfterRecording", tray);
+        Assert.Contains("EnsureFFmpegReadyWithConsentAsync", tray);
+        Assert.Contains("SaveCompletedRecording", tray);
+        Assert.Contains("IsVideoEditorOpen", tray);
+        Assert.Contains("Save or close the current edit before starting another recording", tray);
+    }
+
+    [Fact]
+    public void VideoEditor_UsesTimelineHandlesInsteadOfTextHeavyTrimButtons()
+    {
+        string xaml = ReadSource("VideoEditorWindow.xaml");
+        string code = ReadSource("VideoEditorWindow.xaml.cs");
+
+        Assert.Contains("TrimTimelineCanvas", xaml);
+        Assert.Contains("TrimInHandle", xaml);
+        Assert.Contains("TrimOutHandle", xaml);
+        Assert.Contains("TimelinePlayhead", xaml);
+        Assert.Contains("TrimTimelineCanvas_MouseLeftButtonDown", code);
+        Assert.Contains("UpdateTimelineFromPoint", code);
+        Assert.DoesNotContain("Mark In", xaml);
+        Assert.DoesNotContain("Jump In", xaml);
+        Assert.DoesNotContain("Mark Out", xaml);
+        Assert.DoesNotContain("Jump Out", xaml);
+        Assert.DoesNotContain("🔊", xaml + code);
+        Assert.DoesNotContain("🔇", xaml + code);
+    }
+
+    [Fact]
+    public void VideoEditor_GifExportUsesFullSelectedRangeAndPalettePipeline()
+    {
+        string code = ReadSource("VideoEditorWindow.xaml.cs");
+
+        Assert.Contains("Export GIF", code);
+        Assert.Contains("\"-i\", _videoPath", code);
+        Assert.Contains("\"-ss\", start", code);
+        Assert.Contains("\"-t\", duration", code);
+        Assert.Contains("\"-filter_complex\"", code);
+        Assert.Contains("palettegen", code);
+        Assert.Contains("paletteuse", code);
+        Assert.Contains("\"-loop\", \"0\"", code);
+    }
+
+    [Fact]
+    public void AnnotationZoomControls_UseVisibleVectorContent()
+    {
+        string xaml = ReadSource("AnnotationWindow.xaml");
+
+        Assert.Contains("BtnZoomOut", xaml);
+        Assert.Contains("BtnZoomIn", xaml);
+        Assert.Contains("M 2 8 L 14 8", xaml);
+        Assert.Contains("M 8 2 L 8 14", xaml);
+        Assert.Contains("ProductTextBrush", xaml);
+    }
+
+    [Fact]
+    public void AnnotationBlur_UsesSnapshotPixelsInsteadOfOpacityErasing()
+    {
+        string code = ReadSource("AnnotationWindow.xaml.cs");
+
+        Assert.Contains("var blurSnapshot = RenderFinalImage();", code);
+        Assert.Contains("new ImageBrush(blurSnapshot)", code);
+        Assert.Contains("Opacity = 1.0", code);
+        Assert.DoesNotContain("Visual = ScreenshotImage", code);
+    }
+
+    [Fact]
+    public void AnnotationTextToolbar_SupportsRichFormattingAndMoveHandle()
+    {
+        string xaml = ReadSource("AnnotationWindow.xaml");
+        string code = ReadSource("AnnotationWindow.xaml.cs");
+
+        Assert.Contains("FloatingTextToolbar", xaml);
+        Assert.Contains("TextMoveHandle", xaml);
+        Assert.Contains("TextFormatButton_Click", xaml + code);
+        Assert.Contains("TextFontFamily_SelectionChanged", xaml + code);
+        Assert.Contains("TextColorButton_Click", xaml + code);
+        Assert.Contains("RichTextBox", code);
+        Assert.Contains("ApplyTextSelectionValue", code);
+        Assert.Contains("Inline.TextDecorationsProperty", code);
+        Assert.Contains("TextMoveHandle_MouseMove", code);
+        Assert.Contains("TextElement.FontSizeProperty", code);
+    }
+
+    [Fact]
+    public void AnnotationStrokeSlider_UsesCenteredCustomTemplate()
+    {
+        string styles = ReadSource("DefaultStyles.xaml");
+
+        Assert.Contains("CustomSliderThumbStyle", styles);
+        Assert.Contains("CustomSliderFilledTrackStyle", styles);
+        Assert.Contains("PART_Track", styles);
+        Assert.Contains("VerticalAlignment=\"Center\"", styles);
+        Assert.Contains("Command=\"Slider.DecreaseLarge\"", styles);
+    }
+
     private static string ReadSource(string fileName)
     {
         string repoRoot = FindRepoRoot();
