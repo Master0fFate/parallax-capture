@@ -49,7 +49,7 @@
         </Style>
 
         <Style x:Key="TrimTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource ProductTextBoxStyle}">
-            <Setter Property="Width" Value="92" />
+            <Setter Property="Width" Value="112" />
             <Setter Property="MinHeight" Value="42" />
             <Setter Property="Height" Value="42" />
             <Setter Property="FontFamily" Value="Consolas" />
@@ -221,7 +221,7 @@
                                     VerticalAlignment="Center"
                                     Margin="12,0">
                             <TextBlock x:Name="TxtCurrentTime"
-                                       Text="00:00"
+                                       Text="00:00.000"
                                        Style="{StaticResource EditorMonoTextStyle}" />
                             <TextBlock Text=" / "
                                        Foreground="{StaticResource ProductTextSubtleBrush}"
@@ -229,7 +229,7 @@
                                        FontFamily="Consolas"
                                        VerticalAlignment="Center" />
                             <TextBlock x:Name="TxtTotalTime"
-                                       Text="00:00"
+                                       Text="00:00.000"
                                        Style="{StaticResource EditorMonoTextStyle}" />
                         </StackPanel>
 
@@ -346,7 +346,7 @@
                                    VerticalAlignment="Center"
                                    Margin="0,0,8,0" />
                         <TextBox x:Name="TxtTrimStart"
-                                 Text="00:00"
+                                 Text="00:00.000"
                                  TextChanged="TrimTextBox_TextChanged"
                                  Style="{StaticResource TrimTextBoxStyle}" />
                     </StackPanel>
@@ -357,7 +357,7 @@
                                    VerticalAlignment="Center"
                                    Margin="0,0,8,0" />
                         <TextBox x:Name="TxtTrimOut"
-                                 Text="00:00"
+                                 Text="00:00.000"
                                  TextChanged="TrimTextBox_TextChanged"
                                  Style="{StaticResource TrimTextBoxStyle}" />
                     </StackPanel>
@@ -378,7 +378,7 @@
                                        VerticalAlignment="Center"
                                        Margin="0,0,8,0" />
                             <TextBlock x:Name="TxtTrimDuration"
-                                       Text="00:00"
+                                       Text="00:00.000"
                                        Foreground="{StaticResource ProductSuccessBrush}"
                                        FontSize="13"
                                        FontWeight="Bold"

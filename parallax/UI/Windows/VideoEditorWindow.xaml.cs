@@ -95,8 +95,8 @@ namespace parallax.UI.Windows
             TxtFileName.Text = Path.GetFileName(videoPath);
 
             // Set default trim to full video
-            TxtTrimStart.Text = "00:00";
-            TxtTrimOut.Text = "00:00";
+            TxtTrimStart.Text = FormatTimelineTime(TimeSpan.Zero);
+            TxtTrimOut.Text = FormatTimelineTime(TimeSpan.Zero);
             InitializeIconContent();
 
             _playbackTimer = new DispatcherTimer
@@ -681,10 +681,10 @@ namespace parallax.UI.Windows
         private double TimeToTimelineX(TimeSpan time)
         {
             double width = Math.Max(1, TrimTimelineCanvas.ActualWidth - 24);
-            double durationSeconds = _naturalDuration.HasTimeSpan && _naturalDuration.TimeSpan.TotalSeconds > 0
-                ? _naturalDuration.TimeSpan.TotalSeconds
-                : 1;
-            double ratio = Math.Clamp(time.TotalSeconds / durationSeconds, 0, 1);
+            TimeSpan duration = _naturalDuration.HasTimeSpan && _naturalDuration.TimeSpan > TimeSpan.Zero
+                ? _naturalDuration.TimeSpan
+                : TimeSpan.FromSeconds(1);
+            double ratio = Math.Clamp((double)time.Ticks / duration.Ticks, 0, 1);
             return 12 + (ratio * width);
         }
 
@@ -692,10 +692,10 @@ namespace parallax.UI.Windows
         {
             double width = Math.Max(1, TrimTimelineCanvas.ActualWidth - 24);
             double ratio = Math.Clamp((x - 12) / width, 0, 1);
-            double durationSeconds = _naturalDuration.HasTimeSpan && _naturalDuration.TimeSpan.TotalSeconds > 0
-                ? _naturalDuration.TimeSpan.TotalSeconds
-                : 1;
-            return TimeSpan.FromSeconds(ratio * durationSeconds);
+            TimeSpan duration = _naturalDuration.HasTimeSpan && _naturalDuration.TimeSpan > TimeSpan.Zero
+                ? _naturalDuration.TimeSpan
+                : TimeSpan.FromSeconds(1);
+            return TimeSpan.FromTicks((long)Math.Round(duration.Ticks * ratio));
         }
 
         private static TimeSpan ClampTime(TimeSpan value, TimeSpan min, TimeSpan max)
@@ -790,7 +790,7 @@ namespace parallax.UI.Windows
             var position = ParseTrimTime(trimText);
             if (position == null)
             {
-                ShowEditorStatus($"Invalid {label}. Use MM:SS, HH:MM:SS, or seconds.", true);
+                ShowEditorStatus($"Invalid {label}. Use MM:SS.fff, HH:MM:SS.fff, or seconds.", true);
                 return;
             }
 
@@ -856,7 +856,7 @@ namespace parallax.UI.Windows
             var parsedEnd = ParseTrimTime(TxtTrimOut.Text);
             if (parsedStart == null || parsedEnd == null)
             {
-                errorMessage = "Invalid trim times. Use MM:SS, HH:MM:SS, or seconds.";
+                errorMessage = "Invalid trim times. Use MM:SS.fff, HH:MM:SS.fff, or seconds.";
                 return false;
             }
 
@@ -926,12 +926,17 @@ namespace parallax.UI.Windows
             }
             else
             {
-                TxtTrimDuration.Text = "00:00";
+                TxtTrimDuration.Text = FormatTimelineTime(TimeSpan.Zero);
                 TxtTrimDuration.Foreground = ThemeBrush("ProductDangerBrush", System.Windows.Media.Brushes.OrangeRed);
             }
         }
 
         private TimeSpan? ParseTrimTime(string text)
+        {
+            return ParseTimelineTime(text);
+        }
+
+        public static TimeSpan? ParseTimelineTime(string text)
         {
             text = text.Trim();
             if (string.IsNullOrEmpty(text))
@@ -942,7 +947,7 @@ namespace parallax.UI.Windows
             string[] minuteParts = text.Split(':');
             if (minuteParts.Length == 2
                 && int.TryParse(minuteParts[0], NumberStyles.None, CultureInfo.InvariantCulture, out int totalMinutes)
-                && int.TryParse(minuteParts[1], NumberStyles.None, CultureInfo.InvariantCulture, out int secondsPart)
+                && double.TryParse(minuteParts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double secondsPart)
                 && totalMinutes >= 0
                 && secondsPart is >= 0 and < 60)
             {
@@ -955,6 +960,14 @@ namespace parallax.UI.Windows
                 @"mm\:ss",
                 @"h\:mm\:ss",
                 @"hh\:mm\:ss",
+                @"m\:ss\.f",
+                @"mm\:ss\.f",
+                @"h\:mm\:ss\.f",
+                @"hh\:mm\:ss\.f",
+                @"m\:ss\.ff",
+                @"mm\:ss\.ff",
+                @"h\:mm\:ss\.ff",
+                @"hh\:mm\:ss\.ff",
                 @"m\:ss\.fff",
                 @"mm\:ss\.fff",
                 @"h\:mm\:ss\.fff",
@@ -964,7 +977,6 @@ namespace parallax.UI.Windows
             if (TimeSpan.TryParseExact(text, formats, CultureInfo.InvariantCulture, out var result))
                 return result;
 
-            // Also try parsing as seconds
             if (double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds))
                 return TimeSpan.FromSeconds(seconds);
 
@@ -1562,7 +1574,17 @@ namespace parallax.UI.Windows
 
         private static string FormatTime(TimeSpan time)
         {
-            return $"{(int)time.TotalMinutes:D2}:{time.Seconds:D2}";
+            return FormatTimelineTime(time);
+        }
+
+        public static string FormatTimelineTime(TimeSpan time)
+        {
+            if (time < TimeSpan.Zero)
+                time = TimeSpan.Zero;
+
+            return time.TotalHours >= 1
+                ? $"{(int)time.TotalHours:D2}:{time.Minutes:D2}:{time.Seconds:D2}.{time.Milliseconds:D3}"
+                : $"{(int)time.TotalMinutes:D2}:{time.Seconds:D2}.{time.Milliseconds:D3}";
         }
 
         private void ShowEditorStatus(string message, bool isError)
@@ -1624,11 +1646,11 @@ namespace parallax.UI.Windows
             _naturalDuration = Duration.Automatic;
 
             // Reset trim
-            TxtTrimStart.Text = "00:00";
-            TxtTrimOut.Text = "00:00";
-            TxtTrimDuration.Text = "00:00";
-            TxtCurrentTime.Text = "00:00";
-            TxtTotalTime.Text = "00:00";
+            TxtTrimStart.Text = FormatTimelineTime(TimeSpan.Zero);
+            TxtTrimOut.Text = FormatTimelineTime(TimeSpan.Zero);
+            TxtTrimDuration.Text = FormatTimelineTime(TimeSpan.Zero);
+            TxtCurrentTime.Text = FormatTimelineTime(TimeSpan.Zero);
+            TxtTotalTime.Text = FormatTimelineTime(TimeSpan.Zero);
             UpdateTimelineVisuals();
             PlayOverlay.Visibility = Visibility.Visible;
 

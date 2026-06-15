@@ -84,7 +84,7 @@ namespace parallax
             // 5. Register global hotkeys
             _hotkeyManager = new HotkeyManager();
             _hotkeyManager.Initialize(_backgroundWindow);
-            var warnings = RegisterConfiguredHotkeys(showWarnings: true);
+            var warnings = RegisterConfiguredHotkeys(showWarnings: false);
 
             // 6. Show welcome balloon — note which hotkeys are actually active
             string balloonMsg = warnings.Count == 0

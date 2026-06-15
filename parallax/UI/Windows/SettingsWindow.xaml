@@ -123,37 +123,56 @@
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem Header="Appearance">
+            <TabItem Header="Themes">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
                         <Border Style="{StaticResource ProductSectionBorderStyle}" Margin="0,0,0,12">
                             <StackPanel>
-                                <TextBlock Text="Theme"
+                                <TextBlock Text="Theme mode"
                                            Style="{StaticResource ProductSectionHeaderTextStyle}" />
-                                <TextBlock Text="Choose the color mode and theme family used by settings, editors, recording controls, and tray menus."
+                                <TextBlock Text="Switch the app between dark and light palettes. Theme entries below include the matching variant names."
                                            TextWrapping="Wrap"
                                            Style="{StaticResource ProductCaptionTextStyle}"
                                            Margin="0,4,0,12" />
 
                                 <CheckBox x:Name="ChkUseDarkMode"
                                           Content="Use dark mode"
+                                          Checked="ThemeMode_Changed"
+                                          Unchecked="ThemeMode_Changed"
                                           Style="{StaticResource ProductCheckBoxStyle}" />
+                            </StackPanel>
+                        </Border>
 
-                                <TextBlock Text="Theme family"
+                        <Border Style="{StaticResource ProductSectionBorderStyle}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Theme preset"
+                                           Style="{StaticResource ProductSectionHeaderTextStyle}" />
+                                <TextBlock Text="Pick the exact theme variant to use across settings, editors, recording controls, overlays, and tray menus."
+                                           TextWrapping="Wrap"
+                                           Style="{StaticResource ProductCaptionTextStyle}"
+                                           Margin="0,4,0,12" />
+
+                                <TextBlock Text="Preset"
                                            Style="{StaticResource ProductSectionLabelStyle}"
-                                           Margin="0,12,0,4" />
-                                <ComboBox x:Name="CmbThemeFamily"
-                                          Width="240"
+                                           Margin="0,0,0,4" />
+                                <ComboBox x:Name="CmbThemePreset"
+                                          Width="260"
                                           HorizontalAlignment="Left"
+                                          SelectionChanged="ThemePreset_Changed"
                                           Style="{StaticResource ProductComboBoxStyle}">
-                                    <ComboBoxItem Content="Material 3" Tag="Material 3" IsSelected="True" />
-                                    <ComboBoxItem Content="Catppuccin" Tag="Catppuccin" />
-                                    <ComboBoxItem Content="shadCN" Tag="shadCN" />
-                                    <ComboBoxItem Content="GitHub" Tag="GitHub" />
+                                    <ComboBoxItem Content="Material 3 Dark" Tag="Material 3|Dark" IsSelected="True" />
+                                    <ComboBoxItem Content="Material 3 Light" Tag="Material 3|Light" />
+                                    <ComboBoxItem Content="Catppuccin Mocha" Tag="Catppuccin|Dark" />
+                                    <ComboBoxItem Content="Catppuccin Latte" Tag="Catppuccin|Light" />
+                                    <ComboBoxItem Content="shadCN Dark" Tag="shadCN|Dark" />
+                                    <ComboBoxItem Content="shadCN Light" Tag="shadCN|Light" />
+                                    <ComboBoxItem Content="GitHub Dark" Tag="GitHub|Dark" />
+                                    <ComboBoxItem Content="GitHub Light" Tag="GitHub|Light" />
                                 </ComboBox>
 
-                                <TextBlock Text="Catppuccin switches between Latte in light mode and Mocha in dark mode. Other families provide matched light and dark palettes."
+                                <TextBlock x:Name="TxtThemeSummary"
+                                           Text="Material 3 Dark is selected."
                                            TextWrapping="Wrap"
                                            Style="{StaticResource ProductCaptionTextStyle}"
                                            Margin="0,8,0,0" />
@@ -164,7 +183,7 @@
                             <StackPanel>
                                 <TextBlock Text="Preview"
                                            Style="{StaticResource ProductSectionHeaderTextStyle}" />
-                                <TextBlock Text="The preview reflects the currently applied theme. Save settings to apply a new selection."
+                                <TextBlock Text="The preview uses the active theme resources. Save settings to apply your selection."
                                            TextWrapping="Wrap"
                                            Style="{StaticResource ProductCaptionTextStyle}"
                                            Margin="0,4,0,12" />
@@ -182,7 +201,7 @@
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="Parallax Capture"
                                                        Style="{StaticResource ProductSectionHeaderTextStyle}" />
-                                            <TextBlock Text="Material-inspired surfaces, clear focus states, and restrained accent color."
+                                            <TextBlock Text="Theme resources drive surfaces, focus states, status colors, and accents."
                                                        TextWrapping="Wrap"
                                                        Style="{StaticResource ProductCaptionTextStyle}"
                                                        Margin="0,3,0,0" />

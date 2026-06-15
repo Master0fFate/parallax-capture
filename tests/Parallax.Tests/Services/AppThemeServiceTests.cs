@@ -58,4 +58,19 @@ public class AppThemeServiceTests
             Assert.True(palette.Brushes.ContainsKey(key), $"Missing {key}");
         }
     }
+
+    [Theory]
+    [InlineData("Material 3", "Dark", "Material 3 Dark")]
+    [InlineData("Material 3", "Light", "Material 3 Light")]
+    [InlineData("Catppuccin", "Dark", "Catppuccin Mocha")]
+    [InlineData("Catppuccin", "Light", "Catppuccin Latte")]
+    [InlineData("shadCN", "Dark", "shadCN Dark")]
+    [InlineData("shadCN", "Light", "shadCN Light")]
+    [InlineData("GitHub", "Dark", "GitHub Dark")]
+    [InlineData("GitHub", "Light", "GitHub Light")]
+    public void GetPalette_UsesConcreteLightAndDarkVariantNames(string family, string mode, string expectedDisplayName)
+    {
+        var palette = AppThemeService.GetPalette(family, mode);
+        Assert.Equal(expectedDisplayName, palette.DisplayName);
+    }
 }

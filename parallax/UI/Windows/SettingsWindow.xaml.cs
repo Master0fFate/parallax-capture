@@ -10,8 +10,10 @@ namespace parallax.UI.Windows
     {
         private readonly SettingsService _settingsService;
         private AppSettings _settings;
+        private bool _updatingThemeControls;
 
         private sealed record HotkeyInput(string Name, bool Enabled, string Gesture);
+        private sealed record ThemePreset(string Family, string Mode, string DisplayName);
 
         public SettingsWindow(SettingsService settingsService)
         {
@@ -30,7 +32,6 @@ namespace parallax.UI.Windows
             ChkOpenVideoEditor.IsChecked = _settings.OpenVideoEditorAfterRecording;
             ChkSeparateFolders.IsChecked = _settings.SeparateFolders;
             ChkStartWindows.IsChecked = _settings.StartWithWindows;
-            ChkUseDarkMode.IsChecked = AppThemeService.NormalizeThemeMode(_settings.ThemeMode) == AppThemeService.ModeDark;
             ChkHotkeyScreenshotEnabled.IsChecked = _settings.HotkeyScreenshotEnabled;
             ChkHotkeyFullscreenEnabled.IsChecked = _settings.HotkeyFullscreenEnabled;
             ChkHotkeyRegionVideoEnabled.IsChecked = _settings.HotkeyRegionVideoEnabled;
@@ -48,15 +49,7 @@ namespace parallax.UI.Windows
                 }
             }
 
-            string themeFamily = AppThemeService.NormalizeThemeFamily(_settings.ThemeFamily);
-            foreach (System.Windows.Controls.ComboBoxItem item in CmbThemeFamily.Items)
-            {
-                if (item.Tag?.ToString() == themeFamily)
-                {
-                    CmbThemeFamily.SelectedItem = item;
-                    break;
-                }
-            }
+            SelectThemePreset(_settings.ThemeFamily, _settings.ThemeMode);
 
             UpdateHotkeyInputState();
             UpdateHotkeyStatus();
@@ -77,6 +70,92 @@ namespace parallax.UI.Windows
             dialog.SelectedPath = TxtSaveFolder.Text;
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 TxtSaveFolder.Text = dialog.SelectedPath;
+        }
+
+        private void ThemeMode_Changed(object sender, RoutedEventArgs e)
+        {
+            if (!IsLoaded || _updatingThemeControls)
+                return;
+
+            string mode = ChkUseDarkMode.IsChecked == true ? AppThemeService.ModeDark : AppThemeService.ModeLight;
+            string family = TryReadSelectedThemePreset(out var preset) ? preset.Family : _settings.ThemeFamily;
+            SelectThemePreset(family, mode);
+        }
+
+        private void ThemePreset_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (!IsLoaded || _updatingThemeControls || !TryReadSelectedThemePreset(out var preset))
+                return;
+
+            _updatingThemeControls = true;
+            ChkUseDarkMode.IsChecked = preset.Mode == AppThemeService.ModeDark;
+            _updatingThemeControls = false;
+            UpdateThemeSummary(preset);
+        }
+
+        private void SelectThemePreset(string? family, string? mode)
+        {
+            string themeFamily = AppThemeService.NormalizeThemeFamily(family);
+            string themeMode = AppThemeService.NormalizeThemeMode(mode);
+            string tag = BuildThemeTag(themeFamily, themeMode);
+            System.Windows.Controls.ComboBoxItem? match = null;
+
+            foreach (System.Windows.Controls.ComboBoxItem item in CmbThemePreset.Items)
+            {
+                if (string.Equals(item.Tag?.ToString(), tag, StringComparison.OrdinalIgnoreCase))
+                {
+                    match = item;
+                    break;
+                }
+            }
+
+            match ??= CmbThemePreset.Items.OfType<System.Windows.Controls.ComboBoxItem>().FirstOrDefault();
+            if (match == null)
+                return;
+
+            _updatingThemeControls = true;
+            CmbThemePreset.SelectedItem = match;
+            if (TryReadThemePreset(match, out var preset))
+                ChkUseDarkMode.IsChecked = preset.Mode == AppThemeService.ModeDark;
+            _updatingThemeControls = false;
+
+            if (TryReadSelectedThemePreset(out var selectedPreset))
+                UpdateThemeSummary(selectedPreset);
+        }
+
+        private bool TryReadSelectedThemePreset(out ThemePreset preset)
+        {
+            preset = new ThemePreset(AppThemeService.FamilyMaterial, AppThemeService.ModeDark, "Material 3 Dark");
+            return CmbThemePreset.SelectedItem is System.Windows.Controls.ComboBoxItem item
+                && TryReadThemePreset(item, out preset);
+        }
+
+        private static bool TryReadThemePreset(System.Windows.Controls.ComboBoxItem item, out ThemePreset preset)
+        {
+            preset = new ThemePreset(AppThemeService.FamilyMaterial, AppThemeService.ModeDark, "Material 3 Dark");
+            string? tag = item.Tag?.ToString();
+            if (string.IsNullOrWhiteSpace(tag))
+                return false;
+
+            string[] parts = tag.Split(new[] { '|' }, 2);
+            if (parts.Length != 2)
+                return false;
+
+            string family = AppThemeService.NormalizeThemeFamily(parts[0]);
+            string mode = AppThemeService.NormalizeThemeMode(parts[1]);
+            string displayName = item.Content?.ToString() ?? AppThemeService.GetPalette(family, mode).DisplayName;
+            preset = new ThemePreset(family, mode, displayName);
+            return true;
+        }
+
+        private static string BuildThemeTag(string family, string mode)
+        {
+            return $"{AppThemeService.NormalizeThemeFamily(family)}|{AppThemeService.NormalizeThemeMode(mode)}";
+        }
+
+        private void UpdateThemeSummary(ThemePreset preset)
+        {
+            TxtThemeSummary.Text = $"{preset.DisplayName} selected. Save settings to apply the {preset.Mode.ToLowerInvariant()} palette.";
         }
 
         private void BtnSave_Click(object sender, RoutedEventArgs e)
@@ -109,7 +188,6 @@ namespace parallax.UI.Windows
             _settings.OpenVideoEditorAfterRecording = ChkOpenVideoEditor.IsChecked == true;
             _settings.SeparateFolders = ChkSeparateFolders.IsChecked == true;
             _settings.StartWithWindows = requestedStartWithWindows;
-            _settings.ThemeMode = ChkUseDarkMode.IsChecked == true ? AppThemeService.ModeDark : AppThemeService.ModeLight;
             _settings.HotkeyScreenshotEnabled = IsActiveHotkey(ChkHotkeyScreenshotEnabled.IsChecked == true, TxtHotkeyScreenshot.Text);
             _settings.HotkeyFullscreenEnabled = IsActiveHotkey(ChkHotkeyFullscreenEnabled.IsChecked == true, TxtHotkeyFullscreen.Text);
             _settings.HotkeyRegionVideoEnabled = IsActiveHotkey(ChkHotkeyRegionVideoEnabled.IsChecked == true, TxtHotkeyRegionVideo.Text);
@@ -120,10 +198,14 @@ namespace parallax.UI.Windows
             if (CmbFormat.SelectedItem is System.Windows.Controls.ComboBoxItem selected)
                 _settings.ImageFormat = selected.Tag?.ToString() ?? "png";
 
-            if (CmbThemeFamily.SelectedItem is System.Windows.Controls.ComboBoxItem selectedTheme)
-                _settings.ThemeFamily = AppThemeService.NormalizeThemeFamily(selectedTheme.Tag?.ToString());
+            if (TryReadSelectedThemePreset(out var selectedTheme))
+            {
+                _settings.ThemeFamily = selectedTheme.Family;
+                _settings.ThemeMode = selectedTheme.Mode;
+            }
 
             _settingsService.Save(_settings);
+            AppThemeService.Apply(_settings);
 
             if (startupWarning != null)
             {

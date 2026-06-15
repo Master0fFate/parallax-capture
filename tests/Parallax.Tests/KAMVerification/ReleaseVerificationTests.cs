@@ -80,6 +80,37 @@ public class ReleaseVerificationTests
     }
 
     [Fact]
+    public void SettingsWindow_ExposesDedicatedThemesTabAndConcreteThemeVariants()
+    {
+        string xaml = ReadSource("SettingsWindow.xaml");
+        string code = ReadSource("SettingsWindow.xaml.cs");
+
+        Assert.Contains("Header=\"Themes\"", xaml);
+        Assert.DoesNotContain("Header=\"Appearance\"", xaml);
+        Assert.Contains("ChkUseDarkMode", xaml);
+        Assert.Contains("CmbThemePreset", xaml);
+        Assert.Contains("Material 3 Dark", xaml);
+        Assert.Contains("Material 3 Light", xaml);
+        Assert.Contains("Catppuccin Mocha", xaml);
+        Assert.Contains("Catppuccin Latte", xaml);
+        Assert.Contains("shadCN Dark", xaml);
+        Assert.Contains("shadCN Light", xaml);
+        Assert.Contains("GitHub Dark", xaml);
+        Assert.Contains("GitHub Light", xaml);
+        Assert.Contains("ThemeMode_Changed", code);
+        Assert.Contains("ThemePreset_Changed", code);
+    }
+
+    [Fact]
+    public void StartupShortcutConflicts_DoNotShowModalWarningOnRun()
+    {
+        string app = ReadSource("App.xaml.cs");
+
+        Assert.Contains("RegisterConfiguredHotkeys(showWarnings: false)", app);
+        Assert.Contains("Some enabled shortcuts could not be registered", app);
+    }
+
+    [Fact]
     public void Documentation_StatesCaptureExclusionAndFfmpegTrustBoundaries()
     {
         string readme = File.ReadAllText(Path.Combine(FindRepoRoot(), "README.md"));
@@ -126,6 +157,19 @@ public class ReleaseVerificationTests
         Assert.DoesNotContain("Jump Out", xaml);
         Assert.DoesNotContain("🔊", xaml + code);
         Assert.DoesNotContain("🔇", xaml + code);
+    }
+
+    [Fact]
+    public void VideoEditor_TimelineUsesMillisecondPrecision()
+    {
+        string xaml = ReadSource("VideoEditorWindow.xaml");
+        string code = ReadSource("VideoEditorWindow.xaml.cs");
+
+        Assert.Contains("00:00.000", xaml);
+        Assert.Contains("FormatTimelineTime", code);
+        Assert.Contains("ParseTimelineTime", code);
+        Assert.Contains("TimeSpan.FromTicks", code);
+        Assert.Contains("MM:SS.fff", code);
     }
 
     [Fact]
