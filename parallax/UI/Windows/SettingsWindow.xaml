@@ -123,6 +123,98 @@
                 </ScrollViewer>
             </TabItem>
 
+            <TabItem Header="Appearance">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <Border Style="{StaticResource ProductSectionBorderStyle}" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Theme"
+                                           Style="{StaticResource ProductSectionHeaderTextStyle}" />
+                                <TextBlock Text="Choose the color mode and theme family used by settings, editors, recording controls, and tray menus."
+                                           TextWrapping="Wrap"
+                                           Style="{StaticResource ProductCaptionTextStyle}"
+                                           Margin="0,4,0,12" />
+
+                                <CheckBox x:Name="ChkUseDarkMode"
+                                          Content="Use dark mode"
+                                          Style="{StaticResource ProductCheckBoxStyle}" />
+
+                                <TextBlock Text="Theme family"
+                                           Style="{StaticResource ProductSectionLabelStyle}"
+                                           Margin="0,12,0,4" />
+                                <ComboBox x:Name="CmbThemeFamily"
+                                          Width="240"
+                                          HorizontalAlignment="Left"
+                                          Style="{StaticResource ProductComboBoxStyle}">
+                                    <ComboBoxItem Content="Material 3" Tag="Material 3" IsSelected="True" />
+                                    <ComboBoxItem Content="Catppuccin" Tag="Catppuccin" />
+                                    <ComboBoxItem Content="shadCN" Tag="shadCN" />
+                                    <ComboBoxItem Content="GitHub" Tag="GitHub" />
+                                </ComboBox>
+
+                                <TextBlock Text="Catppuccin switches between Latte in light mode and Mocha in dark mode. Other families provide matched light and dark palettes."
+                                           TextWrapping="Wrap"
+                                           Style="{StaticResource ProductCaptionTextStyle}"
+                                           Margin="0,8,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource ProductSectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Preview"
+                                           Style="{StaticResource ProductSectionHeaderTextStyle}" />
+                                <TextBlock Text="The preview reflects the currently applied theme. Save settings to apply a new selection."
+                                           TextWrapping="Wrap"
+                                           Style="{StaticResource ProductCaptionTextStyle}"
+                                           Margin="0,4,0,12" />
+
+                                <Border Background="{StaticResource ProductInputBrush}"
+                                        BorderBrush="{StaticResource ProductBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="12"
+                                        Padding="12">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Parallax Capture"
+                                                       Style="{StaticResource ProductSectionHeaderTextStyle}" />
+                                            <TextBlock Text="Material-inspired surfaces, clear focus states, and restrained accent color."
+                                                       TextWrapping="Wrap"
+                                                       Style="{StaticResource ProductCaptionTextStyle}"
+                                                       Margin="0,3,0,0" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1"
+                                                    Orientation="Horizontal"
+                                                    VerticalAlignment="Center"
+                                                    Margin="16,0,0,0">
+                                            <Ellipse Width="18"
+                                                     Height="18"
+                                                     Fill="{StaticResource ProductAccentBrush}"
+                                                     Margin="0,0,6,0" />
+                                            <Ellipse Width="18"
+                                                     Height="18"
+                                                     Fill="{StaticResource ProductSuccessBrush}"
+                                                     Margin="0,0,6,0" />
+                                            <Ellipse Width="18"
+                                                     Height="18"
+                                                     Fill="{StaticResource ProductWarningBrush}"
+                                                     Margin="0,0,6,0" />
+                                            <Ellipse Width="18"
+                                                     Height="18"
+                                                     Fill="{StaticResource ProductDangerBrush}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <TabItem Header="Hotkeys">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">

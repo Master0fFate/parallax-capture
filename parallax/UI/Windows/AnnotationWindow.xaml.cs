@@ -113,7 +113,7 @@ namespace parallax.UI.Windows
                 var errorText = new System.Windows.Controls.TextBlock
                 {
                     Text = $"Failed to load screenshot:\n{ex.Message}",
-                    Foreground = System.Windows.Media.Brushes.Red,
+                    Foreground = TryFindResource("ProductDangerBrush") as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.Red,
                     FontSize = 14,
                     TextWrapping = System.Windows.TextWrapping.Wrap,
                     HorizontalAlignment = System.Windows.HorizontalAlignment.Center,

@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -210,7 +211,7 @@ namespace parallax.UI.Windows
             progressText = new TextBlock
             {
                 Text = "Preparing FFmpeg download...",
-                Foreground = System.Windows.Media.Brushes.White,
+                Foreground = ApplicationBrush("ProductTextBrush", System.Windows.Media.Brushes.White),
                 FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
                 FontSize = 13,
                 TextWrapping = TextWrapping.Wrap,
@@ -224,7 +225,7 @@ namespace parallax.UI.Windows
             panel.Children.Add(new TextBlock
             {
                 Text = "Installing FFmpeg",
-                Foreground = System.Windows.Media.Brushes.White,
+                Foreground = ApplicationBrush("ProductTextBrush", System.Windows.Media.Brushes.White),
                 FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
                 FontSize = 16,
                 FontWeight = FontWeights.SemiBold,
@@ -247,7 +248,7 @@ namespace parallax.UI.Windows
                 ResizeMode = ResizeMode.NoResize,
                 WindowStartupLocation = owner == null ? WindowStartupLocation.CenterScreen : WindowStartupLocation.CenterOwner,
                 Owner = owner,
-                Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(15, 23, 32)),
+                Background = ApplicationBrush("ProductWindowBrush", new SolidColorBrush(System.Windows.Media.Color.FromRgb(15, 23, 32))),
                 Content = panel,
                 ShowInTaskbar = false
             };
@@ -301,7 +302,7 @@ namespace parallax.UI.Windows
                 else
                 {
                     TxtFFmpegStatus.Text = "Extraction failed. Try manual install.";
-                    TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.Red;
+                    TxtFFmpegStatus.Foreground = ThemeBrush("ProductDangerBrush", System.Windows.Media.Brushes.Red);
                     ShowEditorStatus("FFmpeg install failed. The archive did not contain ffmpeg.exe.", true);
                 }
             }
@@ -438,8 +439,49 @@ namespace parallax.UI.Windows
             UpdatePlayButton();
         }
 
+        private static System.Windows.Media.Brush ApplicationBrush(string key, System.Windows.Media.Brush fallback)
+        {
+            return System.Windows.Application.Current?.TryFindResource(key) as System.Windows.Media.Brush ?? fallback;
+        }
+
+        private System.Windows.Media.Brush ThemeBrush(string key, System.Windows.Media.Brush fallback)
+        {
+            return TryFindResource(key) as System.Windows.Media.Brush ?? ApplicationBrush(key, fallback);
+        }
+
         private static StackPanel CreateIconLabel(Geometry iconGeometry, string label)
         {
+            static Binding ForegroundBinding() => new("Foreground")
+            {
+                RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(Button), 1)
+            };
+
+            var icon = new ShapePath
+            {
+                Data = iconGeometry,
+                Width = 14,
+                Height = 14,
+                Stretch = Stretch.Uniform,
+                Fill = System.Windows.Media.Brushes.Transparent,
+                StrokeThickness = 1.8,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+                StrokeLineJoin = PenLineJoin.Round,
+                Margin = new Thickness(0, 0, 7, 0),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            icon.SetBinding(ShapePath.StrokeProperty, ForegroundBinding());
+
+            var text = new TextBlock
+            {
+                Text = label,
+                FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
+                FontSize = 12,
+                FontWeight = FontWeights.SemiBold,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            text.SetBinding(TextBlock.ForegroundProperty, ForegroundBinding());
+
             return new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -447,30 +489,8 @@ namespace parallax.UI.Windows
                 VerticalAlignment = VerticalAlignment.Center,
                 Children =
                 {
-                    new ShapePath
-                    {
-                        Data = iconGeometry,
-                        Width = 14,
-                        Height = 14,
-                        Stretch = Stretch.Uniform,
-                        Stroke = System.Windows.Media.Brushes.White,
-                        Fill = System.Windows.Media.Brushes.Transparent,
-                        StrokeThickness = 1.8,
-                        StrokeStartLineCap = PenLineCap.Round,
-                        StrokeEndLineCap = PenLineCap.Round,
-                        StrokeLineJoin = PenLineJoin.Round,
-                        Margin = new Thickness(0, 0, 7, 0),
-                        VerticalAlignment = VerticalAlignment.Center
-                    },
-                    new TextBlock
-                    {
-                        Text = label,
-                        Foreground = System.Windows.Media.Brushes.White,
-                        FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
-                        FontSize = 12,
-                        FontWeight = FontWeights.SemiBold,
-                        VerticalAlignment = VerticalAlignment.Center
-                    }
+                    icon,
+                    text
                 }
             };
         }
@@ -902,12 +922,12 @@ namespace parallax.UI.Windows
             {
                 var duration = end.Value - start.Value;
                 TxtTrimDuration.Text = FormatTime(duration);
-                TxtTrimDuration.Foreground = System.Windows.Media.Brushes.LimeGreen;
+                TxtTrimDuration.Foreground = ThemeBrush("ProductSuccessBrush", System.Windows.Media.Brushes.LimeGreen);
             }
             else
             {
                 TxtTrimDuration.Text = "00:00";
-                TxtTrimDuration.Foreground = System.Windows.Media.Brushes.OrangeRed;
+                TxtTrimDuration.Foreground = ThemeBrush("ProductDangerBrush", System.Windows.Media.Brushes.OrangeRed);
             }
         }
 
@@ -1168,7 +1188,7 @@ namespace parallax.UI.Windows
         {
             _ffmpegAvailable = true;
             TxtFFmpegStatus.Text = "FFmpeg ready";
-            TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.LimeGreen;
+            TxtFFmpegStatus.Foreground = ThemeBrush("ProductSuccessBrush", System.Windows.Media.Brushes.LimeGreen);
             BtnDownloadFFmpeg.Visibility = Visibility.Collapsed;
             BtnSaveTrimmed.IsEnabled = true;
             BtnSaveTrimmed.ToolTip = "Apply trim and save a new video";
@@ -1180,7 +1200,7 @@ namespace parallax.UI.Windows
         {
             _ffmpegAvailable = false;
             TxtFFmpegStatus.Text = "FFmpeg not found - trimming, frame saves, and GIF export need FFmpeg.";
-            TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.Orange;
+            TxtFFmpegStatus.Foreground = ThemeBrush("ProductWarningBrush", System.Windows.Media.Brushes.Orange);
             BtnDownloadFFmpeg.Visibility = Visibility.Visible;
             BtnSaveTrimmed.IsEnabled = false;
             BtnSaveTrimmed.ToolTip = "Download FFmpeg to enable trimming";
@@ -1502,7 +1522,7 @@ namespace parallax.UI.Windows
         {
             string status = ToStatusMessage(message, ex);
             TxtFFmpegStatus.Text = TrimForStatus(status, MaxStatusMessageChars);
-            TxtFFmpegStatus.Foreground = System.Windows.Media.Brushes.Red;
+            TxtFFmpegStatus.Foreground = ThemeBrush("ProductDangerBrush", System.Windows.Media.Brushes.Red);
             ShowEditorStatus(status, true);
         }
 
@@ -1549,8 +1569,8 @@ namespace parallax.UI.Windows
         {
             TxtEditorStatus.Text = message;
             TxtEditorStatus.Foreground = isError
-                ? System.Windows.Media.Brushes.OrangeRed
-                : System.Windows.Media.Brushes.LimeGreen;
+                ? ThemeBrush("ProductDangerBrush", System.Windows.Media.Brushes.OrangeRed)
+                : ThemeBrush("ProductSuccessBrush", System.Windows.Media.Brushes.LimeGreen);
 
             // Cancel any pending status timer (KAM #4c — prevents overlapping timers)
             _statusTimer?.Stop();
@@ -1560,7 +1580,7 @@ namespace parallax.UI.Windows
                 _statusTimer?.Stop();
                 _statusTimer = null;
                 TxtEditorStatus.Text = "Save to keep this recording, or close to discard.";
-                TxtEditorStatus.Foreground = System.Windows.Media.Brushes.Gray;
+                TxtEditorStatus.Foreground = ThemeBrush("ProductTextSubtleBrush", System.Windows.Media.Brushes.Gray);
             };
             _statusTimer.Start();
         }
@@ -1615,7 +1635,7 @@ namespace parallax.UI.Windows
             // Update display
             TxtFileName.Text = Path.GetFileName(filePath);
             TxtEditorStatus.Text = "Save to keep this recording, or close to discard.";
-            TxtEditorStatus.Foreground = System.Windows.Media.Brushes.Gray;
+            TxtEditorStatus.Foreground = ThemeBrush("ProductTextSubtleBrush", System.Windows.Media.Brushes.Gray);
 
             // Load the new video — do NOT call Close() before setting Source.
             // Close() fully unloads the media player and it does not reinitialize

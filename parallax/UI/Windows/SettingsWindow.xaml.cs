@@ -30,6 +30,7 @@ namespace parallax.UI.Windows
             ChkOpenVideoEditor.IsChecked = _settings.OpenVideoEditorAfterRecording;
             ChkSeparateFolders.IsChecked = _settings.SeparateFolders;
             ChkStartWindows.IsChecked = _settings.StartWithWindows;
+            ChkUseDarkMode.IsChecked = AppThemeService.NormalizeThemeMode(_settings.ThemeMode) == AppThemeService.ModeDark;
             ChkHotkeyScreenshotEnabled.IsChecked = _settings.HotkeyScreenshotEnabled;
             ChkHotkeyFullscreenEnabled.IsChecked = _settings.HotkeyFullscreenEnabled;
             ChkHotkeyRegionVideoEnabled.IsChecked = _settings.HotkeyRegionVideoEnabled;
@@ -43,6 +44,16 @@ namespace parallax.UI.Windows
                 if (item.Tag?.ToString() == _settings.ImageFormat)
                 {
                     CmbFormat.SelectedItem = item;
+                    break;
+                }
+            }
+
+            string themeFamily = AppThemeService.NormalizeThemeFamily(_settings.ThemeFamily);
+            foreach (System.Windows.Controls.ComboBoxItem item in CmbThemeFamily.Items)
+            {
+                if (item.Tag?.ToString() == themeFamily)
+                {
+                    CmbThemeFamily.SelectedItem = item;
                     break;
                 }
             }
@@ -98,6 +109,7 @@ namespace parallax.UI.Windows
             _settings.OpenVideoEditorAfterRecording = ChkOpenVideoEditor.IsChecked == true;
             _settings.SeparateFolders = ChkSeparateFolders.IsChecked == true;
             _settings.StartWithWindows = requestedStartWithWindows;
+            _settings.ThemeMode = ChkUseDarkMode.IsChecked == true ? AppThemeService.ModeDark : AppThemeService.ModeLight;
             _settings.HotkeyScreenshotEnabled = IsActiveHotkey(ChkHotkeyScreenshotEnabled.IsChecked == true, TxtHotkeyScreenshot.Text);
             _settings.HotkeyFullscreenEnabled = IsActiveHotkey(ChkHotkeyFullscreenEnabled.IsChecked == true, TxtHotkeyFullscreen.Text);
             _settings.HotkeyRegionVideoEnabled = IsActiveHotkey(ChkHotkeyRegionVideoEnabled.IsChecked == true, TxtHotkeyRegionVideo.Text);
@@ -107,6 +119,9 @@ namespace parallax.UI.Windows
 
             if (CmbFormat.SelectedItem is System.Windows.Controls.ComboBoxItem selected)
                 _settings.ImageFormat = selected.Tag?.ToString() ?? "png";
+
+            if (CmbThemeFamily.SelectedItem is System.Windows.Controls.ComboBoxItem selectedTheme)
+                _settings.ThemeFamily = AppThemeService.NormalizeThemeFamily(selectedTheme.Tag?.ToString());
 
             _settingsService.Save(_settings);
 

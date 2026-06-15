@@ -67,7 +67,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="6"
+                                CornerRadius="10"
                                 Padding="2">
                             <Viewbox Width="16" Height="16"
                                      HorizontalAlignment="Center"
@@ -133,7 +133,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4"
+                                CornerRadius="8"
                                 Width="{TemplateBinding Width}"
                                 Height="{TemplateBinding Height}">
                             <Border.Style>
@@ -160,7 +160,7 @@
     </Window.Resources>
 
     <Grid>
-        <Border CornerRadius="6"
+        <Border CornerRadius="14"
                 Background="{StaticResource ProductSurfaceBrush}"
                 BorderBrush="{StaticResource ProductBorderStrongBrush}"
                 BorderThickness="1"
@@ -183,7 +183,7 @@
                 <!-- TITLE BAR (draggable) -->
                 <Border Grid.Row="0"
                         Background="{StaticResource ProductChromeBrush}"
-                        CornerRadius="6,6,0,0"
+                        CornerRadius="14,14,0,0"
                         MouseDown="TitleBar_MouseDown"
                         Padding="12,8">
                     <Grid>
@@ -212,7 +212,7 @@
                                 Click="Tool_Click"
                                 Style="{StaticResource ToolButtonIconStyle}">
                             <Path Data="{StaticResource IconPenGeo}"
-                                  Stroke="White" StrokeThickness="1.2"
+                                  Stroke="{StaticResource ProductTextBrush}" StrokeThickness="1.2"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                   StrokeLineJoin="Round"
                                   Fill="Transparent" />
@@ -223,7 +223,7 @@
                                 Click="Tool_Click"
                                 Style="{StaticResource ToolButtonIconStyle}">
                             <Path Data="{StaticResource IconArrowGeo}"
-                                  Stroke="White" StrokeThickness="1.5"
+                                  Stroke="{StaticResource ProductTextBrush}" StrokeThickness="1.5"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                   StrokeLineJoin="Round" />
                         </Button>
@@ -233,7 +233,7 @@
                                 Click="Tool_Click"
                                 Style="{StaticResource ToolButtonIconStyle}">
                             <Path Data="{StaticResource IconRectGeo}"
-                                  Stroke="White" StrokeThickness="1.2"
+                                  Stroke="{StaticResource ProductTextBrush}" StrokeThickness="1.2"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                   StrokeLineJoin="Round" />
                         </Button>
@@ -243,7 +243,7 @@
                                 Click="Tool_Click"
                                 Style="{StaticResource ToolButtonIconStyle}">
                             <Path Data="{StaticResource IconEllipseGeo}"
-                                  Stroke="White" StrokeThickness="1.2"
+                                  Stroke="{StaticResource ProductTextBrush}" StrokeThickness="1.2"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                   StrokeLineJoin="Round" />
                         </Button>
@@ -253,7 +253,7 @@
                                 Click="Tool_Click"
                                 Style="{StaticResource ToolButtonIconStyle}">
                             <TextBlock Text="T" FontSize="14" FontWeight="Bold"
-                                       Foreground="White"
+                                       Foreground="{StaticResource ProductTextBrush}"
                                        FontFamily="Segoe UI" />
                         </Button>
 
@@ -262,10 +262,11 @@
                                 Click="Tool_Click"
                                 Style="{StaticResource ToolButtonIconStyle}">
                             <Path Data="{StaticResource IconHlGeo}"
-                                  Stroke="White" StrokeThickness="1.2"
+                                  Stroke="{StaticResource ProductTextBrush}" StrokeThickness="1.2"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                   StrokeLineJoin="Round"
-                                  Fill="#44FFFFFF" />
+                                  Fill="{StaticResource ProductAccentBrush}"
+                                  Opacity="0.75" />
                         </Button>
 
                         <Button x:Name="BtnBlur" ToolTip="Blur (B)"
@@ -273,7 +274,7 @@
                                 Click="Tool_Click"
                                 Style="{StaticResource ToolButtonIconStyle}">
                             <Path Data="{StaticResource IconBlurGeo}"
-                                  Stroke="White" StrokeThickness="1.2"
+                                  Stroke="{StaticResource ProductTextBrush}" StrokeThickness="1.2"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                   StrokeLineJoin="Round"
                                   Opacity="0.8" />
@@ -312,7 +313,7 @@
                                        Margin="0,0,6,0" />
                             <Border BorderBrush="{StaticResource ProductBorderBrush}"
                                     BorderThickness="1"
-                                    CornerRadius="6"
+                                    CornerRadius="10"
                                     Background="{StaticResource ProductInputBrush}"
                                     Padding="6,0">
                                 <Grid>
@@ -397,7 +398,7 @@
                                 Style="{StaticResource UndoClearButtonStyle}">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="{StaticResource IconUndoGeo}"
-                                      Stroke="White" StrokeThickness="1.0"
+                                      Stroke="{StaticResource ProductTextBrush}" StrokeThickness="1.0"
                                       StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                       StrokeLineJoin="Round"
                                       Width="12" Height="12"
@@ -413,8 +414,8 @@
                                 Style="{StaticResource UndoClearButtonStyle}">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="{StaticResource IconClearGeo}"
-                                      Stroke="White" StrokeThickness="0.8"
-                                      Fill="White"
+                                      Stroke="{StaticResource ProductTextBrush}" StrokeThickness="0.8"
+                                      Fill="{StaticResource ProductTextBrush}"
                                       Width="12" Height="12"
                                       Margin="0,0,4,0" />
                                 <TextBlock Text="Clear all" FontSize="11" />

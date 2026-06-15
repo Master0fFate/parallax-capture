@@ -19,12 +19,12 @@
 
             <!-- DIMMING OVERLAY — drawn as a Path with a hole punched out for the selection -->
             <Path x:Name="DimPath"
-                  Fill="#99000000"
+                  Fill="{StaticResource ProductOverlayBrush}"
                   IsHitTestVisible="False" />
 
             <!-- SELECTION BORDER — the white/blue marching ants rectangle -->
             <Rectangle x:Name="SelectionRect"
-                       Stroke="#FF007ACC"
+                       Stroke="{StaticResource ProductAccentBrush}"
                        StrokeThickness="1.5"
                        StrokeDashArray="4 2"
                        Fill="Transparent"
@@ -33,7 +33,7 @@
 
             <!-- SIZE LABEL — shows WxH of selection in real time -->
             <Border x:Name="SizeLabel"
-                    Background="#CC000000"
+                    Background="{StaticResource ProductOverlayBrush}"
                     CornerRadius="3"
                     Padding="6,3"
                     IsHitTestVisible="False"
@@ -62,7 +62,7 @@
         <Border x:Name="InstructionBorder"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Background="#CC000000"
+                Background="{StaticResource ProductOverlayBrush}"
                 CornerRadius="6"
                 Padding="14,8"
                 IsHitTestVisible="False"

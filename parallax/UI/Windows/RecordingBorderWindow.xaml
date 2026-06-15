@@ -19,7 +19,7 @@
         <!-- REC label at top-left, inside the padded area -->
         <Border x:Name="RecLabel"
                 Grid.Row="0"
-                Background="#CC000000"
+                Background="{StaticResource ProductOverlayBrush}"
                 CornerRadius="2"
                 Padding="5,2"
                 HorizontalAlignment="Left"
@@ -28,11 +28,11 @@
                 IsHitTestVisible="False">
             <StackPanel Orientation="Horizontal">
                 <Ellipse Width="6" Height="6"
-                         Fill="#FFFF4444"
+                         Fill="{StaticResource ProductDangerBrush}"
                          VerticalAlignment="Center"
                          Margin="0,0,4,0" />
                 <TextBlock Text="REC"
-                           Foreground="#FFFF4444"
+                           Foreground="{StaticResource ProductDangerBrush}"
                            FontSize="10"
                            FontWeight="Bold"
                            FontFamily="Segoe UI"
@@ -45,7 +45,7 @@
              capture region by a 5px transparent gap, so ScreenRecorderLib never sees it. -->
         <Border x:Name="BorderOverlay"
                 Grid.Row="1"
-                BorderBrush="#FFFF4444"
+                BorderBrush="{StaticResource ProductDangerBrush}"
                 BorderThickness="2"
                 Background="Transparent"
                 IsHitTestVisible="False" />

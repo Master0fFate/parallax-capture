@@ -77,7 +77,7 @@ namespace parallax.Tray
                 FontWeight = FontWeights.Bold
             };
             menu.Items.Add(header);
-            menu.Items.Add(new Separator());
+            menu.Items.Add(CreateMenuSeparator());
 
             var regionShot = new MenuItem { Header = $"Capture region   {FormatHotkeyLabel(_settings.HotkeyScreenshotEnabled, _settings.HotkeyScreenshot)}" };
             regionShot.Click += (s, e) => TriggerRegionScreenshot();
@@ -87,7 +87,7 @@ namespace parallax.Tray
             fullShot.Click += (s, e) => TriggerFullScreenshot();
             menu.Items.Add(fullShot);
 
-            menu.Items.Add(new Separator());
+            menu.Items.Add(CreateMenuSeparator());
 
             // Dynamic recording items — only one visible at a time
             _recordMenuItem = new MenuItem { Header = $"Record region   {FormatHotkeyLabel(_settings.HotkeyRegionVideoEnabled, _settings.HotkeyRegionVideo)}" };
@@ -98,7 +98,7 @@ namespace parallax.Tray
             _stopMenuItem.Click += (s, e) => StopRecording();
             menu.Items.Add(_stopMenuItem);
 
-            menu.Items.Add(new Separator());
+            menu.Items.Add(CreateMenuSeparator());
 
             _videoEditorMenuItem = new MenuItem { Header = "Open video editor" };
             _videoEditorMenuItem.Click += (s, e) => OpenVideoEditor();
@@ -116,13 +116,22 @@ namespace parallax.Tray
             settings.Click += (s, e) => OpenSettings();
             menu.Items.Add(settings);
 
-            menu.Items.Add(new Separator());
+            menu.Items.Add(CreateMenuSeparator());
 
             var exit = new MenuItem { Header = "Quit Parallax Capture" };
             exit.Click += (s, e) => ExitApp();
             menu.Items.Add(exit);
 
             return menu;
+        }
+
+        private static Separator CreateMenuSeparator()
+        {
+            var separator = new Separator();
+            if (System.Windows.Application.Current.TryFindResource("ProductMenuSeparatorStyle") is Style style)
+                separator.Style = style;
+
+            return separator;
         }
 
         // Toggles visibility of Start Recording vs Stop Recording menu items

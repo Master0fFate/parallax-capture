@@ -49,6 +49,7 @@ namespace parallax
             // 1. Load settings
             _settingsService   = new SettingsService();
             _settings          = _settingsService.Load();
+            AppThemeService.Apply(_settings);
 
             // 2. Instantiate all services
             _screenshotService = new ScreenshotService();
@@ -95,6 +96,7 @@ namespace parallax
         private void OnSettingsChanged(AppSettings settings)
         {
             _settings = settings;
+            AppThemeService.Apply(_settings);
             RegisterConfiguredHotkeys(showWarnings: true);
         }
 
