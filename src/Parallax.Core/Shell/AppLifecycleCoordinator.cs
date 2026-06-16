@@ -57,10 +57,15 @@ public sealed class AppLifecycleCoordinator
                 parsed.Modifiers,
                 parsed.VirtualKey,
                 hotkey.DisplayText,
-                () => Execute(MapHotkeyAction(hotkey.Action)));
+                CreateHotkeyCallback(hotkey.Action));
         }
 
         return RefreshSurface(settings, hotkeys);
+    }
+
+    public Action CreateHotkeyCallback(HotkeyAction action)
+    {
+        return () => Execute(MapHotkeyAction(action));
     }
 
     public TraySurfaceModel RefreshSurface(

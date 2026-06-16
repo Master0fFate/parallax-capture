@@ -17,19 +17,22 @@ public sealed class RuntimeSettingsApplier
     private readonly IGlobalHotkeyService _hotkeyService;
     private readonly IStartupService _startupService;
     private readonly ThemeSettingsService _themeService;
+    private readonly Func<HotkeyAction, Action> _hotkeyCallbackFactory;
 
     public RuntimeSettingsApplier(
         IPlatformBackend platform,
         JsonSettingsStore settingsStore,
         IGlobalHotkeyService hotkeyService,
         IStartupService startupService,
-        ThemeSettingsService themeService)
+        ThemeSettingsService themeService,
+        Func<HotkeyAction, Action> hotkeyCallbackFactory)
     {
         _platform = platform;
         _settingsStore = settingsStore;
         _hotkeyService = hotkeyService;
         _startupService = startupService;
         _themeService = themeService;
+        _hotkeyCallbackFactory = hotkeyCallbackFactory;
     }
 
     public RuntimeSettingsApplyResult Apply(ParallaxSettings settings, string executablePath)
@@ -53,7 +56,7 @@ public sealed class RuntimeSettingsApplier
                 parsed.Modifiers,
                 parsed.VirtualKey,
                 parsed.DisplayText,
-                () => { });
+                _hotkeyCallbackFactory(hotkey.Action));
 
             if (!registration.IsRegistered)
             {

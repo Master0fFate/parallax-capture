@@ -35,16 +35,16 @@ public sealed class App : Application
             themeSettings.Preview(settings.ThemeFamily, settings.ThemeMode);
             var hotkeys = AvaloniaRuntimeServices.CreateHotkeyService(platform);
             var startup = AvaloniaRuntimeServices.CreateStartupService(platform);
+            var tray = new AvaloniaTrayService();
+            AvaloniaShellCommandHandler? commandHandler = null;
+            _coordinator = new AppLifecycleCoordinator(platform, tray, hotkeys, action => commandHandler?.Execute(action));
             var runtimeSettings = new RuntimeSettingsApplier(
                 platform,
                 store,
                 hotkeys,
                 startup,
-                themeSettings);
-
-            var tray = new AvaloniaTrayService();
-            AvaloniaShellCommandHandler? commandHandler = null;
-            _coordinator = new AppLifecycleCoordinator(platform, tray, hotkeys, action => commandHandler?.Execute(action));
+                themeSettings,
+                _coordinator.CreateHotkeyCallback);
             commandHandler = new AvaloniaShellCommandHandler(
                 desktop,
                 platform,

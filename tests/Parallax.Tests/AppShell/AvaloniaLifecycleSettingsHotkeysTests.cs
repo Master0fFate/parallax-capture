@@ -271,12 +271,14 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
             var hotkeys = new FakeHotkeyService(CapabilityResult.Supported("Hotkeys supported."));
             var startup = new FakeStartupService(platform.Locations);
             var themes = new FakeThemeApplier();
+            var executed = new List<ShellActionId>();
             var applier = new RuntimeSettingsApplier(
                 platform,
                 new JsonSettingsStore(platform.Locations),
                 hotkeys,
                 startup,
-                new ThemeSettingsService(themes));
+                new ThemeSettingsService(themes),
+                action => () => executed.Add(MapHotkeyAction(action)));
 
             var result = applier.Apply(settings, @"C:\Apps\Parallax\Parallax.exe");
 
@@ -284,6 +286,12 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
             Assert.True(Directory.Exists(settings.SaveFolder));
             Assert.True(hotkeys.Unregistered);
             Assert.Equal(3, hotkeys.Registered.Count);
+            hotkeys.Callbacks[HotkeyPlanner.RegionScreenshotId].Invoke();
+            hotkeys.Callbacks[HotkeyPlanner.FullscreenScreenshotId].Invoke();
+            hotkeys.Callbacks[HotkeyPlanner.RegionRecordingId].Invoke();
+            Assert.Contains(ShellActionId.RegionScreenshot, executed);
+            Assert.Contains(ShellActionId.FullScreenshot, executed);
+            Assert.Contains(ShellActionId.RecordRegion, executed);
             Assert.True(startup.LastResult?.Success);
             Assert.Equal("GitHub Light", themes.Applied.Single().DisplayName);
             Assert.True(File.Exists(platform.Locations.SettingsFilePath));
@@ -309,12 +317,14 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
             var hotkeys = new FakeHotkeyService(CapabilityResult.Supported("Hotkeys supported."));
             var startup = new FakeStartupService(platform.Locations);
             var themes = new FakeThemeApplier();
+            var executed = new List<ShellActionId>();
             var applier = new RuntimeSettingsApplier(
                 platform,
                 new JsonSettingsStore(platform.Locations),
                 hotkeys,
                 startup,
-                new ThemeSettingsService(themes));
+                new ThemeSettingsService(themes),
+                action => () => executed.Add(MapHotkeyAction(action)));
             var model = new SettingsWindowModel(settings)
             {
                 SaveFolder = Path.Combine(root, "custom"),
@@ -339,6 +349,8 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
             Assert.Equal("GitHub", reloaded.ThemeFamily);
             Assert.Equal("Light", reloaded.ThemeMode);
             Assert.Equal("Ctrl+Shift+F", reloaded.HotkeyFullscreen);
+            hotkeys.Callbacks[HotkeyPlanner.FullscreenScreenshotId].Invoke();
+            Assert.Contains(ShellActionId.FullScreenshot, executed);
             Assert.True(startup.LastResult?.Success);
             Assert.Equal("GitHub Light", themes.Applied.Single().DisplayName);
         }
@@ -349,6 +361,17 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
                 Directory.Delete(root, recursive: true);
             }
         }
+    }
+
+    private static ShellActionId MapHotkeyAction(HotkeyAction action)
+    {
+        return action switch
+        {
+            HotkeyAction.RegionScreenshot => ShellActionId.RegionScreenshot,
+            HotkeyAction.FullscreenScreenshot => ShellActionId.FullScreenshot,
+            HotkeyAction.RegionRecording => ShellActionId.RecordRegion,
+            _ => throw new ArgumentOutOfRangeException(nameof(action), action, "Unsupported hotkey action.")
+        };
     }
 
     private sealed class TestPlatform : IPlatformBackend
