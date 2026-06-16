@@ -97,10 +97,31 @@ public class ReleaseVerificationTests
         Assert.Contains("shadCN Light", xaml);
         Assert.Contains("GitHub Dark", xaml);
         Assert.Contains("GitHub Light", xaml);
+        Assert.Contains("TxtThemePreviewTitle", xaml);
         Assert.Contains("ThemeMode_Changed", code);
         Assert.Contains("ThemePreset_Changed", code);
         Assert.Contains("PreviewTheme", code);
+        Assert.Contains("TxtThemePreviewTitle.Text = preset.DisplayName", code);
         Assert.Contains("OnClosed", code);
+    }
+
+    [Fact]
+    public void ProductThemeBrushBindings_AreDynamicSoExistingWindowsUpdate()
+    {
+        string repoRoot = FindRepoRoot();
+        string sourceRoot = Path.Combine(repoRoot, "parallax");
+
+        string[] offenders = Directory
+            .EnumerateFiles(sourceRoot, "*.xaml", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}")
+                           && !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
+            .SelectMany(path => File.ReadAllLines(path)
+                .Select((line, index) => new { path, line, index })
+                .Where(item => item.line.Contains("{StaticResource Product") && item.line.Contains("Brush}"))
+                .Select(item => $"{Path.GetRelativePath(repoRoot, item.path)}:{item.index + 1}: {item.line.Trim()}"))
+            .ToArray();
+
+        Assert.Empty(offenders);
     }
 
     [Fact]

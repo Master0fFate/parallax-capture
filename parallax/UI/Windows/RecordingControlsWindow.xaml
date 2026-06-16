@@ -10,10 +10,10 @@
         Topmost="True"
         ShowActivated="False"
         ShowInTaskbar="False"
-        Background="{StaticResource ProductSurfaceRaisedBrush}"
+        Background="{DynamicResource ProductSurfaceRaisedBrush}"
         Style="{StaticResource ProductWindowStyle}">
-    <Border Background="{StaticResource ProductSurfaceRaisedBrush}"
-            BorderBrush="{StaticResource ProductBorderStrongBrush}"
+    <Border Background="{DynamicResource ProductSurfaceRaisedBrush}"
+            BorderBrush="{DynamicResource ProductBorderStrongBrush}"
             BorderThickness="1"
             Padding="10"
             SnapsToDevicePixels="True">
@@ -29,7 +29,7 @@
                         VerticalAlignment="Center">
                 <Ellipse Width="8"
                          Height="8"
-                         Fill="{StaticResource ProductDangerHoverBrush}"
+                         Fill="{DynamicResource ProductDangerHoverBrush}"
                          Margin="0,0,7,0"
                          VerticalAlignment="Center" />
                 <TextBlock Text="Recording"
@@ -43,7 +43,7 @@
                        FontFamily="Consolas"
                        FontSize="16"
                        FontWeight="SemiBold"
-                       Foreground="{StaticResource ProductTextBrush}"
+                       Foreground="{DynamicResource ProductTextBrush}"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"
                        Margin="12,0" />

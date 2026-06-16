@@ -50,9 +50,9 @@
         <PathGeometry x:Key="IconClearGeo">M4,14 L5.5,14 L5.5,6 L4,6 Z M7,14 L8.5,14 L8.5,6 L7,6 Z M10,14 L11.5,14 L11.5,6 L10,6 Z M2,4 L5,4 L6,2 L10,2 L11,4 L14,4 L14,5 L2,5 Z</PathGeometry>
 
         <Style x:Key="ToolButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource ProductSurfaceRaisedBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource ProductBorderBrush}" />
+            <Setter Property="Background" Value="{DynamicResource ProductSurfaceRaisedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ProductTextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ProductBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Width" Value="32" />
@@ -78,15 +78,15 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource ProductSurfaceHoverBrush}" />
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource ProductBorderStrongBrush}" />
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ProductSurfaceHoverBrush}" />
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource ProductBorderStrongBrush}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource ProductAccentPressedBrush}" />
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource ProductAccentBrush}" />
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ProductAccentPressedBrush}" />
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource ProductAccentBrush}" />
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource ProductFocusBrush}" />
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource ProductFocusBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="border" Property="Opacity" Value="0.4" />
@@ -123,7 +123,7 @@
             <Setter Property="Height" Value="24" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="{StaticResource ProductBorderBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ProductBorderBrush}" />
             <Setter Property="Margin" Value="2,0" />
             <Setter Property="FocusVisualStyle" Value="{StaticResource ProductFocusVisualStyle}" />
             <Setter Property="Template">
@@ -140,7 +140,7 @@
                                 <Style TargetType="Border">
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="BorderBrush" Value="{StaticResource ProductFocusBrush}" />
+                                            <Setter Property="BorderBrush" Value="{DynamicResource ProductFocusBrush}" />
                                             <Setter Property="BorderThickness" Value="2" />
                                         </Trigger>
                                     </Style.Triggers>
@@ -149,7 +149,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource ProductFocusBrush}" />
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource ProductFocusBrush}" />
                                 <Setter TargetName="border" Property="BorderThickness" Value="2" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -161,8 +161,8 @@
 
     <Grid>
         <Border CornerRadius="14"
-                Background="{StaticResource ProductSurfaceBrush}"
-                BorderBrush="{StaticResource ProductBorderStrongBrush}"
+                Background="{DynamicResource ProductSurfaceBrush}"
+                BorderBrush="{DynamicResource ProductBorderStrongBrush}"
                 BorderThickness="1"
                 Margin="6">
             <Border.Effect>
@@ -182,7 +182,7 @@
 
                 <!-- TITLE BAR (draggable) -->
                 <Border Grid.Row="0"
-                        Background="{StaticResource ProductChromeBrush}"
+                        Background="{DynamicResource ProductChromeBrush}"
                         CornerRadius="14,14,0,0"
                         MouseDown="TitleBar_MouseDown"
                         Padding="12,8">
@@ -202,7 +202,7 @@
 
                 <!-- TOOLBAR ROW -->
                 <Border Grid.Row="1"
-                        Background="{StaticResource ProductSurfaceRaisedBrush}"
+                        Background="{DynamicResource ProductSurfaceRaisedBrush}"
                         Padding="8,6">
                     <StackPanel Orientation="Horizontal">
 
@@ -212,7 +212,7 @@
                                 Click="Tool_Click"
                                 Style="{StaticResource ToolButtonIconStyle}">
                             <Path Data="{StaticResource IconPenGeo}"
-                                  Stroke="{StaticResource ProductTextBrush}" StrokeThickness="1.2"
+                                  Stroke="{DynamicResource ProductTextBrush}" StrokeThickness="1.2"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                   StrokeLineJoin="Round"
                                   Fill="Transparent" />
@@ -223,7 +223,7 @@
                                 Click="Tool_Click"
                                 Style="{StaticResource ToolButtonIconStyle}">
                             <Path Data="{StaticResource IconArrowGeo}"
-                                  Stroke="{StaticResource ProductTextBrush}" StrokeThickness="1.5"
+                                  Stroke="{DynamicResource ProductTextBrush}" StrokeThickness="1.5"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                   StrokeLineJoin="Round" />
                         </Button>
@@ -233,7 +233,7 @@
                                 Click="Tool_Click"
                                 Style="{StaticResource ToolButtonIconStyle}">
                             <Path Data="{StaticResource IconRectGeo}"
-                                  Stroke="{StaticResource ProductTextBrush}" StrokeThickness="1.2"
+                                  Stroke="{DynamicResource ProductTextBrush}" StrokeThickness="1.2"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                   StrokeLineJoin="Round" />
                         </Button>
@@ -243,7 +243,7 @@
                                 Click="Tool_Click"
                                 Style="{StaticResource ToolButtonIconStyle}">
                             <Path Data="{StaticResource IconEllipseGeo}"
-                                  Stroke="{StaticResource ProductTextBrush}" StrokeThickness="1.2"
+                                  Stroke="{DynamicResource ProductTextBrush}" StrokeThickness="1.2"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                   StrokeLineJoin="Round" />
                         </Button>
@@ -253,7 +253,7 @@
                                 Click="Tool_Click"
                                 Style="{StaticResource ToolButtonIconStyle}">
                             <TextBlock Text="T" FontSize="14" FontWeight="Bold"
-                                       Foreground="{StaticResource ProductTextBrush}"
+                                       Foreground="{DynamicResource ProductTextBrush}"
                                        FontFamily="Segoe UI" />
                         </Button>
 
@@ -262,10 +262,10 @@
                                 Click="Tool_Click"
                                 Style="{StaticResource ToolButtonIconStyle}">
                             <Path Data="{StaticResource IconHlGeo}"
-                                  Stroke="{StaticResource ProductTextBrush}" StrokeThickness="1.2"
+                                  Stroke="{DynamicResource ProductTextBrush}" StrokeThickness="1.2"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                   StrokeLineJoin="Round"
-                                  Fill="{StaticResource ProductAccentBrush}"
+                                  Fill="{DynamicResource ProductAccentBrush}"
                                   Opacity="0.75" />
                         </Button>
 
@@ -274,13 +274,13 @@
                                 Click="Tool_Click"
                                 Style="{StaticResource ToolButtonIconStyle}">
                             <Path Data="{StaticResource IconBlurGeo}"
-                                  Stroke="{StaticResource ProductTextBrush}" StrokeThickness="1.2"
+                                  Stroke="{DynamicResource ProductTextBrush}" StrokeThickness="1.2"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                   StrokeLineJoin="Round"
                                   Opacity="0.8" />
                         </Button>
 
-                        <Separator Width="1" Background="{StaticResource ProductSeparatorBrush}" Margin="6,0" />
+                        <Separator Width="1" Background="{DynamicResource ProductSeparatorBrush}" Margin="6,0" />
 
                         <!-- ── Color Picker ── -->
                         <ItemsControl x:Name="ColorSwatches"
@@ -302,19 +302,19 @@
                                 VerticalAlignment="Center"
                                 Style="{StaticResource ActionButtonStyle}" />
 
-                        <Separator Width="1" Background="{StaticResource ProductSeparatorBrush}" Margin="6,0" />
+                        <Separator Width="1" Background="{DynamicResource ProductSeparatorBrush}" Margin="6,0" />
 
                         <!-- ── Stroke Thickness ── -->
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="Stroke"
-                                       Foreground="{StaticResource ProductTextMutedBrush}"
+                                       Foreground="{DynamicResource ProductTextMutedBrush}"
                                        FontSize="12"
                                        VerticalAlignment="Center"
                                        Margin="0,0,6,0" />
-                            <Border BorderBrush="{StaticResource ProductBorderBrush}"
+                            <Border BorderBrush="{DynamicResource ProductBorderBrush}"
                                     BorderThickness="1"
                                     CornerRadius="10"
-                                    Background="{StaticResource ProductInputBrush}"
+                                    Background="{DynamicResource ProductInputBrush}"
                                     Padding="6,0">
                                 <Grid>
                                     <Slider x:Name="ThicknessSlider"
@@ -328,7 +328,7 @@
                             </Border>
                             <TextBlock x:Name="ThicknessValue"
                                        Text="2"
-                                       Foreground="{StaticResource ProductTextMutedBrush}"
+                                       Foreground="{DynamicResource ProductTextMutedBrush}"
                                        FontSize="11"
                                        FontFamily="Segoe UI"
                                        VerticalAlignment="Center"
@@ -337,7 +337,7 @@
                                        Margin="3,0,0,0" />
                         </StackPanel>
 
-                        <Separator Width="1" Background="{StaticResource ProductSeparatorBrush}" Margin="6,0" />
+                        <Separator Width="1" Background="{DynamicResource ProductSeparatorBrush}" Margin="6,0" />
 
                         <!-- ── Zoom Controls ── -->
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -349,14 +349,14 @@
                                      Margin="0,0,2,0"
                                      Style="{StaticResource ToolButtonIconStyle}">
                                 <Path Data="M 2 8 L 14 8"
-                                      Stroke="{StaticResource ProductTextBrush}"
+                                      Stroke="{DynamicResource ProductTextBrush}"
                                       StrokeThickness="2"
                                       StrokeStartLineCap="Round"
                                       StrokeEndLineCap="Round" />
                             </Button>
                             <TextBlock x:Name="TxtZoomLevel"
                                        Text="100%"
-                                       Foreground="{StaticResource ProductTextMutedBrush}"
+                                       Foreground="{DynamicResource ProductTextMutedBrush}"
                                        FontSize="10"
                                        FontFamily="Segoe UI"
                                        Width="38"
@@ -370,7 +370,7 @@
                                      Margin="2,0,2,0"
                                      Style="{StaticResource ToolButtonIconStyle}">
                                 <Path Data="M 8 2 L 8 14 M 2 8 L 14 8"
-                                      Stroke="{StaticResource ProductTextBrush}"
+                                      Stroke="{DynamicResource ProductTextBrush}"
                                       StrokeThickness="2"
                                       StrokeStartLineCap="Round"
                                       StrokeEndLineCap="Round" />
@@ -382,14 +382,14 @@
                                      VerticalAlignment="Center"
                                      Style="{StaticResource ToolButtonIconStyle}">
                                 <TextBlock Text="1:1"
-                                           Foreground="{StaticResource ProductTextBrush}"
+                                           Foreground="{DynamicResource ProductTextBrush}"
                                            FontFamily="Segoe UI"
                                            FontSize="10"
                                            FontWeight="SemiBold" />
                             </Button>
                         </StackPanel>
 
-                        <Separator Width="1" Background="{StaticResource ProductSeparatorBrush}" Margin="6,0" />
+                        <Separator Width="1" Background="{DynamicResource ProductSeparatorBrush}" Margin="6,0" />
 
                         <!-- ── Undo (wider with icon) ── -->
                         <Button x:Name="BtnUndo"
@@ -398,7 +398,7 @@
                                 Style="{StaticResource UndoClearButtonStyle}">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="{StaticResource IconUndoGeo}"
-                                      Stroke="{StaticResource ProductTextBrush}" StrokeThickness="1.0"
+                                      Stroke="{DynamicResource ProductTextBrush}" StrokeThickness="1.0"
                                       StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                       StrokeLineJoin="Round"
                                       Width="12" Height="12"
@@ -414,8 +414,8 @@
                                 Style="{StaticResource UndoClearButtonStyle}">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="{StaticResource IconClearGeo}"
-                                      Stroke="{StaticResource ProductTextBrush}" StrokeThickness="0.8"
-                                      Fill="{StaticResource ProductTextBrush}"
+                                      Stroke="{DynamicResource ProductTextBrush}" StrokeThickness="0.8"
+                                      Fill="{DynamicResource ProductTextBrush}"
                                       Width="12" Height="12"
                                       Margin="0,0,4,0" />
                                 <TextBlock Text="Clear all" FontSize="11" />
@@ -427,7 +427,7 @@
 
                 <!-- ANNOTATION CANVAS AREA -->
                 <ScrollViewer Grid.Row="2"
-                              Background="{StaticResource ProductInputBrush}"
+                              Background="{DynamicResource ProductInputBrush}"
                               HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto">
                     <Grid x:Name="ContentGrid">
@@ -455,8 +455,8 @@
                                 Panel.ZIndex="20">
                             <Border x:Name="FloatingTextToolbar"
                                     Visibility="Collapsed"
-                                    Background="{StaticResource ProductChromeBrush}"
-                                    BorderBrush="{StaticResource ProductBorderStrongBrush}"
+                                    Background="{DynamicResource ProductChromeBrush}"
+                                    BorderBrush="{DynamicResource ProductBorderStrongBrush}"
                                     BorderThickness="1"
                                     CornerRadius="7"
                                     Padding="6"
@@ -471,7 +471,7 @@
                                             Click="TextColorButton_Click"
                                             Style="{StaticResource ToolButtonStyle}">
                                         <Grid Width="18" Height="18">
-                                            <Ellipse Stroke="{StaticResource ProductTextBrush}"
+                                            <Ellipse Stroke="{DynamicResource ProductTextBrush}"
                                                      StrokeThickness="1"
                                                      Fill="Transparent" />
                                             <Rectangle x:Name="TextColorPreview"
@@ -544,7 +544,7 @@
                                     PreviewMouseLeftButtonUp="TextMoveHandle_MouseLeftButtonUp"
                                     Style="{StaticResource ToolButtonStyle}">
                                 <Path Data="M 8 2 L 8 14 M 2 8 L 14 8 M 8 2 L 5 5 M 8 2 L 11 5 M 14 8 L 11 5 M 14 8 L 11 11 M 8 14 L 5 11 M 8 14 L 11 11 M 2 8 L 5 5 M 2 8 L 5 11"
-                                      Stroke="{StaticResource ProductTextBrush}"
+                                      Stroke="{DynamicResource ProductTextBrush}"
                                       StrokeThickness="1.4"
                                       StrokeStartLineCap="Round"
                                       StrokeEndLineCap="Round"
@@ -559,7 +559,7 @@
 
                 <!-- BOTTOM ACTION BAR -->
                 <Border Grid.Row="3"
-                        Background="{StaticResource ProductChromeBrush}"
+                        Background="{DynamicResource ProductChromeBrush}"
                         Padding="10,8"
                         CornerRadius="0,0,6,6">
                     <Grid>
@@ -572,7 +572,7 @@
                         <TextBlock x:Name="TxtStatus"
                                    Grid.Column="0"
                                    Text=""
-                                   Foreground="{StaticResource ProductSuccessBrush}"
+                                   Foreground="{DynamicResource ProductSuccessBrush}"
                                    FontSize="12"
                                    FontFamily="Segoe UI"
                                    VerticalAlignment="Center"

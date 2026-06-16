@@ -161,6 +161,7 @@ namespace parallax.UI.Windows
         private void UpdateThemeSummary(ThemePreset preset)
         {
             TxtThemeSummary.Text = $"{preset.DisplayName} selected. Save settings to keep the {preset.Mode.ToLowerInvariant()} palette.";
+            TxtThemePreviewTitle.Text = preset.DisplayName;
         }
 
         private static void PreviewTheme(ThemePreset preset)

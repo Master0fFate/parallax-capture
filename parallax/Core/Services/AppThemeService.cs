@@ -118,28 +118,8 @@ namespace parallax.Core.Services
         {
             foreach (var pair in palette.Brushes)
             {
-                if (TryMutateBrush(resources, pair.Key, pair.Value))
-                    continue;
-
                 resources[pair.Key] = new SolidColorBrush(pair.Value);
             }
-        }
-
-        private static bool TryMutateBrush(ResourceDictionary resources, string key, MediaColor color)
-        {
-            if (resources.Contains(key) && resources[key] is SolidColorBrush brush && !brush.IsFrozen)
-            {
-                brush.Color = color;
-                return true;
-            }
-
-            foreach (ResourceDictionary merged in resources.MergedDictionaries)
-            {
-                if (TryMutateBrush(merged, key, color))
-                    return true;
-            }
-
-            return false;
         }
 
         private static MediaColor ParseColor(string hex)

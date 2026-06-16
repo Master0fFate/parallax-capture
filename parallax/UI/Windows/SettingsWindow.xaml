@@ -188,8 +188,8 @@
                                            Style="{StaticResource ProductCaptionTextStyle}"
                                            Margin="0,4,0,12" />
 
-                                <Border Background="{StaticResource ProductInputBrush}"
-                                        BorderBrush="{StaticResource ProductBorderBrush}"
+                                <Border Background="{DynamicResource ProductInputBrush}"
+                                        BorderBrush="{DynamicResource ProductBorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="12"
                                         Padding="12">
@@ -199,7 +199,8 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0">
-                                            <TextBlock Text="Parallax Capture"
+                                            <TextBlock x:Name="TxtThemePreviewTitle"
+                                                       Text="Material 3 Dark"
                                                        Style="{StaticResource ProductSectionHeaderTextStyle}" />
                                             <TextBlock Text="Theme resources drive surfaces, focus states, status colors, and accents."
                                                        TextWrapping="Wrap"
@@ -212,19 +213,19 @@
                                                     Margin="16,0,0,0">
                                             <Ellipse Width="18"
                                                      Height="18"
-                                                     Fill="{StaticResource ProductAccentBrush}"
+                                                     Fill="{DynamicResource ProductAccentBrush}"
                                                      Margin="0,0,6,0" />
                                             <Ellipse Width="18"
                                                      Height="18"
-                                                     Fill="{StaticResource ProductSuccessBrush}"
+                                                     Fill="{DynamicResource ProductSuccessBrush}"
                                                      Margin="0,0,6,0" />
                                             <Ellipse Width="18"
                                                      Height="18"
-                                                     Fill="{StaticResource ProductWarningBrush}"
+                                                     Fill="{DynamicResource ProductWarningBrush}"
                                                      Margin="0,0,6,0" />
                                             <Ellipse Width="18"
                                                      Height="18"
-                                                     Fill="{StaticResource ProductDangerBrush}" />
+                                                     Fill="{DynamicResource ProductDangerBrush}" />
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -350,7 +351,7 @@
         </TabControl>
 
         <Grid Grid.Row="2" Margin="0,14,0,0">
-            <TextBlock Text="Changes apply after you save."
+            <TextBlock Text="Theme changes preview immediately. Save settings to keep them."
                        Style="{StaticResource ProductCaptionTextStyle}"
                        VerticalAlignment="Center" />
             <Button Content="Save settings"

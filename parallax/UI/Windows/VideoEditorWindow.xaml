@@ -32,9 +32,9 @@
         <Style x:Key="EditorWarningButtonStyle" TargetType="Button" BasedOn="{StaticResource ProductButtonStyle}">
             <Setter Property="MinHeight" Value="36" />
             <Setter Property="Height" Value="36" />
-            <Setter Property="Background" Value="{StaticResource ProductWarningSurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource ProductWarningBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource ProductTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource ProductWarningSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ProductWarningBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ProductTextBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
@@ -68,7 +68,7 @@
         </Style>
 
         <Style x:Key="EditorMonoTextStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource ProductTextMutedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ProductTextMutedBrush}" />
             <Setter Property="FontFamily" Value="Consolas" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -76,8 +76,8 @@
     </Window.Resources>
 
     <Border CornerRadius="14"
-            Background="{StaticResource ProductWindowBrush}"
-            BorderBrush="{StaticResource ProductBorderStrongBrush}"
+            Background="{DynamicResource ProductWindowBrush}"
+            BorderBrush="{DynamicResource ProductBorderStrongBrush}"
             BorderThickness="1"
             Margin="8">
         <Border.Effect>
@@ -95,7 +95,7 @@
             </Grid.RowDefinitions>
 
             <Border Grid.Row="0"
-                    Background="{StaticResource ProductChromeBrush}"
+                    Background="{DynamicResource ProductChromeBrush}"
                     CornerRadius="14,14,0,0"
                     MouseDown="TitleBar_MouseDown"
                     Padding="16,10">
@@ -114,7 +114,7 @@
                                    FontSize="14"
                                    VerticalAlignment="Center" />
                         <TextBlock Text="Space: play/pause   M: mute   Esc: close"
-                                   Foreground="{StaticResource ProductTextSubtleBrush}"
+                                   Foreground="{DynamicResource ProductTextSubtleBrush}"
                                    FontSize="11"
                                    FontFamily="Segoe UI"
                                    Margin="14,1,0,0"
@@ -124,7 +124,7 @@
                     <TextBlock x:Name="TxtFileName"
                                Grid.Column="1"
                                Text=""
-                               Foreground="{StaticResource ProductTextSubtleBrush}"
+                               Foreground="{DynamicResource ProductTextSubtleBrush}"
                                FontSize="12"
                                FontFamily="Segoe UI"
                                VerticalAlignment="Center"
@@ -142,8 +142,8 @@
             </Border>
 
             <Border Grid.Row="1"
-                    Background="{StaticResource ProductInputBrush}"
-                    BorderBrush="{StaticResource ProductSeparatorBrush}"
+                    Background="{DynamicResource ProductInputBrush}"
+                    BorderBrush="{DynamicResource ProductSeparatorBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
                     Margin="12,12,12,0"
@@ -161,8 +161,8 @@
                                   VerticalAlignment="Center" />
 
                     <Border x:Name="PlayOverlay"
-                            Background="{StaticResource ProductOverlayBrush}"
-                            BorderBrush="{StaticResource ProductBorderStrongBrush}"
+                            Background="{DynamicResource ProductOverlayBrush}"
+                            BorderBrush="{DynamicResource ProductBorderStrongBrush}"
                             BorderThickness="1"
                             CornerRadius="42"
                             Width="84" Height="84"
@@ -171,7 +171,7 @@
                             Cursor="Hand"
                             MouseDown="PlayOverlay_MouseDown">
                         <Path Data="M 0 0 L 28 16 L 0 32 Z"
-                              Fill="{StaticResource ProductTextBrush}"
+                              Fill="{DynamicResource ProductTextBrush}"
                               Width="32"
                               Height="32"
                               Stretch="Uniform"
@@ -183,8 +183,8 @@
             </Border>
 
             <Border Grid.Row="2"
-                    Background="{StaticResource ProductSurfaceBrush}"
-                    BorderBrush="{StaticResource ProductSeparatorBrush}"
+                    Background="{DynamicResource ProductSurfaceBrush}"
+                    BorderBrush="{DynamicResource ProductSeparatorBrush}"
                     BorderThickness="0,1,0,1"
                     Padding="14,12"
                     Margin="0,12,0,0">
@@ -209,7 +209,7 @@
 
                         <TextBlock Grid.Column="1"
                                    Text="Drag the blue handles to set the trim range. Click the track to move the playhead."
-                                   Foreground="{StaticResource ProductTextSubtleBrush}"
+                                   Foreground="{DynamicResource ProductTextSubtleBrush}"
                                    FontSize="11"
                                    FontFamily="Segoe UI"
                                    TextTrimming="CharacterEllipsis"
@@ -224,7 +224,7 @@
                                        Text="00:00.000"
                                        Style="{StaticResource EditorMonoTextStyle}" />
                             <TextBlock Text=" / "
-                                       Foreground="{StaticResource ProductTextSubtleBrush}"
+                                       Foreground="{DynamicResource ProductTextSubtleBrush}"
                                        FontSize="13"
                                        FontFamily="Consolas"
                                        VerticalAlignment="Center" />
@@ -236,7 +236,7 @@
                         <TextBlock x:Name="TxtFFmpegStatus"
                                    Grid.Column="3"
                                    Text=""
-                                   Foreground="{StaticResource ProductWarningBrush}"
+                                   Foreground="{DynamicResource ProductWarningBrush}"
                                    FontSize="12"
                                    FontFamily="Segoe UI"
                                    VerticalAlignment="Center"
@@ -285,21 +285,21 @@
                                        Height="8"
                                        RadiusX="4"
                                        RadiusY="4"
-                                       Fill="{StaticResource ProductInputHoverBrush}"
-                                       Stroke="{StaticResource ProductBorderStrongBrush}"
+                                       Fill="{DynamicResource ProductInputHoverBrush}"
+                                       Stroke="{DynamicResource ProductBorderStrongBrush}"
                                        StrokeThickness="1"
                                        Canvas.Top="28" />
                             <Rectangle x:Name="TimelineSelectedRange"
                                        Height="10"
                                        RadiusX="5"
                                        RadiusY="5"
-                                       Fill="{StaticResource ProductAccentBrush}"
+                                       Fill="{DynamicResource ProductAccentBrush}"
                                        Opacity="0.75"
                                        Canvas.Top="27" />
                             <Line x:Name="TimelinePlayhead"
                                   Y1="10"
                                   Y2="54"
-                                  Stroke="{StaticResource ProductTextBrush}"
+                                  Stroke="{DynamicResource ProductTextBrush}"
                                   StrokeThickness="2"
                                   StrokeStartLineCap="Round"
                                   StrokeEndLineCap="Round" />
@@ -308,8 +308,8 @@
                                        Height="34"
                                        RadiusX="3"
                                        RadiusY="3"
-                                       Fill="{StaticResource ProductAccentBrush}"
-                                       Stroke="{StaticResource ProductAccentTextBrush}"
+                                       Fill="{DynamicResource ProductAccentBrush}"
+                                       Stroke="{DynamicResource ProductAccentTextBrush}"
                                        StrokeThickness="1"
                                        Canvas.Top="15" />
                             <Rectangle x:Name="TrimOutHandle"
@@ -317,8 +317,8 @@
                                        Height="34"
                                        RadiusX="3"
                                        RadiusY="3"
-                                       Fill="{StaticResource ProductAccentBrush}"
-                                       Stroke="{StaticResource ProductAccentTextBrush}"
+                                       Fill="{DynamicResource ProductAccentBrush}"
+                                       Stroke="{DynamicResource ProductAccentTextBrush}"
                                        StrokeThickness="1"
                                        Canvas.Top="15" />
                         </Canvas>
@@ -327,8 +327,8 @@
             </Border>
 
             <Border Grid.Row="3"
-                    Background="{StaticResource ProductSurfaceRaisedBrush}"
-                    BorderBrush="{StaticResource ProductSeparatorBrush}"
+                    Background="{DynamicResource ProductSurfaceRaisedBrush}"
+                    BorderBrush="{DynamicResource ProductSeparatorBrush}"
                     BorderThickness="0,0,0,1"
                     Padding="14,12">
                 <Grid>
@@ -363,23 +363,23 @@
                     </StackPanel>
 
                     <Border Grid.Column="2"
-                            BorderBrush="{StaticResource ProductBorderBrush}"
+                            BorderBrush="{DynamicResource ProductBorderBrush}"
                             BorderThickness="1"
                             CornerRadius="12"
                             Padding="10,7"
-                            Background="{StaticResource ProductInputBrush}"
+                            Background="{DynamicResource ProductInputBrush}"
                             VerticalAlignment="Center"
                             Margin="14,0,0,0">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Duration"
-                                       Foreground="{StaticResource ProductTextSubtleBrush}"
+                                       Foreground="{DynamicResource ProductTextSubtleBrush}"
                                        FontSize="11"
                                        FontFamily="Segoe UI"
                                        VerticalAlignment="Center"
                                        Margin="0,0,8,0" />
                             <TextBlock x:Name="TxtTrimDuration"
                                        Text="00:00.000"
-                                       Foreground="{StaticResource ProductSuccessBrush}"
+                                       Foreground="{DynamicResource ProductSuccessBrush}"
                                        FontSize="13"
                                        FontWeight="Bold"
                                        FontFamily="Consolas"
@@ -409,7 +409,7 @@
             </Border>
 
             <Border Grid.Row="4"
-                    Background="{StaticResource ProductChromeBrush}"
+                    Background="{DynamicResource ProductChromeBrush}"
                     Padding="14,12"
                     CornerRadius="0,0,14,14">
                 <Grid>
@@ -435,14 +435,14 @@
 
                     <Border Grid.Column="1"
                             Grid.Row="0"
-                            Background="{StaticResource ProductInputBrush}"
-                            BorderBrush="{StaticResource ProductBorderBrush}"
+                            Background="{DynamicResource ProductInputBrush}"
+                            BorderBrush="{DynamicResource ProductBorderBrush}"
                             BorderThickness="1"
                             CornerRadius="12"
                             Padding="10,7">
                         <TextBlock x:Name="TxtEditorStatus"
                                    Text="Save to keep this recording, or close to discard."
-                                   Foreground="{StaticResource ProductTextSubtleBrush}"
+                                   Foreground="{DynamicResource ProductTextSubtleBrush}"
                                    FontSize="12"
                                    FontFamily="Segoe UI"
                                    VerticalAlignment="Center"

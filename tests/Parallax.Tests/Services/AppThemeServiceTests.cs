@@ -77,7 +77,7 @@ public class AppThemeServiceTests
     }
 
     [Fact]
-    public void ApplyTo_MutatesExistingBrushInstancesForStaticResourceConsumers()
+    public void ApplyTo_ReplacesExistingBrushResourcesForDynamicResourceConsumers()
     {
         var resources = new ResourceDictionary();
         var accent = new SolidColorBrush(Colors.Red);
@@ -86,7 +86,8 @@ public class AppThemeServiceTests
         AppThemeService.ApplyTo(resources, "GitHub", "Light");
 
         var expected = AppThemeService.GetPalette("GitHub", "Light").Brushes["ProductAccentBrush"];
-        Assert.Same(accent, resources["ProductAccentBrush"]);
-        Assert.Equal(expected, accent.Color);
+        var actual = Assert.IsType<SolidColorBrush>(resources["ProductAccentBrush"]);
+        Assert.NotSame(accent, actual);
+        Assert.Equal(expected, actual.Color);
     }
 }
