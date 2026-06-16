@@ -36,11 +36,13 @@ public sealed class AvaloniaTrayService : ITrayService
         var menu = new NativeMenu();
         foreach (var item in items.Where(item => item.IsVisible))
         {
-            menu.Items.Add(new NativeMenuItem
+            var nativeItem = new NativeMenuItem
             {
                 Header = item.Label,
                 IsEnabled = item.IsEnabled
-            });
+            };
+            nativeItem.Click += (_, _) => item.Invoke();
+            menu.Items.Add(nativeItem);
         }
 
         _trayIcon.Menu = menu;

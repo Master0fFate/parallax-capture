@@ -6,7 +6,7 @@ namespace Parallax.App.Avalonia.Shell;
 
 public sealed class FallbackControlWindow : Window
 {
-    public FallbackControlWindow(TraySurfaceModel surface)
+    public FallbackControlWindow(TraySurfaceModel surface, Action<ShellActionId>? executeAction = null)
     {
         Title = "Parallax Capture";
         Width = 360;
@@ -29,13 +29,15 @@ public sealed class FallbackControlWindow : Window
 
         foreach (var item in surface.MenuItems.Where(item => item.IsVisible))
         {
-            panel.Children.Add(new Button
+            var button = new Button
             {
                 Content = item.Label,
                 IsEnabled = item.IsEnabled,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 MinHeight = 36
-            });
+            };
+            button.Click += (_, _) => executeAction?.Invoke(item.Action);
+            panel.Children.Add(button);
         }
 
         Content = new ScrollViewer { Content = panel };

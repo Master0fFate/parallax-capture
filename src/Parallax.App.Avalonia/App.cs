@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
 using Parallax.App.Avalonia.Shell;
-using Parallax.Core.Hotkeys;
 using Parallax.Core.Platform;
 using Parallax.Core.Settings;
 using Parallax.Core.Shell;
@@ -32,15 +31,34 @@ public sealed class App : Application
             IPlatformBackend platform = CreatePlatformBackend();
             var store = new JsonSettingsStore(platform.Locations);
             var settings = store.Load();
+            var themeSettings = AvaloniaRuntimeServices.CreateThemeSettingsService(this);
+            themeSettings.Preview(settings.ThemeFamily, settings.ThemeMode);
+            var hotkeys = AvaloniaRuntimeServices.CreateHotkeyService(platform);
+            var startup = AvaloniaRuntimeServices.CreateStartupService(platform);
+            var runtimeSettings = new RuntimeSettingsApplier(
+                platform,
+                store,
+                hotkeys,
+                startup,
+                themeSettings);
 
             var tray = new AvaloniaTrayService();
-            var hotkeys = new UnsupportedHotkeyService(platform.Capabilities.GlobalHotkeys);
-            _coordinator = new AppLifecycleCoordinator(platform, tray, hotkeys);
+            AvaloniaShellCommandHandler? commandHandler = null;
+            _coordinator = new AppLifecycleCoordinator(platform, tray, hotkeys, action => commandHandler?.Execute(action));
+            commandHandler = new AvaloniaShellCommandHandler(
+                desktop,
+                platform,
+                settings,
+                store,
+                runtimeSettings,
+                themeSettings,
+                _coordinator,
+                GetExecutablePath());
             var surface = _coordinator.StartTrayFirst(settings);
 
             if (surface.MainWindowVisibleAtStartup)
             {
-                desktop.MainWindow = new FallbackControlWindow(surface);
+                desktop.MainWindow = new FallbackControlWindow(surface, action => commandHandler.Execute(action));
                 desktop.MainWindow.Show();
             }
         }
@@ -68,26 +86,10 @@ public sealed class App : Application
             xdgStateHome: Environment.GetEnvironmentVariable("XDG_STATE_HOME"));
     }
 
-    private sealed class UnsupportedHotkeyService : IGlobalHotkeyService
+    private static string GetExecutablePath()
     {
-        public UnsupportedHotkeyService(CapabilityResult capability)
-        {
-            Capability = capability;
-        }
-
-        public CapabilityResult Capability { get; }
-
-        public HotkeyRegistrationResult Register(int id, uint modifiers, uint virtualKey, string displayText, Action callback)
-        {
-            return new HotkeyRegistrationResult(HotkeyRegistrationResultState.Unsupported, displayText, Capability.Message);
-        }
-
-        public void UnregisterAll()
-        {
-        }
-
-        public void Dispose()
-        {
-        }
+        return Environment.ProcessPath
+            ?? Environment.GetCommandLineArgs().FirstOrDefault()
+            ?? AppContext.BaseDirectory;
     }
 }

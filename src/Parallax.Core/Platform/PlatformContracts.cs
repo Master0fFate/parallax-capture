@@ -56,15 +56,13 @@ public interface ITrayService
     void Dispose();
 }
 
-public interface IGlobalHotkeyService
+public interface IGlobalHotkeyService : IDisposable
 {
     CapabilityResult Capability { get; }
 
     HotkeyRegistrationResult Register(int id, uint modifiers, uint virtualKey, string displayText, Action callback);
 
     void UnregisterAll();
-
-    void Dispose();
 }
 
 public interface IScreenshotService
@@ -114,7 +112,22 @@ public interface IPackagingEnvironment
 {
 }
 
-public sealed record TrayMenuItem(string Id, string Label, bool IsEnabled, bool IsVisible, string? Status = null);
+public sealed record TrayMenuItem(
+    string Id,
+    string Label,
+    bool IsEnabled,
+    bool IsVisible,
+    string? Status = null,
+    Action? Activate = null)
+{
+    public void Invoke()
+    {
+        if (IsEnabled && IsVisible)
+        {
+            Activate?.Invoke();
+        }
+    }
+}
 
 public enum HotkeyRegistrationResultState
 {

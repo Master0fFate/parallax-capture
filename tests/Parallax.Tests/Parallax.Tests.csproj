@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\parallax\parallax.csproj" />
+    <ProjectReference Include="..\..\src\Parallax.App.Avalonia\Parallax.App.Avalonia.csproj" />
     <ProjectReference Include="..\..\src\Parallax.Core\Parallax.Core.csproj" />
     <ProjectReference Include="..\..\src\Parallax.Platform.Windows\Parallax.Platform.Windows.csproj" />
     <ProjectReference Include="..\..\src\Parallax.Platform.Mac\Parallax.Platform.Mac.csproj" />

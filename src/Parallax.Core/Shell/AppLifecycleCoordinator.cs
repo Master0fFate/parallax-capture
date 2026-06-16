@@ -16,17 +16,22 @@ public sealed class AppLifecycleCoordinator
     private readonly IPlatformBackend _platform;
     private readonly ITrayService _trayService;
     private readonly IGlobalHotkeyService _hotkeyService;
+    private readonly Action<ShellActionId>? _executeAction;
     private readonly List<IAppLifecycleResource> _resources = [];
     private bool _isRunning;
+    private bool _isRecording;
+    private bool _hasActiveVideoEditor;
 
     public AppLifecycleCoordinator(
         IPlatformBackend platform,
         ITrayService trayService,
-        IGlobalHotkeyService hotkeyService)
+        IGlobalHotkeyService hotkeyService,
+        Action<ShellActionId>? executeAction = null)
     {
         _platform = platform;
         _trayService = trayService;
         _hotkeyService = hotkeyService;
+        _executeAction = executeAction;
     }
 
     public bool IsRunning => _isRunning;
@@ -38,6 +43,7 @@ public sealed class AppLifecycleCoordinator
     public TraySurfaceModel StartTrayFirst(ParallaxSettings settings, bool isRecording = false)
     {
         _isRunning = true;
+        _isRecording = isRecording;
         var hotkeys = HotkeyPlanner.Plan(settings, _hotkeyService.Capability);
         foreach (var hotkey in hotkeys.Where(item => item.ShouldRegister))
         {
@@ -46,19 +52,43 @@ public sealed class AppLifecycleCoordinator
                 continue;
             }
 
-            _hotkeyService.Register(hotkey.RegistrationId, parsed.Modifiers, parsed.VirtualKey, hotkey.DisplayText, () => { });
+            _hotkeyService.Register(
+                hotkey.RegistrationId,
+                parsed.Modifiers,
+                parsed.VirtualKey,
+                hotkey.DisplayText,
+                () => Execute(MapHotkeyAction(hotkey.Action)));
         }
 
-        var state = new ShellRuntimeState(isRecording, _trayService.IsAvailable);
+        return RefreshSurface(settings, hotkeys);
+    }
+
+    public TraySurfaceModel RefreshSurface(
+        ParallaxSettings settings,
+        IReadOnlyList<PlannedHotkey>? plannedHotkeys = null)
+    {
+        var hotkeys = plannedHotkeys ?? HotkeyPlanner.Plan(settings, _hotkeyService.Capability);
+        var state = new ShellRuntimeState(_isRecording, _trayService.IsAvailable, _hasActiveVideoEditor);
         var surface = TraySurfaceBuilder.Build(_platform.Info, _platform.Capabilities, state, hotkeys);
         _trayService.SetMenu(surface.MenuItems.Select(item => new TrayMenuItem(
             item.Action.ToString(),
             item.Label,
             item.IsEnabled,
             item.IsVisible,
-            item.Status)).ToArray());
+            item.Status,
+            () => Execute(item.Action))).ToArray());
         _trayService.SetToolTip(surface.Tooltip);
         return surface;
+    }
+
+    public void SetRecordingState(bool isRecording)
+    {
+        _isRecording = isRecording;
+    }
+
+    public void SetVideoEditorActive(bool isActive)
+    {
+        _hasActiveVideoEditor = isActive;
     }
 
     public void TrackResource(IAppLifecycleResource resource)
@@ -68,6 +98,11 @@ public sealed class AppLifecycleCoordinator
 
     public void Quit()
     {
+        if (ShutdownRequested && !_isRunning)
+        {
+            return;
+        }
+
         var cleanup = new List<string>();
         ShutdownRequested = true;
 
@@ -116,5 +151,28 @@ public sealed class AppLifecycleCoordinator
 
         _isRunning = false;
         CleanupLog = cleanup;
+    }
+
+    private void Execute(ShellActionId action)
+    {
+        if (action == ShellActionId.Quit)
+        {
+            Quit();
+            _executeAction?.Invoke(action);
+            return;
+        }
+
+        _executeAction?.Invoke(action);
+    }
+
+    private static ShellActionId MapHotkeyAction(HotkeyAction action)
+    {
+        return action switch
+        {
+            HotkeyAction.RegionScreenshot => ShellActionId.RegionScreenshot,
+            HotkeyAction.FullscreenScreenshot => ShellActionId.FullScreenshot,
+            HotkeyAction.RegionRecording => ShellActionId.RecordRegion,
+            _ => throw new ArgumentOutOfRangeException(nameof(action), action, "Unsupported hotkey action.")
+        };
     }
 }
