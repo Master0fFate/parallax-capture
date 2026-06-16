@@ -99,6 +99,26 @@ public class ReleaseVerificationTests
         Assert.Contains("GitHub Light", xaml);
         Assert.Contains("ThemeMode_Changed", code);
         Assert.Contains("ThemePreset_Changed", code);
+        Assert.Contains("PreviewTheme", code);
+        Assert.Contains("OnClosed", code);
+    }
+
+    [Fact]
+    public void TrayMenu_UsesThemeSafeMenuStylesAndInputGestures()
+    {
+        string styles = ReadSource("DefaultStyles.xaml");
+        string tray = ReadSource("TrayIconManager.cs");
+
+        Assert.Contains("ProductContextMenuStyle", styles);
+        Assert.Contains("ProductMenuItemStyle", styles);
+        Assert.Contains("InputGestureText", styles);
+        Assert.Contains("ProductContextMenuStyle", tray);
+        Assert.Contains("ProductMenuItemStyle", tray);
+        Assert.Contains("InputGestureText", tray);
+        Assert.Contains("FormatHotkeyGesture", tray);
+        Assert.DoesNotContain("Capture region   ", tray);
+        Assert.DoesNotContain("Capture full screen   ", tray);
+        Assert.DoesNotContain("Record region   ", tray);
     }
 
     [Fact]

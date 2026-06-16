@@ -41,14 +41,19 @@ namespace parallax.Core.Services
             if (app == null)
                 return;
 
-            var palette = GetPalette(family, mode);
             if (!app.Dispatcher.CheckAccess())
             {
-                app.Dispatcher.Invoke(() => ApplyPalette(app, palette));
+                app.Dispatcher.Invoke(() => ApplyTo(app.Resources, family, mode));
                 return;
             }
 
-            ApplyPalette(app, palette);
+            ApplyTo(app.Resources, family, mode);
+        }
+
+        public static void ApplyTo(ResourceDictionary resources, string? family, string? mode)
+        {
+            var palette = GetPalette(family, mode);
+            ApplyPalette(resources, palette);
         }
 
         public static ThemePalette GetPalette(string? family, string? mode)
@@ -109,18 +114,32 @@ namespace parallax.Core.Services
                 hexColors.ToDictionary(pair => pair.Key, pair => ParseColor(pair.Value)));
         }
 
-        private static void ApplyPalette(Application app, ThemePalette palette)
+        private static void ApplyPalette(ResourceDictionary resources, ThemePalette palette)
         {
             foreach (var pair in palette.Brushes)
             {
-                if (app.TryFindResource(pair.Key) is SolidColorBrush existing && !existing.IsFrozen)
-                {
-                    existing.Color = pair.Value;
+                if (TryMutateBrush(resources, pair.Key, pair.Value))
                     continue;
-                }
 
-                app.Resources[pair.Key] = new SolidColorBrush(pair.Value);
+                resources[pair.Key] = new SolidColorBrush(pair.Value);
             }
+        }
+
+        private static bool TryMutateBrush(ResourceDictionary resources, string key, MediaColor color)
+        {
+            if (resources.Contains(key) && resources[key] is SolidColorBrush brush && !brush.IsFrozen)
+            {
+                brush.Color = color;
+                return true;
+            }
+
+            foreach (ResourceDictionary merged in resources.MergedDictionaries)
+            {
+                if (TryMutateBrush(merged, key, color))
+                    return true;
+            }
+
+            return false;
         }
 
         private static MediaColor ParseColor(string hex)

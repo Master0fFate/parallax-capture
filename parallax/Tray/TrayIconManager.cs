@@ -69,60 +69,76 @@ namespace parallax.Tray
         private ContextMenu BuildContextMenu()
         {
             var menu = new ContextMenu();
+            if (System.Windows.Application.Current.TryFindResource("ProductContextMenuStyle") is Style menuStyle)
+                menu.Style = menuStyle;
 
-            var header = new MenuItem
-            {
-                Header = "Parallax Capture",
-                IsEnabled = false,
-                FontWeight = FontWeights.Bold
-            };
+            var header = CreateMenuItem("Parallax Capture");
+            header.IsEnabled = false;
+            header.FontWeight = FontWeights.Bold;
             menu.Items.Add(header);
             menu.Items.Add(CreateMenuSeparator());
 
-            var regionShot = new MenuItem { Header = $"Capture region   {FormatHotkeyLabel(_settings.HotkeyScreenshotEnabled, _settings.HotkeyScreenshot)}" };
-            regionShot.Click += (s, e) => TriggerRegionScreenshot();
+            var regionShot = CreateMenuItem(
+                "Capture region",
+                FormatHotkeyGesture(_settings.HotkeyScreenshotEnabled, _settings.HotkeyScreenshot),
+                (s, e) => TriggerRegionScreenshot());
             menu.Items.Add(regionShot);
 
-            var fullShot = new MenuItem { Header = $"Capture full screen   {FormatHotkeyLabel(_settings.HotkeyFullscreenEnabled, _settings.HotkeyFullscreen)}" };
-            fullShot.Click += (s, e) => TriggerFullScreenshot();
+            var fullShot = CreateMenuItem(
+                "Capture full screen",
+                FormatHotkeyGesture(_settings.HotkeyFullscreenEnabled, _settings.HotkeyFullscreen),
+                (s, e) => TriggerFullScreenshot());
             menu.Items.Add(fullShot);
 
             menu.Items.Add(CreateMenuSeparator());
 
             // Dynamic recording items — only one visible at a time
-            _recordMenuItem = new MenuItem { Header = $"Record region   {FormatHotkeyLabel(_settings.HotkeyRegionVideoEnabled, _settings.HotkeyRegionVideo)}" };
-            _recordMenuItem.Click += (s, e) => TriggerRegionVideo();
+            _recordMenuItem = CreateMenuItem(
+                "Record region",
+                FormatHotkeyGesture(_settings.HotkeyRegionVideoEnabled, _settings.HotkeyRegionVideo),
+                (s, e) => TriggerRegionVideo());
             menu.Items.Add(_recordMenuItem);
 
-            _stopMenuItem = new MenuItem { Header = "Stop recording" };
-            _stopMenuItem.Click += (s, e) => StopRecording();
+            _stopMenuItem = CreateMenuItem("Stop recording", null, (s, e) => StopRecording());
             menu.Items.Add(_stopMenuItem);
 
             menu.Items.Add(CreateMenuSeparator());
 
-            _videoEditorMenuItem = new MenuItem { Header = "Open video editor" };
-            _videoEditorMenuItem.Click += (s, e) => OpenVideoEditor();
+            _videoEditorMenuItem = CreateMenuItem("Open video editor", null, (s, e) => OpenVideoEditor());
             menu.Items.Add(_videoEditorMenuItem);
 
-            var openImage = new MenuItem { Header = "Open image editor" };
-            openImage.Click += (s, e) => OpenImageEditor();
+            var openImage = CreateMenuItem("Open image editor", null, (s, e) => OpenImageEditor());
             menu.Items.Add(openImage);
 
-            var openFolder = new MenuItem { Header = "Open save folder" };
-            openFolder.Click += (s, e) => OpenSaveFolder();
+            var openFolder = CreateMenuItem("Open save folder", null, (s, e) => OpenSaveFolder());
             menu.Items.Add(openFolder);
 
-            var settings = new MenuItem { Header = "Open settings" };
-            settings.Click += (s, e) => OpenSettings();
+            var settings = CreateMenuItem("Open settings", null, (s, e) => OpenSettings());
             menu.Items.Add(settings);
 
             menu.Items.Add(CreateMenuSeparator());
 
-            var exit = new MenuItem { Header = "Quit Parallax Capture" };
-            exit.Click += (s, e) => ExitApp();
+            var exit = CreateMenuItem("Quit Parallax Capture", null, (s, e) => ExitApp());
             menu.Items.Add(exit);
 
             return menu;
+        }
+
+        private static MenuItem CreateMenuItem(string header, string? inputGestureText = null, RoutedEventHandler? click = null)
+        {
+            var item = new MenuItem
+            {
+                Header = header,
+                InputGestureText = inputGestureText ?? string.Empty
+            };
+
+            if (System.Windows.Application.Current.TryFindResource("ProductMenuItemStyle") is Style style)
+                item.Style = style;
+
+            if (click != null)
+                item.Click += click;
+
+            return item;
         }
 
         private static Separator CreateMenuSeparator()
@@ -559,15 +575,18 @@ namespace parallax.Tray
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     var win = new SettingsWindow(_settingsService);
-                    win.ShowDialog();
+                    if (win.ShowDialog() != true)
+                        return;
+
                     _settings = _settingsService.Load();
                     _fileService.UpdateSettings(_settings);
+                    AppThemeService.Apply(_settings);
+                    SettingsChanged?.Invoke(_settings);
 
                     if (_trayIcon != null)
                         _trayIcon.ContextMenu = BuildContextMenu();
 
                     UpdateRecordingMenuState();
-                    SettingsChanged?.Invoke(_settings);
                 });
             }
             catch (Exception ex)
@@ -600,14 +619,14 @@ namespace parallax.Tray
             return System.Drawing.SystemIcons.Application;
         }
 
-        private static string FormatHotkeyLabel(bool enabled, string? gesture)
+        private static string FormatHotkeyGesture(bool enabled, string? gesture)
         {
             string display = HotkeyManager.FormatForDisplay(enabled, gesture);
             return display switch
             {
-                "disabled" => "(disabled)",
-                "invalid" => "(invalid)",
-                _ => $"({display})"
+                "disabled" => "disabled",
+                "invalid" => "invalid",
+                _ => display
             };
         }
 

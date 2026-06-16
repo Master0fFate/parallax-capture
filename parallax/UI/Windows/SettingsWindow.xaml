@@ -148,7 +148,7 @@
                             <StackPanel>
                                 <TextBlock Text="Theme preset"
                                            Style="{StaticResource ProductSectionHeaderTextStyle}" />
-                                <TextBlock Text="Pick the exact theme variant to use across settings, editors, recording controls, overlays, and tray menus."
+                                <TextBlock Text="Pick the exact theme variant to preview immediately. Save settings to keep it."
                                            TextWrapping="Wrap"
                                            Style="{StaticResource ProductCaptionTextStyle}"
                                            Margin="0,4,0,12" />
@@ -183,7 +183,7 @@
                             <StackPanel>
                                 <TextBlock Text="Preview"
                                            Style="{StaticResource ProductSectionHeaderTextStyle}" />
-                                <TextBlock Text="The preview uses the active theme resources. Save settings to apply your selection."
+                                <TextBlock Text="The preview uses the active theme resources. Choosing a preset previews it immediately."
                                            TextWrapping="Wrap"
                                            Style="{StaticResource ProductCaptionTextStyle}"
                                            Margin="0,4,0,12" />

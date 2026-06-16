@@ -79,7 +79,7 @@ namespace parallax.UI.Windows
 
             string mode = ChkUseDarkMode.IsChecked == true ? AppThemeService.ModeDark : AppThemeService.ModeLight;
             string family = TryReadSelectedThemePreset(out var preset) ? preset.Family : _settings.ThemeFamily;
-            SelectThemePreset(family, mode);
+            SelectThemePreset(family, mode, preview: true);
         }
 
         private void ThemePreset_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -91,9 +91,10 @@ namespace parallax.UI.Windows
             ChkUseDarkMode.IsChecked = preset.Mode == AppThemeService.ModeDark;
             _updatingThemeControls = false;
             UpdateThemeSummary(preset);
+            PreviewTheme(preset);
         }
 
-        private void SelectThemePreset(string? family, string? mode)
+        private void SelectThemePreset(string? family, string? mode, bool preview = false)
         {
             string themeFamily = AppThemeService.NormalizeThemeFamily(family);
             string themeMode = AppThemeService.NormalizeThemeMode(mode);
@@ -120,7 +121,11 @@ namespace parallax.UI.Windows
             _updatingThemeControls = false;
 
             if (TryReadSelectedThemePreset(out var selectedPreset))
+            {
                 UpdateThemeSummary(selectedPreset);
+                if (preview)
+                    PreviewTheme(selectedPreset);
+            }
         }
 
         private bool TryReadSelectedThemePreset(out ThemePreset preset)
@@ -155,7 +160,20 @@ namespace parallax.UI.Windows
 
         private void UpdateThemeSummary(ThemePreset preset)
         {
-            TxtThemeSummary.Text = $"{preset.DisplayName} selected. Save settings to apply the {preset.Mode.ToLowerInvariant()} palette.";
+            TxtThemeSummary.Text = $"{preset.DisplayName} selected. Save settings to keep the {preset.Mode.ToLowerInvariant()} palette.";
+        }
+
+        private static void PreviewTheme(ThemePreset preset)
+        {
+            AppThemeService.Apply(preset.Family, preset.Mode);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            if (DialogResult != true)
+                AppThemeService.Apply(_settings);
+
+            base.OnClosed(e);
         }
 
         private void BtnSave_Click(object sender, RoutedEventArgs e)

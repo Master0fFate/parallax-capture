@@ -1,4 +1,6 @@
 using parallax.Core.Services;
+using System.Windows;
+using System.Windows.Media;
 
 namespace Parallax.Tests.Services;
 
@@ -72,5 +74,19 @@ public class AppThemeServiceTests
     {
         var palette = AppThemeService.GetPalette(family, mode);
         Assert.Equal(expectedDisplayName, palette.DisplayName);
+    }
+
+    [Fact]
+    public void ApplyTo_MutatesExistingBrushInstancesForStaticResourceConsumers()
+    {
+        var resources = new ResourceDictionary();
+        var accent = new SolidColorBrush(Colors.Red);
+        resources["ProductAccentBrush"] = accent;
+
+        AppThemeService.ApplyTo(resources, "GitHub", "Light");
+
+        var expected = AppThemeService.GetPalette("GitHub", "Light").Brushes["ProductAccentBrush"];
+        Assert.Same(accent, resources["ProductAccentBrush"]);
+        Assert.Equal(expected, accent.Color);
     }
 }
