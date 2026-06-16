@@ -16,19 +16,19 @@ namespace parallax.Core.Services
         private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
         // Modifier key constants
-        private const uint MOD_NONE  = 0x0000;
-        private const uint MOD_ALT   = 0x0001;
-        private const uint MOD_CTRL  = 0x0002;
+        private const uint MOD_NONE = 0x0000;
+        private const uint MOD_ALT = 0x0001;
+        private const uint MOD_CTRL = 0x0002;
         private const uint MOD_SHIFT = 0x0004;
-        private const uint MOD_WIN   = 0x0008;
+        private const uint MOD_WIN = 0x0008;
 
         // Windows message constant for hotkeys
         private const int WM_HOTKEY = 0x0312;
 
         // Hotkey IDs — each unique hotkey needs a unique ID integer
         public const int ID_REGION_SCREENSHOT = 9001;
-        public const int ID_FULLSCREEN        = 9002;
-        public const int ID_REGION_VIDEO      = 9003;
+        public const int ID_FULLSCREEN = 9002;
+        public const int ID_REGION_VIDEO = 9003;
 
         private IntPtr _windowHandle;
         private HwndSource? _source;

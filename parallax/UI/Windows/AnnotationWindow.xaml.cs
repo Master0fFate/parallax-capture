@@ -94,7 +94,7 @@ namespace parallax.UI.Windows
 
                 // Size canvas to match the screenshot (stays at natural size;
                 // zoom is applied via LayoutTransform on the parent ContentGrid)
-                AnnotationCanvas.Width  = _sourceBitmap.Width;
+                AnnotationCanvas.Width = _sourceBitmap.Width;
                 AnnotationCanvas.Height = _sourceBitmap.Height;
                 TextAdornerCanvas.Width = _sourceBitmap.Width;
                 TextAdornerCanvas.Height = _sourceBitmap.Height;
@@ -145,7 +145,8 @@ namespace parallax.UI.Windows
             {
                 var btn = new Button
                 {
-                    Width = 24, Height = 24,
+                    Width = 24,
+                    Height = 24,
                     Background = new SolidColorBrush(color),
                     BorderBrush = new SolidColorBrush(Colors.Gray),
                     BorderThickness = new Thickness(1),
@@ -336,8 +337,10 @@ namespace parallax.UI.Windows
                     {
                         Stroke = brush,
                         StrokeThickness = _currentThickness,
-                        X1 = _drawStart.X, Y1 = _drawStart.Y,
-                        X2 = _drawStart.X, Y2 = _drawStart.Y
+                        X1 = _drawStart.X,
+                        Y1 = _drawStart.Y,
+                        X2 = _drawStart.X,
+                        Y2 = _drawStart.Y
                     };
                     _currentShape = arrowLine;
                     AnnotationCanvas.Children.Add(arrowLine);
@@ -370,35 +373,35 @@ namespace parallax.UI.Windows
                     break;
 
                 case AnnotationTool.Blur:
-                {
-                    // Snapshot the current pixel stack before placing the blur rectangle.
-                    // This blurs screenshot pixels and any existing annotations without
-                    // recursively sampling the blur rectangle itself.
-                    var blurSnapshot = RenderFinalImage();
-                    var blurRect = new System.Windows.Shapes.Rectangle
                     {
-                        StrokeThickness = 0,
-                        Fill = new ImageBrush(blurSnapshot)
+                        // Snapshot the current pixel stack before placing the blur rectangle.
+                        // This blurs screenshot pixels and any existing annotations without
+                        // recursively sampling the blur rectangle itself.
+                        var blurSnapshot = RenderFinalImage();
+                        var blurRect = new System.Windows.Shapes.Rectangle
                         {
-                            ViewboxUnits = BrushMappingMode.Absolute,
-                            ViewportUnits = BrushMappingMode.Absolute,
-                            Stretch = Stretch.Fill,
-                            AlignmentX = AlignmentX.Left,
-                            AlignmentY = AlignmentY.Top
-                        },
-                        Effect = new System.Windows.Media.Effects.BlurEffect
-                        {
-                            Radius = 12,
-                            KernelType = System.Windows.Media.Effects.KernelType.Gaussian
-                        },
-                        Opacity = 1.0
-                    };
-                    Canvas.SetLeft(blurRect, _drawStart.X);
-                    Canvas.SetTop(blurRect, _drawStart.Y);
-                    _currentShape = blurRect;
-                    AnnotationCanvas.Children.Add(blurRect);
-                    break;
-                }
+                            StrokeThickness = 0,
+                            Fill = new ImageBrush(blurSnapshot)
+                            {
+                                ViewboxUnits = BrushMappingMode.Absolute,
+                                ViewportUnits = BrushMappingMode.Absolute,
+                                Stretch = Stretch.Fill,
+                                AlignmentX = AlignmentX.Left,
+                                AlignmentY = AlignmentY.Top
+                            },
+                            Effect = new System.Windows.Media.Effects.BlurEffect
+                            {
+                                Radius = 12,
+                                KernelType = System.Windows.Media.Effects.KernelType.Gaussian
+                            },
+                            Opacity = 1.0
+                        };
+                        Canvas.SetLeft(blurRect, _drawStart.X);
+                        Canvas.SetTop(blurRect, _drawStart.Y);
+                        _currentShape = blurRect;
+                        AnnotationCanvas.Children.Add(blurRect);
+                        break;
+                    }
 
                 case AnnotationTool.Text:
                     var tb = CreateRichTextAnnotationBox(brush);
@@ -447,7 +450,7 @@ namespace parallax.UI.Windows
                         double y = Math.Min(pos.Y, _drawStart.Y);
                         Canvas.SetLeft(rect, x);
                         Canvas.SetTop(rect, y);
-                        rect.Width  = Math.Abs(pos.X - _drawStart.X);
+                        rect.Width = Math.Abs(pos.X - _drawStart.X);
                         rect.Height = Math.Abs(pos.Y - _drawStart.Y);
                     }
                     break;
@@ -459,7 +462,7 @@ namespace parallax.UI.Windows
                         double y = Math.Min(pos.Y, _drawStart.Y);
                         Canvas.SetLeft(el, x);
                         Canvas.SetTop(el, y);
-                        el.Width  = Math.Abs(pos.X - _drawStart.X);
+                        el.Width = Math.Abs(pos.X - _drawStart.X);
                         el.Height = Math.Abs(pos.Y - _drawStart.Y);
                     }
                     break;
@@ -471,7 +474,7 @@ namespace parallax.UI.Windows
                         double y = Math.Min(pos.Y, _drawStart.Y);
                         Canvas.SetLeft(bl, x);
                         Canvas.SetTop(bl, y);
-                        bl.Width  = Math.Abs(pos.X - _drawStart.X);
+                        bl.Width = Math.Abs(pos.X - _drawStart.X);
                         bl.Height = Math.Abs(pos.Y - _drawStart.Y);
                         // Update the ImageBrush crop to track the snapshotted pixels behind the blur.
                         if (bl.Fill is ImageBrush vb)
@@ -522,7 +525,7 @@ namespace parallax.UI.Windows
             // Calculate angle of the line
             double angle = Math.Atan2(y2 - y1, x2 - x1);
             double arrowLength = 14.0;
-            double arrowAngle  = 25.0 * (Math.PI / 180.0);
+            double arrowAngle = 25.0 * (Math.PI / 180.0);
 
             var brush = new SolidColorBrush(_currentColor);
 
@@ -539,8 +542,10 @@ namespace parallax.UI.Windows
             {
                 Stroke = brush,
                 StrokeThickness = _currentThickness,
-                X1 = x2, Y1 = y2,
-                X2 = leftX, Y2 = leftY,
+                X1 = x2,
+                Y1 = y2,
+                X2 = leftX,
+                Y2 = leftY,
                 StrokeStartLineCap = PenLineCap.Round,
                 StrokeEndLineCap = PenLineCap.Round
             };
@@ -550,8 +555,10 @@ namespace parallax.UI.Windows
             {
                 Stroke = brush,
                 StrokeThickness = _currentThickness,
-                X1 = x2, Y1 = y2,
-                X2 = rightX, Y2 = rightY,
+                X1 = x2,
+                Y1 = y2,
+                X2 = rightX,
+                Y2 = rightY,
                 StrokeStartLineCap = PenLineCap.Round,
                 StrokeEndLineCap = PenLineCap.Round
             };

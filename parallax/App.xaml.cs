@@ -8,14 +8,14 @@ namespace parallax
     public partial class App : Application
     {
         // ── All services are instantiated here and live for the app lifetime
-        private SettingsService?  _settingsService;
-        private AppSettings?      _settings;
+        private SettingsService? _settingsService;
+        private AppSettings? _settings;
         private ScreenshotService? _screenshotService;
-        private RecorderService?  _recorderService;
+        private RecorderService? _recorderService;
         private ClipboardService? _clipboardService;
-        private FileService?      _fileService;
-        private TrayIconManager?  _trayManager;
-        private HotkeyManager?    _hotkeyManager;
+        private FileService? _fileService;
+        private TrayIconManager? _trayManager;
+        private HotkeyManager? _hotkeyManager;
 
         // ── Hidden background window needed to receive hotkey messages
         // (HotkeyManager needs a real HWND — a hidden Window provides this)
@@ -47,15 +47,15 @@ namespace parallax
             };
 
             // 1. Load settings
-            _settingsService   = new SettingsService();
-            _settings          = _settingsService.Load();
+            _settingsService = new SettingsService();
+            _settings = _settingsService.Load();
             AppThemeService.Apply(_settings);
 
             // 2. Instantiate all services
             _screenshotService = new ScreenshotService();
-            _recorderService   = new RecorderService();
-            _clipboardService  = new ClipboardService();
-            _fileService       = new FileService(_settings);
+            _recorderService = new RecorderService();
+            _clipboardService = new ClipboardService();
+            _fileService = new FileService(_settings);
 
             // 3. Initialize tray icon
             _trayManager = new TrayIconManager(
@@ -72,7 +72,8 @@ namespace parallax
             // 4. Create hidden background window for hotkey HWND
             _backgroundWindow = new Window
             {
-                Width = 0, Height = 0,
+                Width = 0,
+                Height = 0,
                 WindowStyle = WindowStyle.None,
                 ShowInTaskbar = false,
                 Visibility = Visibility.Hidden,

@@ -34,12 +34,12 @@ namespace parallax.UI.Windows
             // Use WPF SystemParameters (device-independent pixels) for window sizing.
             // SystemInformation.VirtualScreen returns physical pixels, which don't
             // match WPF's coordinate space on HiDPI displays — causing selection offset.
-            Left   = System.Windows.SystemParameters.VirtualScreenLeft;
-            Top    = System.Windows.SystemParameters.VirtualScreenTop;
-            Width  = System.Windows.SystemParameters.VirtualScreenWidth;
+            Left = System.Windows.SystemParameters.VirtualScreenLeft;
+            Top = System.Windows.SystemParameters.VirtualScreenTop;
+            Width = System.Windows.SystemParameters.VirtualScreenWidth;
             Height = System.Windows.SystemParameters.VirtualScreenHeight;
 
-            _screenWidth  = Width;
+            _screenWidth = Width;
             _screenHeight = Height;
 
             // Draw the initial full-screen dim (no hole yet)
@@ -105,7 +105,7 @@ namespace parallax.UI.Windows
                 // Update the marching ants selection rectangle
                 Canvas.SetLeft(SelectionRect, selectionRect.X);
                 Canvas.SetTop(SelectionRect, selectionRect.Y);
-                SelectionRect.Width  = selectionRect.Width;
+                SelectionRect.Width = selectionRect.Width;
                 SelectionRect.Height = selectionRect.Height;
 
                 // Update dim path with hole
@@ -151,7 +151,7 @@ namespace parallax.UI.Windows
             // or DPI configurations, which would otherwise leave the overlay stuck open.
             try
             {
-                var topLeft     = MainCanvas.PointToScreen(new System.Windows.Point(rect.X, rect.Y));
+                var topLeft = MainCanvas.PointToScreen(new System.Windows.Point(rect.X, rect.Y));
                 var bottomRight = MainCanvas.PointToScreen(new System.Windows.Point(
                     rect.X + rect.Width, rect.Y + rect.Height));
 

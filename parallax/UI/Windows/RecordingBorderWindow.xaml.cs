@@ -45,9 +45,9 @@ namespace parallax.UI.Windows
 
             int gap = 7; // 5px transparent + 2px border
 
-            Left   = x - gap;
-            Top    = y - gap - TopPadding;
-            Width  = width  + (gap * 2);
+            Left = x - gap;
+            Top = y - gap - TopPadding;
+            Width = width + (gap * 2);
             Height = height + (gap * 2) + TopPadding;
 
             // Position REC label inside window bounds at (4, 4)

@@ -47,11 +47,11 @@ namespace parallax.Tray
             AppSettings settings)
         {
             _screenshotService = screenshotService;
-            _recorderService   = recorderService;
-            _clipboardService  = clipboardService;
-            _fileService       = fileService;
-            _settingsService   = settingsService;
-            _settings          = settings;
+            _recorderService = recorderService;
+            _clipboardService = clipboardService;
+            _fileService = fileService;
+            _settingsService = settingsService;
+            _settings = settings;
         }
 
         public void Initialize()
@@ -309,7 +309,7 @@ namespace parallax.Tray
                     string outputPath = _fileService.GetTempVideoPath("mp4");
 
                     _recorderService.RecordingCompleted += OnRecordingCompleted;
-                    _recorderService.RecordingFailed    += OnRecordingFailed;
+                    _recorderService.RecordingFailed += OnRecordingFailed;
 
                     // Show the recording border BEFORE starting the recorder —
                     // gives the user immediate visual feedback even if the
@@ -327,7 +327,7 @@ namespace parallax.Tray
                 catch (Exception ex)
                 {
                     _recorderService.RecordingCompleted -= OnRecordingCompleted;
-                    _recorderService.RecordingFailed    -= OnRecordingFailed;
+                    _recorderService.RecordingFailed -= OnRecordingFailed;
 
                     // Balloon tips are silently suppressed by Windows Focus Assist /
                     // notification settings. Use MessageBox so the user always sees errors.
@@ -355,7 +355,7 @@ namespace parallax.Tray
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
                 _recorderService.RecordingCompleted -= OnRecordingCompleted;
-                _recorderService.RecordingFailed    -= OnRecordingFailed;
+                _recorderService.RecordingFailed -= OnRecordingFailed;
                 HideRecordingBorder();
                 UpdateRecordingMenuState();
 
@@ -395,7 +395,7 @@ namespace parallax.Tray
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
                 _recorderService.RecordingCompleted -= OnRecordingCompleted;
-                _recorderService.RecordingFailed    -= OnRecordingFailed;
+                _recorderService.RecordingFailed -= OnRecordingFailed;
                 HideRecordingBorder();
                 UpdateRecordingMenuState();
                 ShowBalloon("Recording failed", error);
