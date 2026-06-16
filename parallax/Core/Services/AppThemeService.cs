@@ -29,6 +29,19 @@ namespace parallax.Core.Services
         ];
 
         public sealed record ThemePalette(string Family, string Mode, string DisplayName, IReadOnlyDictionary<string, MediaColor> Brushes);
+        public sealed record ThemePreset(string Id, string Family, string Mode, string DisplayName);
+
+        public static IReadOnlyList<ThemePreset> ThemePresets { get; } =
+        [
+            new("material-3-dark", FamilyMaterial, ModeDark, "Material 3 Dark"),
+            new("material-3-light", FamilyMaterial, ModeLight, "Material 3 Light"),
+            new("catppuccin-mocha", FamilyCatppuccin, ModeDark, "Catppuccin Mocha"),
+            new("catppuccin-latte", FamilyCatppuccin, ModeLight, "Catppuccin Latte"),
+            new("shadcn-dark", FamilyShadCn, ModeDark, "shadCN Dark"),
+            new("shadcn-light", FamilyShadCn, ModeLight, "shadCN Light"),
+            new("github-dark", FamilyGitHub, ModeDark, "GitHub Dark"),
+            new("github-light", FamilyGitHub, ModeLight, "GitHub Light")
+        ];
 
         public static void Apply(AppSettings settings)
         {
@@ -58,17 +71,47 @@ namespace parallax.Core.Services
 
         public static ThemePalette GetPalette(string? family, string? mode)
         {
-            string normalizedFamily = NormalizeThemeFamily(family);
-            string normalizedMode = NormalizeThemeMode(mode);
+            var preset = ResolveThemePreset(family, mode);
 
-            return normalizedFamily switch
+            return preset.Family switch
             {
-                FamilyCatppuccin => BuildPalette(FamilyCatppuccin, normalizedMode, normalizedMode == ModeDark ? "Catppuccin Mocha" : "Catppuccin Latte",
-                    normalizedMode == ModeDark ? CatppuccinMocha : CatppuccinLatte),
-                FamilyShadCn => BuildPalette(FamilyShadCn, normalizedMode, $"shadCN {normalizedMode}", normalizedMode == ModeDark ? ShadCnDark : ShadCnLight),
-                FamilyGitHub => BuildPalette(FamilyGitHub, normalizedMode, $"GitHub {normalizedMode}", normalizedMode == ModeDark ? GitHubDark : GitHubLight),
-                _ => BuildPalette(FamilyMaterial, normalizedMode, $"Material 3 {normalizedMode}", normalizedMode == ModeDark ? MaterialDark : MaterialLight)
+                FamilyCatppuccin => BuildPalette(preset, preset.Mode == ModeDark ? CatppuccinMocha : CatppuccinLatte),
+                FamilyShadCn => BuildPalette(preset, preset.Mode == ModeDark ? ShadCnDark : ShadCnLight),
+                FamilyGitHub => BuildPalette(preset, preset.Mode == ModeDark ? GitHubDark : GitHubLight),
+                _ => BuildPalette(preset, preset.Mode == ModeDark ? MaterialDark : MaterialLight)
             };
+        }
+
+        public static ThemePreset ResolveThemePreset(string? familyOrPreset, string? mode)
+        {
+            if (TryFindThemePreset(familyOrPreset, out var preset) || TryFindThemePreset(mode, out preset))
+                return preset;
+
+            string family = NormalizeThemeFamily(familyOrPreset);
+            string resolvedMode = ResolveThemeMode(familyOrPreset, mode);
+            return ThemePresets.First(item => item.Family == family && item.Mode == resolvedMode);
+        }
+
+        public static bool TryFindThemePreset(string? value, out ThemePreset preset)
+        {
+            preset = ThemePresets[0];
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+
+            string theme = value.Trim();
+            foreach (var item in ThemePresets)
+            {
+                if (theme.Equals(item.Id, StringComparison.OrdinalIgnoreCase)
+                    || theme.Equals(item.DisplayName, StringComparison.OrdinalIgnoreCase)
+                    || theme.Equals($"{item.Family}|{item.Mode}", StringComparison.OrdinalIgnoreCase)
+                    || theme.Equals($"{item.Family} {item.Mode}", StringComparison.OrdinalIgnoreCase))
+                {
+                    preset = item;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static string NormalizeThemeFamily(string? family)
@@ -101,16 +144,42 @@ namespace parallax.Core.Services
             string value = mode.Trim();
             if (value.Equals(ModeLight, StringComparison.OrdinalIgnoreCase) || value.Contains("light", StringComparison.OrdinalIgnoreCase) || value.Contains("latte", StringComparison.OrdinalIgnoreCase))
                 return ModeLight;
+            if (value.Equals(ModeDark, StringComparison.OrdinalIgnoreCase) || value.Contains("dark", StringComparison.OrdinalIgnoreCase) || value.Contains("mocha", StringComparison.OrdinalIgnoreCase))
+                return ModeDark;
 
             return ModeDark;
         }
 
-        private static ThemePalette BuildPalette(string family, string mode, string displayName, IReadOnlyDictionary<string, string> hexColors)
+        private static string ResolveThemeMode(string? familyOrPreset, string? mode)
+        {
+            if (ContainsLightVariant(familyOrPreset))
+                return ModeLight;
+            if (ContainsDarkVariant(familyOrPreset))
+                return ModeDark;
+
+            return NormalizeThemeMode(mode);
+        }
+
+        private static bool ContainsLightVariant(string? value)
+        {
+            return !string.IsNullOrWhiteSpace(value)
+                   && (value.Contains("light", StringComparison.OrdinalIgnoreCase)
+                       || value.Contains("latte", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool ContainsDarkVariant(string? value)
+        {
+            return !string.IsNullOrWhiteSpace(value)
+                   && (value.Contains("dark", StringComparison.OrdinalIgnoreCase)
+                       || value.Contains("mocha", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static ThemePalette BuildPalette(ThemePreset preset, IReadOnlyDictionary<string, string> hexColors)
         {
             return new ThemePalette(
-                family,
-                mode,
-                displayName,
+                preset.Family,
+                preset.Mode,
+                preset.DisplayName,
                 hexColors.ToDictionary(pair => pair.Key, pair => ParseColor(pair.Value)));
         }
 

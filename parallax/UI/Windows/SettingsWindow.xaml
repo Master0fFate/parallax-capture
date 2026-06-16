@@ -161,14 +161,14 @@
                                           HorizontalAlignment="Left"
                                           SelectionChanged="ThemePreset_Changed"
                                           Style="{StaticResource ProductComboBoxStyle}">
-                                    <ComboBoxItem Content="Material 3 Dark" Tag="Material 3|Dark" IsSelected="True" />
-                                    <ComboBoxItem Content="Material 3 Light" Tag="Material 3|Light" />
-                                    <ComboBoxItem Content="Catppuccin Mocha" Tag="Catppuccin|Dark" />
-                                    <ComboBoxItem Content="Catppuccin Latte" Tag="Catppuccin|Light" />
-                                    <ComboBoxItem Content="shadCN Dark" Tag="shadCN|Dark" />
-                                    <ComboBoxItem Content="shadCN Light" Tag="shadCN|Light" />
-                                    <ComboBoxItem Content="GitHub Dark" Tag="GitHub|Dark" />
-                                    <ComboBoxItem Content="GitHub Light" Tag="GitHub|Light" />
+                                    <ComboBoxItem Content="Material 3 Dark" Tag="material-3-dark" IsSelected="True" />
+                                    <ComboBoxItem Content="Material 3 Light" Tag="material-3-light" />
+                                    <ComboBoxItem Content="Catppuccin Mocha" Tag="catppuccin-mocha" />
+                                    <ComboBoxItem Content="Catppuccin Latte" Tag="catppuccin-latte" />
+                                    <ComboBoxItem Content="shadCN Dark" Tag="shadcn-dark" />
+                                    <ComboBoxItem Content="shadCN Light" Tag="shadcn-light" />
+                                    <ComboBoxItem Content="GitHub Dark" Tag="github-dark" />
+                                    <ComboBoxItem Content="GitHub Light" Tag="github-light" />
                                 </ComboBox>
 
                                 <TextBlock x:Name="TxtThemeSummary"

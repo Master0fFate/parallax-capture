@@ -1,3 +1,5 @@
+using parallax.Core.Services;
+
 namespace Parallax.Tests.KAMVerification;
 
 public class ReleaseVerificationTests
@@ -97,6 +99,12 @@ public class ReleaseVerificationTests
         Assert.Contains("shadCN Light", xaml);
         Assert.Contains("GitHub Dark", xaml);
         Assert.Contains("GitHub Light", xaml);
+        foreach (var preset in AppThemeService.ThemePresets)
+        {
+            Assert.Contains($"Content=\"{preset.DisplayName}\" Tag=\"{preset.Id}\"", xaml);
+            Assert.Equal(preset.DisplayName, AppThemeService.GetPalette(preset.Id, null).DisplayName);
+        }
+
         Assert.Contains("TxtThemePreviewTitle", xaml);
         Assert.Contains("ThemeMode_Changed", code);
         Assert.Contains("ThemePreset_Changed", code);

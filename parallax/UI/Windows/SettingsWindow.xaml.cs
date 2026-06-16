@@ -13,7 +13,6 @@ namespace parallax.UI.Windows
         private bool _updatingThemeControls;
 
         private sealed record HotkeyInput(string Name, bool Enabled, string Gesture);
-        private sealed record ThemePreset(string Family, string Mode, string DisplayName);
 
         public SettingsWindow(SettingsService settingsService)
         {
@@ -96,14 +95,12 @@ namespace parallax.UI.Windows
 
         private void SelectThemePreset(string? family, string? mode, bool preview = false)
         {
-            string themeFamily = AppThemeService.NormalizeThemeFamily(family);
-            string themeMode = AppThemeService.NormalizeThemeMode(mode);
-            string tag = BuildThemeTag(themeFamily, themeMode);
+            var resolvedPreset = AppThemeService.ResolveThemePreset(family, mode);
             System.Windows.Controls.ComboBoxItem? match = null;
 
             foreach (System.Windows.Controls.ComboBoxItem item in CmbThemePreset.Items)
             {
-                if (string.Equals(item.Tag?.ToString(), tag, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(item.Tag?.ToString(), resolvedPreset.Id, StringComparison.OrdinalIgnoreCase))
                 {
                     match = item;
                     break;
@@ -128,43 +125,28 @@ namespace parallax.UI.Windows
             }
         }
 
-        private bool TryReadSelectedThemePreset(out ThemePreset preset)
+        private bool TryReadSelectedThemePreset(out AppThemeService.ThemePreset preset)
         {
-            preset = new ThemePreset(AppThemeService.FamilyMaterial, AppThemeService.ModeDark, "Material 3 Dark");
+            preset = AppThemeService.ResolveThemePreset(AppThemeService.FamilyMaterial, AppThemeService.ModeDark);
             return CmbThemePreset.SelectedItem is System.Windows.Controls.ComboBoxItem item
                 && TryReadThemePreset(item, out preset);
         }
 
-        private static bool TryReadThemePreset(System.Windows.Controls.ComboBoxItem item, out ThemePreset preset)
+        private static bool TryReadThemePreset(System.Windows.Controls.ComboBoxItem item, out AppThemeService.ThemePreset preset)
         {
-            preset = new ThemePreset(AppThemeService.FamilyMaterial, AppThemeService.ModeDark, "Material 3 Dark");
-            string? tag = item.Tag?.ToString();
-            if (string.IsNullOrWhiteSpace(tag))
-                return false;
+            if (AppThemeService.TryFindThemePreset(item.Tag?.ToString(), out preset))
+                return true;
 
-            string[] parts = tag.Split(new[] { '|' }, 2);
-            if (parts.Length != 2)
-                return false;
-
-            string family = AppThemeService.NormalizeThemeFamily(parts[0]);
-            string mode = AppThemeService.NormalizeThemeMode(parts[1]);
-            string displayName = item.Content?.ToString() ?? AppThemeService.GetPalette(family, mode).DisplayName;
-            preset = new ThemePreset(family, mode, displayName);
-            return true;
+            return AppThemeService.TryFindThemePreset(item.Content?.ToString(), out preset);
         }
 
-        private static string BuildThemeTag(string family, string mode)
-        {
-            return $"{AppThemeService.NormalizeThemeFamily(family)}|{AppThemeService.NormalizeThemeMode(mode)}";
-        }
-
-        private void UpdateThemeSummary(ThemePreset preset)
+        private void UpdateThemeSummary(AppThemeService.ThemePreset preset)
         {
             TxtThemeSummary.Text = $"{preset.DisplayName} selected. Save settings to keep the {preset.Mode.ToLowerInvariant()} palette.";
             TxtThemePreviewTitle.Text = preset.DisplayName;
         }
 
-        private static void PreviewTheme(ThemePreset preset)
+        private static void PreviewTheme(AppThemeService.ThemePreset preset)
         {
             AppThemeService.Apply(preset.Family, preset.Mode);
         }
