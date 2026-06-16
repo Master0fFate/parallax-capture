@@ -47,10 +47,24 @@ public sealed record PlatformCapabilitySet(
 
 public interface ITrayService
 {
+    bool IsAvailable { get; }
+
+    void SetMenu(IReadOnlyList<TrayMenuItem> items);
+
+    void SetToolTip(string text);
+
+    void Dispose();
 }
 
 public interface IGlobalHotkeyService
 {
+    CapabilityResult Capability { get; }
+
+    HotkeyRegistrationResult Register(int id, uint modifiers, uint virtualKey, string displayText, Action callback);
+
+    void UnregisterAll();
+
+    void Dispose();
 }
 
 public interface IScreenshotService
@@ -71,6 +85,9 @@ public interface IClipboardService
 
 public interface IStartupService
 {
+    StartupRegistrationPlan CreatePlan(bool enable, string executablePath);
+
+    StartupRegistrationResult SetEnabled(bool enable, string executablePath);
 }
 
 public interface ICaptureExclusionService
@@ -96,3 +113,42 @@ public interface IVideoPreviewService
 public interface IPackagingEnvironment
 {
 }
+
+public sealed record TrayMenuItem(string Id, string Label, bool IsEnabled, bool IsVisible, string? Status = null);
+
+public enum HotkeyRegistrationResultState
+{
+    Registered,
+    Disabled,
+    Invalid,
+    Conflict,
+    Unsupported
+}
+
+public sealed record HotkeyRegistrationResult(
+    HotkeyRegistrationResultState State,
+    string DisplayText,
+    string Message)
+{
+    public bool IsRegistered => State == HotkeyRegistrationResultState.Registered;
+}
+
+public sealed record StartupRegistrationPlan(
+    PlatformKind Platform,
+    bool Enable,
+    string Mechanism,
+    string TargetPath,
+    bool RequiresAdmin,
+    string Description);
+
+public sealed record StartupRegistrationResult(
+    bool Success,
+    StartupRegistrationPlan Plan,
+    string Message);
+
+public interface IFolderLauncher
+{
+    FolderLaunchResult OpenFolder(string folderPath);
+}
+
+public sealed record FolderLaunchResult(bool Success, string Message);
