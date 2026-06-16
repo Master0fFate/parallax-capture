@@ -19,6 +19,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\parallax\parallax.csproj" />
+    <ProjectReference Include="..\..\src\Parallax.Core\Parallax.Core.csproj" />
+    <ProjectReference Include="..\..\src\Parallax.Platform.Windows\Parallax.Platform.Windows.csproj" />
+    <ProjectReference Include="..\..\src\Parallax.Platform.Mac\Parallax.Platform.Mac.csproj" />
+    <ProjectReference Include="..\..\src\Parallax.Platform.Linux\Parallax.Platform.Linux.csproj" />
   </ItemGroup>
 
   <ItemGroup>
