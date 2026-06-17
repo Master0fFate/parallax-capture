@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parallax.Tests", "tests\Par
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parallax.App.Avalonia", "src\Parallax.App.Avalonia\Parallax.App.Avalonia.csproj", "{F5A8E219-23DF-4283-BE39-944128D3A5EE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parallax.Packaging.Tests", "tests\Parallax.Packaging.Tests\Parallax.Packaging.Tests.csproj", "{465FF048-537E-4F85-B810-D7E0A9E61FDA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -115,6 +117,18 @@ Global
 		{F5A8E219-23DF-4283-BE39-944128D3A5EE}.Release|x64.Build.0 = Release|Any CPU
 		{F5A8E219-23DF-4283-BE39-944128D3A5EE}.Release|x86.ActiveCfg = Release|Any CPU
 		{F5A8E219-23DF-4283-BE39-944128D3A5EE}.Release|x86.Build.0 = Release|Any CPU
+		{465FF048-537E-4F85-B810-D7E0A9E61FDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{465FF048-537E-4F85-B810-D7E0A9E61FDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{465FF048-537E-4F85-B810-D7E0A9E61FDA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{465FF048-537E-4F85-B810-D7E0A9E61FDA}.Debug|x64.Build.0 = Debug|Any CPU
+		{465FF048-537E-4F85-B810-D7E0A9E61FDA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{465FF048-537E-4F85-B810-D7E0A9E61FDA}.Debug|x86.Build.0 = Debug|Any CPU
+		{465FF048-537E-4F85-B810-D7E0A9E61FDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{465FF048-537E-4F85-B810-D7E0A9E61FDA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{465FF048-537E-4F85-B810-D7E0A9E61FDA}.Release|x64.ActiveCfg = Release|Any CPU
+		{465FF048-537E-4F85-B810-D7E0A9E61FDA}.Release|x64.Build.0 = Release|Any CPU
+		{465FF048-537E-4F85-B810-D7E0A9E61FDA}.Release|x86.ActiveCfg = Release|Any CPU
+		{465FF048-537E-4F85-B810-D7E0A9E61FDA}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -126,5 +140,6 @@ Global
 		{2E86690A-3709-47F7-BF73-60392CD5F994} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{365DF847-AC6F-4A01-AC07-B72458E4D769} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{F5A8E219-23DF-4283-BE39-944128D3A5EE} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{465FF048-537E-4F85-B810-D7E0A9E61FDA} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal

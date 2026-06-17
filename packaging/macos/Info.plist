@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key>
+  <string>Parallax Capture</string>
+  <key>CFBundleDisplayName</key>
+  <string>Parallax Capture</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.master0ffate.parallax-capture</string>
+  <key>CFBundleVersion</key>
+  <string>@VERSION@</string>
+  <key>CFBundleShortVersionString</key>
+  <string>@VERSION@</string>
+  <key>CFBundleExecutable</key>
+  <string>@EXECUTABLE@</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleIconFile</key>
+  <string>icon.ico</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>13.0</string>
+  <key>LSApplicationCategoryType</key>
+  <string>public.app-category.graphics-design</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Parallax Capture records system or microphone audio only when you start a screen recording.</string>
+  <key>NSDocumentsFolderUsageDescription</key>
+  <string>Parallax Capture saves screenshots and recordings only to folders you choose.</string>
+  <key>NSDownloadsFolderUsageDescription</key>
+  <string>Parallax Capture can open or save media from Downloads when you choose that folder.</string>
+  <key>NSDesktopFolderUsageDescription</key>
+  <string>Parallax Capture can open or save media from Desktop when you choose that folder.</string>
+  <key>NSUserSelectedFileReadUsageDescription</key>
+  <string>Parallax Capture opens images and videos selected by the user for annotation or trimming.</string>
+  <key>NSUserSelectedFileWriteUsageDescription</key>
+  <string>Parallax Capture writes screenshots, recordings, frames, GIFs, and trims to user-selected locations.</string>
+  <key>ParallaxPermissionNotes</key>
+  <dict>
+    <key>Screen Recording</key>
+    <string>macOS requires Screen Recording permission for screenshots and video capture. The app surfaces recovery instructions when permission is missing.</string>
+    <key>Accessibility</key>
+    <string>Accessibility permission may be needed for global shortcut fallback behavior. Capture still reports a visible degraded state if unavailable.</string>
+    <key>Input Monitoring</key>
+    <string>Input Monitoring may be needed for global shortcut fallback behavior. The app must not silently pretend global shortcuts are active when unavailable.</string>
+    <key>File Access</key>
+    <string>Parallax Capture uses per-user app data and user-selected media folders, not administrator-owned locations.</string>
+  </dict>
+</dict>
+</plist>

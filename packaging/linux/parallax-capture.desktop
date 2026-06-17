@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Parallax Capture
+Comment=Screenshot and screen recording tool
+Exec=parallax-capture
+Icon=parallax-capture
+Terminal=false
+StartupNotify=true
+Categories=Graphics;AudioVideo;Utility;
+Keywords=screenshot;screen recording;capture;annotation;ffmpeg;

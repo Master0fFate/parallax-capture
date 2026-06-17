@@ -3,9 +3,9 @@
 ; Requires Inno Setup 7 (https://jrsoftware.org/isdl.php)
 ;
 ; Build steps:
-;   1. dotnet publish -c Release -p:Platform=x64 -o publish
-;   2. Open this file in Inno Setup Compiler, click Compile
-;   3. Output: installer\ParallaxCapture-Setup-{#AppVersion}.exe
+;   1. pwsh ..\scripts\package-windows.ps1 -RuntimeIdentifier win-x64
+;   2. If Inno Setup 7 is installed, the script compiles this optional installer.
+;   3. Output remains per-user because PrivilegesRequired=lowest and DefaultDirName={userpf}.
 ; ───────────────────────────────────────────────────────────────────
 
 #define AppName        "Parallax Capture"

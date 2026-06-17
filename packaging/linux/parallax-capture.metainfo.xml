@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.master0ffate.parallax-capture</id>
+  <name>Parallax Capture</name>
+  <summary>Screenshot and screen recording tool</summary>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <description>
+    <p>Parallax Capture captures screenshots, annotates images, records regions, and exports video through FFmpeg.</p>
+    <p>On Wayland, screen capture and recording may require xdg-desktop-portal and PipeWire user mediation. Unsupported session states are shown in the app instead of silently failing.</p>
+  </description>
+  <launchable type="desktop-id">parallax-capture.desktop</launchable>
+  <provides>
+    <binary>parallax-capture</binary>
+  </provides>
+</component>
