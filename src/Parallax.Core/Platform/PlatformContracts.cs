@@ -1,3 +1,5 @@
+using Parallax.Core.Capture;
+
 namespace Parallax.Core.Platform;
 
 public interface IPlatformInfo
@@ -67,10 +69,14 @@ public interface IGlobalHotkeyService : IDisposable
 
 public interface IScreenshotService
 {
+    CaptureResult CaptureRegion(CaptureRectangle region);
+
+    CaptureResult CaptureFullScreen();
 }
 
 public interface IRegionSelectionService
 {
+    RegionSelectionResult SelectRegion();
 }
 
 public interface IScreenRecordingService
@@ -79,6 +85,7 @@ public interface IScreenRecordingService
 
 public interface IClipboardService
 {
+    ClipboardImageResult CopyImage(CaptureImage image);
 }
 
 public interface IStartupService

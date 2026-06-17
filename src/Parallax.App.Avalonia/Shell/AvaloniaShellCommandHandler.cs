@@ -52,10 +52,10 @@ public sealed class AvaloniaShellCommandHandler
         switch (action)
         {
             case ShellActionId.RegionScreenshot:
-                ShowStatus("Capture region", "The region screenshot command is wired. Capture implementation is provided by the capture milestone.");
+                ShowStatus("Capture region", CaptureStatusMessage("Region screenshot"));
                 break;
             case ShellActionId.FullScreenshot:
-                ShowStatus("Capture full screen", "The full-screen screenshot command is wired. Capture implementation is provided by the capture milestone.");
+                ShowStatus("Capture full screen", CaptureStatusMessage("Full-screen screenshot"));
                 break;
             case ShellActionId.RecordRegion:
                 ShowStatus("Record region", "The region recording command is wired. Recording implementation is provided by the recording milestone.");
@@ -71,7 +71,7 @@ public sealed class AvaloniaShellCommandHandler
                 ShowStatus("Video editor", "The video editor command is wired. Media editing implementation is provided by the media milestone.");
                 break;
             case ShellActionId.OpenImageEditor:
-                ShowStatus("Image editor", "The image editor command is wired. Annotation implementation is provided by the capture/edit milestone.");
+                ShowStatus("Image editor", "Open an existing PNG, JPEG, or BMP image to annotate it, save a collision-safe copy, or copy the edited pixels to the clipboard. Unsupported or unreadable files are reported without overwriting the source image.");
                 break;
             case ShellActionId.OpenSaveFolder:
                 OpenSaveFolder();
@@ -117,6 +117,18 @@ public sealed class AvaloniaShellCommandHandler
         ShowStatus(
             result.Success ? "Save folder opened" : "Save folder issue",
             result.Message);
+    }
+
+    private string CaptureStatusMessage(string action)
+    {
+        var capability = _platform.Capabilities.ScreenCapture;
+        return capability.State switch
+        {
+            CapabilityState.Supported => $"{action} is available through the platform screenshot workflow. Successful captures can be saved, copied to the clipboard, or opened in the annotation editor based on settings.",
+            CapabilityState.RequiresPermission => $"{action} needs OS screen capture permission before it can continue. {capability.Message}",
+            CapabilityState.RequiresUserMediation => $"{action} requires a user-mediated picker or portal flow on this desktop session. {capability.Message}",
+            _ => $"{action} is unavailable on this platform session. {capability.Message}"
+        };
     }
 
     private void ShowStatus(string title, string message)
