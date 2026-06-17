@@ -20,11 +20,11 @@
 
 ## Install
 
-Release packages publish a `SHA256SUMS` manifest. The one-line installers download the matching release artifact, verify its SHA-256 checksum, and stop before installing if the checksum does not match.
+Release packages publish a `SHA256SUMS` manifest. The one-line installers download the matching release artifact, verify its SHA-256 checksum, and stop before installing if the checksum does not match. Installers use per-user locations and do not require admin privileges.
 
 ### Windows
 
-PowerShell one-line install or update, per-user under `%LOCALAPPDATA%\Programs\Parallax Capture`:
+**One-line install or update:**
 
 ```powershell
 irm https://raw.githubusercontent.com/Master0fFate/parallax-capture/master/scripts/install-windows.ps1 | iex
@@ -36,45 +36,120 @@ Install a specific release:
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Master0fFate/parallax-capture/master/scripts/install-windows.ps1))) -Version v1.1.0
 ```
 
-Uninstall:
+**What it installs:** the release `ParallaxCapture-<version>-win-x64.zip` artifact, extracted to `%LOCALAPPDATA%\Programs\Parallax Capture`, plus a Start Menu shortcut named `Parallax Capture.lnk`.
+
+**Uninstall:**
 
 ```powershell
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Master0fFate/parallax-capture/master/scripts/install-windows.ps1))) -Uninstall
 ```
 
-Windows releases may also include `ParallaxCapture-Setup-x.x.x.exe`. That Inno Setup path installs per-user with `PrivilegesRequired=lowest`.
+**Manual install from a release:**
+
+1. Download `ParallaxCapture-<version>-win-x64.zip` and `SHA256SUMS` from the GitHub release.
+2. Verify the zip hash against `SHA256SUMS`.
+3. Extract the zip to `%LOCALAPPDATA%\Programs\Parallax Capture`.
+4. Run `Parallax Capture.exe`. Create your own shortcut if needed.
+
+**Build a package from source:**
+
+```powershell
+pwsh ./scripts/package-windows.ps1 -RuntimeIdentifier win-x64 -Version v1.1.0
+```
+
+This publishes the Avalonia app, creates `artifacts/release/ParallaxCapture-v1.1.0-win-x64.zip`, and regenerates `artifacts/release/SHA256SUMS`. If Inno Setup `iscc.exe` is installed, the script also builds the optional legacy Inno Setup installer from `parallax/installer.iss`; that installer is configured with `PrivilegesRequired=lowest`.
+
+**Prerequisites:** Windows 10 or later for the app, PowerShell for the installer, .NET 10 SDK for source packaging, and optional Inno Setup for the `.exe` installer.
+
+**Limitations and permissions:** the implemented installer supports `win-x64` only, installs per-user, stops a running `Parallax Capture` process during updates or uninstall, and does not elevate. Screen capture and recording are local desktop operations. Recording HUD capture exclusion is best-effort only.
 
 ### macOS
 
-Shell one-line install, per-user under `~/Applications/Parallax Capture.app`:
+**One-line install or update:**
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Master0fFate/parallax-capture/master/scripts/install-unix.sh | sh
 ```
 
-For Apple Silicon or Intel, the script selects `osx-arm64` or `osx-x64`, verifies `SHA256SUMS`, and installs the `.app` bundle archive. Release automation can also create a DMG when `hdiutil` is available. Signing, hardened runtime, notarization, and stapling hooks are present in `scripts/package-macos.sh`; unsigned local packages are used when signing secrets are not configured.
+Install a specific release:
 
-Uninstall:
+```sh
+curl -fsSL https://raw.githubusercontent.com/Master0fFate/parallax-capture/master/scripts/install-unix.sh | sh -s -- --version v1.1.0
+```
+
+**What it installs:** the release `ParallaxCapture-<version>-osx-x64-app.tar.gz` or `ParallaxCapture-<version>-osx-arm64-app.tar.gz` artifact, selected from `uname -m`, extracted as `~/Applications/Parallax Capture.app`.
+
+**Uninstall:**
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Master0fFate/parallax-capture/master/scripts/install-unix.sh | sh -s -- --uninstall
 ```
+
+**Manual install from a release:**
+
+1. Download the matching `ParallaxCapture-<version>-osx-x64-app.tar.gz` or `ParallaxCapture-<version>-osx-arm64-app.tar.gz` and `SHA256SUMS`.
+2. Verify the archive hash with `shasum -a 256`.
+3. Extract the archive and move `Parallax Capture.app` to `~/Applications`.
+4. Launch the app from Finder or with `open "$HOME/Applications/Parallax Capture.app"`.
+
+Release automation may also publish `ParallaxCapture-<version>-osx-x64.dmg` or `ParallaxCapture-<version>-osx-arm64.dmg` when `hdiutil` is available. The repository includes Homebrew Cask metadata in `packaging/macos/parallax-capture.rb`, but that is release-ready metadata with a placeholder checksum, not a published Homebrew Cask.
+
+**Build a package from source:**
+
+```sh
+bash ./scripts/package-macos.sh osx-x64
+bash ./scripts/package-macos.sh osx-arm64
+```
+
+The script publishes the Avalonia app, creates a `.app` bundle, writes `Info.plist`, includes entitlements metadata, creates the app `tar.gz`, optionally creates a DMG with `hdiutil`, and regenerates `SHA256SUMS`. If `MACOS_CODESIGN_IDENTITY` and `MACOS_NOTARY_PROFILE` are configured, it runs signing, hardened runtime, notarization, and stapling steps. Without those values, local packages are unsigned.
+
+**Prerequisites:** macOS on Intel or Apple Silicon for native package generation, `curl`, `tar`, `shasum`, .NET 10 SDK for source packaging, Xcode command-line tooling for signing/notarization steps, and `hdiutil` for DMG creation.
+
+**Limitations and permissions:** the shell installer supports only `osx-x64` and `osx-arm64`. macOS Screen Recording permission is required for capture. Microphone, Accessibility, Input Monitoring, and Documents folder usage metadata exists in the app bundle, but actual permission prompts depend on the OS and feature used. macOS packages are produced by scripts and CI; native runtime behavior is not fully validated from a Windows development host.
 
 ### Linux
 
-Shell one-line install, per-user under `~/.local/share/parallax-capture` with a `~/.local/bin/parallax-capture` launcher:
+**One-line install or update:**
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Master0fFate/parallax-capture/master/scripts/install-unix.sh | sh
 ```
 
-The Linux package script produces a portable AppDir tarball and creates AppImage, deb, and rpm artifacts when the host has `appimagetool`, `dpkg-deb`, or `rpmbuild`. The installer verifies `SHA256SUMS`, installs desktop metadata to `~/.local/share/applications`, and does not use `sudo`.
+Install a specific release:
 
-Uninstall:
+```sh
+curl -fsSL https://raw.githubusercontent.com/Master0fFate/parallax-capture/master/scripts/install-unix.sh | sh -s -- --version v1.1.0
+```
+
+**What it installs:** the release `ParallaxCapture-<version>-linux-x64.tar.gz` AppDir-style artifact, extracted to `~/.local/share/parallax-capture`, plus a `~/.local/bin/parallax-capture` launcher symlink and desktop metadata in `~/.local/share/applications/parallax-capture.desktop`.
+
+**Uninstall:**
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Master0fFate/parallax-capture/master/scripts/install-unix.sh | sh -s -- --uninstall
 ```
+
+**Manual install from a release:**
+
+1. Download `ParallaxCapture-<version>-linux-x64.tar.gz` and `SHA256SUMS`.
+2. Verify the archive hash with `sha256sum`.
+3. Extract the archive to `~/.local/share/parallax-capture`.
+4. Link `~/.local/share/parallax-capture/usr/bin/parallax-capture` into a directory on `PATH`, for example `~/.local/bin/parallax-capture`.
+5. Optionally copy `usr/share/applications/parallax-capture.desktop` to `~/.local/share/applications`.
+
+Release automation may also publish `.AppImage`, `.deb`, and `.rpm` artifacts when the Linux packaging host has `appimagetool`, `dpkg-deb`, or `rpmbuild`. The repository contains AppStream and desktop metadata under `packaging/linux`; it does not contain Flatpak, Snap, apt repository, dnf repository, or pacman package metadata.
+
+**Build a package from source:**
+
+```sh
+bash ./scripts/package-linux.sh linux-x64
+```
+
+The script publishes the Avalonia app into an AppDir layout, copies desktop and AppStream metadata, creates `artifacts/release/ParallaxCapture-<version>-linux-x64.tar.gz`, optionally creates AppImage, deb, and rpm artifacts when their tools are installed, and regenerates `SHA256SUMS`.
+
+**Prerequisites:** Linux x86_64 for native package generation, `curl`, `tar`, `sha256sum`, .NET 10 SDK for source packaging, and optional `appimagetool`, `dpkg-deb`, or `rpmbuild` for those extra artifact types.
+
+**Limitations and permissions:** the shell installer supports only Linux x86_64 and does not use `sudo`. Wayland sessions may require `xdg-desktop-portal` and PipeWire user mediation for capture or recording. X11, tray, and global shortcut behavior depend on the desktop session. Linux packages are produced by scripts and CI; native runtime behavior is not fully validated from a Windows development host.
 
 ## Build
 
