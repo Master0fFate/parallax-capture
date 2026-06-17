@@ -247,14 +247,14 @@ public sealed class AnnotationDocument
         double threshold = Math.Max(0.08, thickness / Math.Max(rx, ry));
 
         for (int y = bounds.Y; y < bounds.Y + bounds.Height; y++)
-        for (int x = bounds.X; x < bounds.X + bounds.Width; x++)
-        {
-            double value = Math.Pow((x - cx) / rx, 2) + Math.Pow((y - cy) / ry, 2);
-            if (Math.Abs(value - 1) <= threshold)
+            for (int x = bounds.X; x < bounds.X + bounds.Width; x++)
             {
-                Set(target, x, y, color);
+                double value = Math.Pow((x - cx) / rx, 2) + Math.Pow((y - cy) / ry, 2);
+                if (Math.Abs(value - 1) <= threshold)
+                {
+                    Set(target, x, y, color);
+                }
             }
-        }
     }
 
     private static void DrawTextBlock(CaptureImage target, CapturePoint origin, string text, RgbaColor color, int strokeThickness)
@@ -267,54 +267,54 @@ public sealed class AnnotationDocument
     private static void FillRectangle(CaptureImage target, CaptureRectangle bounds, RgbaColor color)
     {
         for (int y = bounds.Y; y < bounds.Y + bounds.Height; y++)
-        for (int x = bounds.X; x < bounds.X + bounds.Width; x++)
-        {
-            Set(target, x, y, color);
-        }
+            for (int x = bounds.X; x < bounds.X + bounds.Width; x++)
+            {
+                Set(target, x, y, color);
+            }
     }
 
     private static void BlurRectangle(CaptureImage target, CaptureRectangle bounds, int radius)
     {
         var original = target.Clone();
         for (int y = bounds.Y; y < bounds.Y + bounds.Height; y++)
-        for (int x = bounds.X; x < bounds.X + bounds.Width; x++)
-        {
-            int r = 0;
-            int g = 0;
-            int b = 0;
-            int a = 0;
-            int count = 0;
-            for (int yy = y - radius; yy <= y + radius; yy++)
-            for (int xx = x - radius; xx <= x + radius; xx++)
+            for (int x = bounds.X; x < bounds.X + bounds.Width; x++)
             {
-                if (!original.Contains(xx, yy))
+                int r = 0;
+                int g = 0;
+                int b = 0;
+                int a = 0;
+                int count = 0;
+                for (int yy = y - radius; yy <= y + radius; yy++)
+                    for (int xx = x - radius; xx <= x + radius; xx++)
+                    {
+                        if (!original.Contains(xx, yy))
+                        {
+                            continue;
+                        }
+
+                        var color = original.GetPixel(xx, yy);
+                        r += color.R;
+                        g += color.G;
+                        b += color.B;
+                        a += color.A;
+                        count++;
+                    }
+
+                if (count > 0)
                 {
-                    continue;
+                    target.SetPixel(x, y, new RgbaColor((byte)(r / count), (byte)(g / count), (byte)(b / count), (byte)(a / count)));
                 }
-
-                var color = original.GetPixel(xx, yy);
-                r += color.R;
-                g += color.G;
-                b += color.B;
-                a += color.A;
-                count++;
             }
-
-            if (count > 0)
-            {
-                target.SetPixel(x, y, new RgbaColor((byte)(r / count), (byte)(g / count), (byte)(b / count), (byte)(a / count)));
-            }
-        }
     }
 
     private static void DrawSquare(CaptureImage target, CapturePoint point, RgbaColor color, int thickness)
     {
         int radius = Math.Max(0, thickness / 2);
         for (int y = point.Y - radius; y <= point.Y + radius; y++)
-        for (int x = point.X - radius; x <= point.X + radius; x++)
-        {
-            Set(target, x, y, color);
-        }
+            for (int x = point.X - radius; x <= point.X + radius; x++)
+            {
+                Set(target, x, y, color);
+            }
     }
 
     private static void Set(CaptureImage target, int x, int y, RgbaColor color)

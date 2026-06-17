@@ -1,4 +1,5 @@
 using Parallax.Core.Capture;
+using Parallax.Core.Recording;
 
 namespace Parallax.Core.Platform;
 
@@ -81,6 +82,15 @@ public interface IRegionSelectionService
 
 public interface IScreenRecordingService
 {
+    CapabilityResult Capability { get; }
+
+    AudioCaptureCapability AudioCapability { get; }
+
+    bool IsRecording { get; }
+
+    RecordingStartResult Start(RecordingStartRequest request);
+
+    RecordingStopResult Stop(RecordingStopSource source);
 }
 
 public interface IClipboardService
@@ -97,18 +107,24 @@ public interface IStartupService
 
 public interface ICaptureExclusionService
 {
+    CaptureExclusionResult RequestExclusion(CaptureExclusionTarget target);
 }
 
 public interface IPlatformPermissionService
 {
+    CapabilityResult GetScreenRecordingPermission();
+
+    CapabilityResult RefreshScreenRecordingPermission();
 }
 
 public interface IFFmpegLocator
 {
+    FFmpegAvailability Locate();
 }
 
 public interface IFFmpegRunner
 {
+    FFmpegRunResult Run(FFmpegRunRequest request);
 }
 
 public interface IVideoPreviewService

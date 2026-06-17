@@ -83,32 +83,32 @@ public sealed class ScreenshotAndAnnotationParityTests : IDisposable
     {
         var platform = TestPlatform.Create(_root);
         foreach (bool save in new[] { false, true })
-        foreach (bool copy in new[] { false, true })
-        foreach (bool openEditor in new[] { false, true })
-        {
-            var folder = Path.Combine(_root, $"case-{save}-{copy}-{openEditor}");
-            var settings = ParallaxSettings.CreateDefaults(folder);
-            settings.SaveAutomatically = save;
-            settings.CopyToClipboardAfterCapture = copy;
-            settings.OpenAnnotationEditorAfterScreenshot = openEditor;
-            var screenshot = new FakeScreenshotService { FullImage = CaptureImage.CreateSolid(12, 8, RgbaColor.Blue) };
-            var clipboard = new FakeClipboardService();
-            var editor = new FakeAnnotationEditorLauncher();
+            foreach (bool copy in new[] { false, true })
+                foreach (bool openEditor in new[] { false, true })
+                {
+                    var folder = Path.Combine(_root, $"case-{save}-{copy}-{openEditor}");
+                    var settings = ParallaxSettings.CreateDefaults(folder);
+                    settings.SaveAutomatically = save;
+                    settings.CopyToClipboardAfterCapture = copy;
+                    settings.OpenAnnotationEditorAfterScreenshot = openEditor;
+                    var screenshot = new FakeScreenshotService { FullImage = CaptureImage.CreateSolid(12, 8, RgbaColor.Blue) };
+                    var clipboard = new FakeClipboardService();
+                    var editor = new FakeAnnotationEditorLauncher();
 
-            var result = new ScreenshotWorkflow(
-                screenshot,
-                new FakeRegionSelectionService(RegionSelectionResult.Cancelled("Unused.")),
-                clipboard,
-                new CollisionSafeImageSaver(),
-                editor).CaptureFullScreen(settings, platform.Locations);
+                    var result = new ScreenshotWorkflow(
+                        screenshot,
+                        new FakeRegionSelectionService(RegionSelectionResult.Cancelled("Unused.")),
+                        clipboard,
+                        new CollisionSafeImageSaver(),
+                        editor).CaptureFullScreen(settings, platform.Locations);
 
-            Assert.True(result.Success, result.Message);
-            Assert.Equal(save, result.SavedPath is not null);
-            Assert.Equal(copy, result.ClipboardCopied);
-            Assert.Equal(copy, clipboard.WasCopied);
-            Assert.Equal(openEditor, result.EditorOpened);
-            Assert.Equal(openEditor, editor.OpenedImages.Count == 1);
-        }
+                    Assert.True(result.Success, result.Message);
+                    Assert.Equal(save, result.SavedPath is not null);
+                    Assert.Equal(copy, result.ClipboardCopied);
+                    Assert.Equal(copy, clipboard.WasCopied);
+                    Assert.Equal(openEditor, result.EditorOpened);
+                    Assert.Equal(openEditor, editor.OpenedImages.Count == 1);
+                }
     }
 
     [Theory]

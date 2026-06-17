@@ -65,7 +65,13 @@ public sealed class AppLifecycleCoordinator
 
     public Action CreateHotkeyCallback(HotkeyAction action)
     {
-        return () => Execute(MapHotkeyAction(action));
+        return () =>
+        {
+            var shellAction = action == HotkeyAction.RegionRecording && _isRecording
+                ? ShellActionId.StopRecording
+                : MapHotkeyAction(action);
+            Execute(shellAction);
+        };
     }
 
     public TraySurfaceModel RefreshSurface(

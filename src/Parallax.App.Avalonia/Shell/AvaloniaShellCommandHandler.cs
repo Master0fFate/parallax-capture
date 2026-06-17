@@ -58,7 +58,7 @@ public sealed class AvaloniaShellCommandHandler
                 ShowStatus("Capture full screen", CaptureStatusMessage("Full-screen screenshot"));
                 break;
             case ShellActionId.RecordRegion:
-                ShowStatus("Record region", "The region recording command is wired. Recording implementation is provided by the recording milestone.");
+                ShowStatus("Record region", RecordingStatusMessage());
                 break;
             case ShellActionId.StopRecording:
                 _coordinator.SetRecordingState(false);
@@ -128,6 +128,21 @@ public sealed class AvaloniaShellCommandHandler
             CapabilityState.RequiresPermission => $"{action} needs OS screen capture permission before it can continue. {capability.Message}",
             CapabilityState.RequiresUserMediation => $"{action} requires a user-mediated picker or portal flow on this desktop session. {capability.Message}",
             _ => $"{action} is unavailable on this platform session. {capability.Message}"
+        };
+    }
+
+    private string RecordingStatusMessage()
+    {
+        var capability = _platform.Capabilities.ScreenRecording;
+        string exclusion = _platform.Capabilities.CaptureExclusion.State == CapabilityState.Supported
+            ? $"HUD and border capture exclusion will be requested where supported. {_platform.Capabilities.CaptureExclusion.Message}"
+            : $"HUD and border capture exclusion are best-effort only. {_platform.Capabilities.CaptureExclusion.Message}";
+        return capability.State switch
+        {
+            CapabilityState.Supported => $"Region recording can start after selecting an area. Tray stop and the recording hotkey remain fallback stop paths. {exclusion}",
+            CapabilityState.RequiresPermission => $"Region recording needs OS screen recording permission before it can continue. {capability.Message}",
+            CapabilityState.RequiresUserMediation => $"Region recording requires a user-mediated picker or portal flow on this desktop session. {capability.Message}",
+            _ => $"Region recording is unavailable on this platform session. {capability.Message}"
         };
     }
 
