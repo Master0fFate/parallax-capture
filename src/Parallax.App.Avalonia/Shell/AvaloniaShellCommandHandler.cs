@@ -2,7 +2,9 @@ using System.Diagnostics;
 using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Parallax.App.Avalonia.Capture;
 using Parallax.App.Avalonia.Settings;
+using Parallax.Core.Capture;
 using Parallax.Core.Platform;
 using Parallax.Core.Settings;
 using Parallax.Core.Shell;
@@ -15,9 +17,10 @@ public sealed class AvaloniaShellCommandHandler
     private readonly IPlatformBackend _platform;
     private readonly JsonSettingsStore _settingsStore;
     private readonly RuntimeSettingsApplier _settingsApplier;
-    private readonly ThemeSettingsService _themeSettings;
+    private readonly IScreenshotWorkflowRunner _screenshotWorkflow;
     private readonly AppLifecycleCoordinator _coordinator;
     private readonly string _executablePath;
+    private readonly ShellFeatureSet _features;
     private ParallaxSettings _settings;
     private Window? _settingsWindow;
     private Window? _statusWindow;
@@ -28,18 +31,20 @@ public sealed class AvaloniaShellCommandHandler
         ParallaxSettings settings,
         JsonSettingsStore settingsStore,
         RuntimeSettingsApplier settingsApplier,
-        ThemeSettingsService themeSettings,
+        IScreenshotWorkflowRunner screenshotWorkflow,
         AppLifecycleCoordinator coordinator,
-        string executablePath)
+        string executablePath,
+        ShellFeatureSet? features = null)
     {
         _desktop = desktop;
         _platform = platform;
         _settings = settings;
         _settingsStore = settingsStore;
         _settingsApplier = settingsApplier;
-        _themeSettings = themeSettings;
+        _screenshotWorkflow = screenshotWorkflow;
         _coordinator = coordinator;
         _executablePath = executablePath;
+        _features = features ?? ShellFeatureSet.All;
     }
 
     public IReadOnlyList<ShellActionId> ExecutedActions => _executedActions;
@@ -48,30 +53,29 @@ public sealed class AvaloniaShellCommandHandler
 
     public void Execute(ShellActionId action)
     {
+        if (!_features.Supports(action))
+        {
+            return;
+        }
+
         _executedActions.Add(action);
         switch (action)
         {
             case ShellActionId.RegionScreenshot:
-                ShowStatus("Capture region", CaptureStatusMessage("Region screenshot"));
+                RunScreenshot("Capture region", () => _screenshotWorkflow.CaptureRegion(_settings, _platform.Locations));
                 break;
             case ShellActionId.FullScreenshot:
-                ShowStatus("Capture full screen", CaptureStatusMessage("Full-screen screenshot"));
+                RunScreenshot("Capture full screen", () => _screenshotWorkflow.CaptureFullScreen(_settings, _platform.Locations));
                 break;
             case ShellActionId.RecordRegion:
-                ShowStatus("Record region", RecordingStatusMessage());
                 break;
             case ShellActionId.StopRecording:
                 _coordinator.SetRecordingState(false);
                 _coordinator.RefreshSurface(_settings);
-                ShowStatus("Stop recording", "Stop recording command handled.");
                 break;
             case ShellActionId.OpenVideoEditor:
-                _coordinator.SetVideoEditorActive(true);
-                _coordinator.RefreshSurface(_settings);
-                ShowStatus("Video editor", "The video editor command is wired. Media editing implementation is provided by the media milestone.");
                 break;
             case ShellActionId.OpenImageEditor:
-                ShowStatus("Image editor", "Open an existing PNG, JPEG, or BMP image to annotate it, save a collision-safe copy, or copy the edited pixels to the clipboard. Unsupported or unreadable files are reported without overwriting the source image.");
                 break;
             case ShellActionId.OpenSaveFolder:
                 OpenSaveFolder();
@@ -99,7 +103,6 @@ public sealed class AvaloniaShellCommandHandler
             _settings,
             _platform,
             _settingsApplier,
-            _themeSettings,
             _executablePath,
             result =>
             {
@@ -119,31 +122,51 @@ public sealed class AvaloniaShellCommandHandler
             result.Message);
     }
 
-    private string CaptureStatusMessage(string action)
+    private void RunScreenshot(string title, Func<ScreenshotWorkflowResult> capture)
     {
         var capability = _platform.Capabilities.ScreenCapture;
-        return capability.State switch
+        if (capability.State != CapabilityState.Supported)
         {
-            CapabilityState.Supported => $"{action} is available through the platform screenshot workflow. Successful captures can be saved, copied to the clipboard, or opened in the annotation editor based on settings.",
-            CapabilityState.RequiresPermission => $"{action} needs OS screen capture permission before it can continue. {capability.Message}",
-            CapabilityState.RequiresUserMediation => $"{action} requires a user-mediated picker or portal flow on this desktop session. {capability.Message}",
-            _ => $"{action} is unavailable on this platform session. {capability.Message}"
-        };
+            ShowStatus(title, capability.Message);
+            return;
+        }
+
+        var result = capture();
+        if (result.Cancelled)
+        {
+            return;
+        }
+
+        if (!result.Success || (!result.ClipboardCopied && !result.EditorOpened && string.IsNullOrWhiteSpace(result.SavedPath)))
+        {
+            ShowStatus(title, FormatScreenshotResult(result));
+        }
     }
 
-    private string RecordingStatusMessage()
+    private static string FormatScreenshotResult(ScreenshotWorkflowResult result)
     {
-        var capability = _platform.Capabilities.ScreenRecording;
-        string exclusion = _platform.Capabilities.CaptureExclusion.State == CapabilityState.Supported
-            ? $"HUD and border capture exclusion will be requested where supported. {_platform.Capabilities.CaptureExclusion.Message}"
-            : $"HUD and border capture exclusion are best-effort only. {_platform.Capabilities.CaptureExclusion.Message}";
-        return capability.State switch
+        if (!result.Success)
         {
-            CapabilityState.Supported => $"Region recording can start after selecting an area. Tray stop and the recording hotkey remain fallback stop paths. {exclusion}",
-            CapabilityState.RequiresPermission => $"Region recording needs OS screen recording permission before it can continue. {capability.Message}",
-            CapabilityState.RequiresUserMediation => $"Region recording requires a user-mediated picker or portal flow on this desktop session. {capability.Message}",
-            _ => $"Region recording is unavailable on this platform session. {capability.Message}"
-        };
+            return result.Message;
+        }
+
+        var details = new List<string> { result.Message };
+        if (!string.IsNullOrWhiteSpace(result.SavedPath))
+        {
+            details.Add($"Saved: {result.SavedPath}");
+        }
+
+        if (result.ClipboardCopied)
+        {
+            details.Add("Copied to clipboard.");
+        }
+
+        if (result.EditorOpened)
+        {
+            details.Add("Opened in annotation editor.");
+        }
+
+        return string.Join(Environment.NewLine, details);
     }
 
     private void ShowStatus(string title, string message)

@@ -13,10 +13,34 @@ public enum ShellActionId
     Quit
 }
 
+public sealed record ShellFeatureSet(
+    bool RegionScreenshot = true,
+    bool FullScreenshot = true,
+    bool RegionRecording = true,
+    bool VideoEditor = true,
+    bool ImageEditor = true)
+{
+    public static ShellFeatureSet All { get; } = new();
+
+    public bool Supports(ShellActionId action)
+    {
+        return action switch
+        {
+            ShellActionId.RegionScreenshot => RegionScreenshot,
+            ShellActionId.FullScreenshot => FullScreenshot,
+            ShellActionId.RecordRegion or ShellActionId.StopRecording => RegionRecording,
+            ShellActionId.OpenVideoEditor => VideoEditor,
+            ShellActionId.OpenImageEditor => ImageEditor,
+            _ => true
+        };
+    }
+}
+
 public sealed record ShellRuntimeState(
     bool IsRecording,
     bool TrayAvailable,
-    bool HasActiveVideoEditor = false);
+    bool HasActiveVideoEditor = false,
+    ShellFeatureSet? Features = null);
 
 public sealed record TrayMenuEntry(
     ShellActionId Action,

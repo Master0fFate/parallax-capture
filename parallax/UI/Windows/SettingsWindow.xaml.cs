@@ -10,7 +10,6 @@ namespace parallax.UI.Windows
     {
         private readonly SettingsService _settingsService;
         private AppSettings _settings;
-        private bool _updatingThemeControls;
 
         private sealed record HotkeyInput(string Name, bool Enabled, string Gesture);
 
@@ -48,8 +47,6 @@ namespace parallax.UI.Windows
                 }
             }
 
-            SelectThemePreset(_settings.ThemeFamily, _settings.ThemeMode);
-
             UpdateHotkeyInputState();
             UpdateHotkeyStatus();
         }
@@ -69,94 +66,6 @@ namespace parallax.UI.Windows
             dialog.SelectedPath = TxtSaveFolder.Text;
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 TxtSaveFolder.Text = dialog.SelectedPath;
-        }
-
-        private void ThemeMode_Changed(object sender, RoutedEventArgs e)
-        {
-            if (!IsLoaded || _updatingThemeControls)
-                return;
-
-            string mode = ChkUseDarkMode.IsChecked == true ? AppThemeService.ModeDark : AppThemeService.ModeLight;
-            string family = TryReadSelectedThemePreset(out var preset) ? preset.Family : _settings.ThemeFamily;
-            SelectThemePreset(family, mode, preview: true);
-        }
-
-        private void ThemePreset_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
-            if (!IsLoaded || _updatingThemeControls || !TryReadSelectedThemePreset(out var preset))
-                return;
-
-            _updatingThemeControls = true;
-            ChkUseDarkMode.IsChecked = preset.Mode == AppThemeService.ModeDark;
-            _updatingThemeControls = false;
-            UpdateThemeSummary(preset);
-            PreviewTheme(preset);
-        }
-
-        private void SelectThemePreset(string? family, string? mode, bool preview = false)
-        {
-            var resolvedPreset = AppThemeService.ResolveThemePreset(family, mode);
-            System.Windows.Controls.ComboBoxItem? match = null;
-
-            foreach (System.Windows.Controls.ComboBoxItem item in CmbThemePreset.Items)
-            {
-                if (string.Equals(item.Tag?.ToString(), resolvedPreset.Id, StringComparison.OrdinalIgnoreCase))
-                {
-                    match = item;
-                    break;
-                }
-            }
-
-            match ??= CmbThemePreset.Items.OfType<System.Windows.Controls.ComboBoxItem>().FirstOrDefault();
-            if (match == null)
-                return;
-
-            _updatingThemeControls = true;
-            CmbThemePreset.SelectedItem = match;
-            if (TryReadThemePreset(match, out var preset))
-                ChkUseDarkMode.IsChecked = preset.Mode == AppThemeService.ModeDark;
-            _updatingThemeControls = false;
-
-            if (TryReadSelectedThemePreset(out var selectedPreset))
-            {
-                UpdateThemeSummary(selectedPreset);
-                if (preview)
-                    PreviewTheme(selectedPreset);
-            }
-        }
-
-        private bool TryReadSelectedThemePreset(out AppThemeService.ThemePreset preset)
-        {
-            preset = AppThemeService.ResolveThemePreset(AppThemeService.FamilyMaterial, AppThemeService.ModeDark);
-            return CmbThemePreset.SelectedItem is System.Windows.Controls.ComboBoxItem item
-                && TryReadThemePreset(item, out preset);
-        }
-
-        private static bool TryReadThemePreset(System.Windows.Controls.ComboBoxItem item, out AppThemeService.ThemePreset preset)
-        {
-            if (AppThemeService.TryFindThemePreset(item.Tag?.ToString(), out preset))
-                return true;
-
-            return AppThemeService.TryFindThemePreset(item.Content?.ToString(), out preset);
-        }
-
-        private void UpdateThemeSummary(AppThemeService.ThemePreset preset)
-        {
-            TxtThemeSummary.Text = $"{preset.DisplayName} selected. Save settings to keep the {preset.Mode.ToLowerInvariant()} palette.";
-            TxtThemePreviewTitle.Text = preset.DisplayName;
-        }
-
-        private static void PreviewTheme(AppThemeService.ThemePreset preset)
-        {
-            AppThemeService.Apply(preset.Family, preset.Mode);
-        }
-
-        protected override void OnClosed(EventArgs e)
-        {
-            if (DialogResult != true)
-                AppThemeService.Apply(_settings);
-
-            base.OnClosed(e);
         }
 
         private void BtnSave_Click(object sender, RoutedEventArgs e)
@@ -199,14 +108,7 @@ namespace parallax.UI.Windows
             if (CmbFormat.SelectedItem is System.Windows.Controls.ComboBoxItem selected)
                 _settings.ImageFormat = selected.Tag?.ToString() ?? "png";
 
-            if (TryReadSelectedThemePreset(out var selectedTheme))
-            {
-                _settings.ThemeFamily = selectedTheme.Family;
-                _settings.ThemeMode = selectedTheme.Mode;
-            }
-
             _settingsService.Save(_settings);
-            AppThemeService.Apply(_settings);
 
             if (startupWarning != null)
             {

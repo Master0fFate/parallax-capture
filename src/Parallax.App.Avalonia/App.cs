@@ -31,29 +31,30 @@ public sealed class App : Application
             IPlatformBackend platform = CreatePlatformBackend();
             var store = new JsonSettingsStore(platform.Locations);
             var settings = store.Load();
-            var themeSettings = AvaloniaRuntimeServices.CreateThemeSettingsService(this);
-            themeSettings.Preview(settings.ThemeFamily, settings.ThemeMode);
+            var features = AvaloniaRuntimeServices.CreateShellFeatureSet(platform);
             var hotkeys = AvaloniaRuntimeServices.CreateHotkeyService(platform);
             var startup = AvaloniaRuntimeServices.CreateStartupService(platform);
+            var screenshots = AvaloniaRuntimeServices.CreateScreenshotWorkflowRunner(platform, settings);
             var tray = new AvaloniaTrayService();
             AvaloniaShellCommandHandler? commandHandler = null;
-            _coordinator = new AppLifecycleCoordinator(platform, tray, hotkeys, action => commandHandler?.Execute(action));
+            _coordinator = new AppLifecycleCoordinator(platform, tray, hotkeys, action => commandHandler?.Execute(action), features);
             var runtimeSettings = new RuntimeSettingsApplier(
                 platform,
                 store,
                 hotkeys,
                 startup,
-                themeSettings,
-                _coordinator.CreateHotkeyCallback);
+                _coordinator.CreateHotkeyCallback,
+                _coordinator.SupportsHotkey);
             commandHandler = new AvaloniaShellCommandHandler(
                 desktop,
                 platform,
                 settings,
                 store,
                 runtimeSettings,
-                themeSettings,
+                screenshots,
                 _coordinator,
-                GetExecutablePath());
+                GetExecutablePath(),
+                features);
             var surface = _coordinator.StartTrayFirst(settings);
 
             if (surface.MainWindowVisibleAtStartup)

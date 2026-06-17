@@ -66,6 +66,44 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
     }
 
     [Fact]
+    public void AvaloniaRuntimeFeatureSetHidesUnimplementedActionsAndHotkeys()
+    {
+        var windows = TestPlatform.Create(PlatformKind.Windows);
+        var windowsTray = new FakeTrayService(isAvailable: true);
+        var windowsHotkeys = new FakeHotkeyService(CapabilityResult.Supported("Hotkeys supported."));
+        var windowsCoordinator = new AppLifecycleCoordinator(
+            windows,
+            windowsTray,
+            windowsHotkeys,
+            features: AvaloniaRuntimeServices.CreateShellFeatureSet(windows));
+
+        var windowsSurface = windowsCoordinator.StartTrayFirst(ParallaxSettings.CreateDefaults(windows.Locations.ScreenshotsDirectory));
+
+        Assert.Contains(windowsSurface.MenuItems, item => item.Action == ShellActionId.RegionScreenshot && item.IsVisible);
+        Assert.Contains(windowsSurface.MenuItems, item => item.Action == ShellActionId.FullScreenshot && item.IsVisible);
+        Assert.DoesNotContain(windowsSurface.MenuItems, item => item.Action == ShellActionId.RecordRegion && item.IsVisible);
+        Assert.DoesNotContain(windowsSurface.MenuItems, item => item.Action == ShellActionId.OpenVideoEditor && item.IsVisible);
+        Assert.DoesNotContain(windowsSurface.MenuItems, item => item.Action == ShellActionId.OpenImageEditor && item.IsVisible);
+        Assert.Equal(2, windowsHotkeys.Registered.Count);
+
+        var linux = TestPlatform.Create(PlatformKind.Linux);
+        var linuxHotkeys = new FakeHotkeyService(CapabilityResult.Supported("Hotkeys supported."));
+        var linuxCoordinator = new AppLifecycleCoordinator(
+            linux,
+            new FakeTrayService(isAvailable: true),
+            linuxHotkeys,
+            features: AvaloniaRuntimeServices.CreateShellFeatureSet(linux));
+
+        var linuxSurface = linuxCoordinator.StartTrayFirst(ParallaxSettings.CreateDefaults(linux.Locations.ScreenshotsDirectory));
+
+        Assert.DoesNotContain(linuxSurface.MenuItems, item => item.Action == ShellActionId.RegionScreenshot && item.IsVisible);
+        Assert.DoesNotContain(linuxSurface.MenuItems, item => item.Action == ShellActionId.FullScreenshot && item.IsVisible);
+        Assert.DoesNotContain(linuxSurface.MenuItems, item => item.Action == ShellActionId.RecordRegion && item.IsVisible);
+        Assert.Contains(linuxSurface.MenuItems, item => item.Action == ShellActionId.OpenSaveFolder && item.IsVisible);
+        Assert.Empty(linuxHotkeys.Registered);
+    }
+
+    [Fact]
     public void RecordingStateShowsStopActionAndHidesRecordAction()
     {
         var platform = TestPlatform.Create(PlatformKind.Windows);
@@ -208,24 +246,6 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
     }
 
     [Fact]
-    public void ThemePreviewPersistsNormalizedSettingsAndRecoversInvalidValues()
-    {
-        var applied = new FakeThemeApplier();
-        var service = new ThemeSettingsService(applied);
-        var settings = new ParallaxSettings
-        {
-            ThemeFamily = "unknown theme",
-            ThemeMode = "nonsense"
-        };
-
-        service.Persist(settings, settings.ThemeFamily, settings.ThemeMode);
-
-        Assert.Equal(ThemeCatalog.FamilyMaterial, settings.ThemeFamily);
-        Assert.Equal(ThemeCatalog.ModeDark, settings.ThemeMode);
-        Assert.Equal("Material 3 Dark", applied.Applied.Single().DisplayName);
-    }
-
-    [Fact]
     public void OpenSaveFolderCreatesRootAndReportsLaunchFailures()
     {
         string root = Path.Combine(Path.GetTempPath(), "parallax-open-save-folder", Guid.NewGuid().ToString("N"));
@@ -256,7 +276,7 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
     }
 
     [Fact]
-    public void ApplyingRuntimeSettingsUpdatesHotkeysStartupThemeSaveFolderAndPersistence()
+    public void ApplyingRuntimeSettingsUpdatesHotkeysStartupSaveFolderAndPersistence()
     {
         string root = Path.Combine(Path.GetTempPath(), "parallax-runtime-settings", Guid.NewGuid().ToString("N"));
         try
@@ -264,20 +284,16 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
             var platform = TestPlatform.Create(PlatformKind.Windows, root);
             var settings = ParallaxSettings.CreateDefaults(Path.Combine(root, "captures"));
             settings.StartWithSystem = true;
-            settings.ThemeFamily = "GitHub";
-            settings.ThemeMode = "Light";
             settings.HotkeyFullscreen = "Ctrl+Shift+F";
 
             var hotkeys = new FakeHotkeyService(CapabilityResult.Supported("Hotkeys supported."));
             var startup = new FakeStartupService(platform.Locations);
-            var themes = new FakeThemeApplier();
             var executed = new List<ShellActionId>();
             var applier = new RuntimeSettingsApplier(
                 platform,
                 new JsonSettingsStore(platform.Locations),
                 hotkeys,
                 startup,
-                new ThemeSettingsService(themes),
                 action => () => executed.Add(MapHotkeyAction(action)));
 
             var result = applier.Apply(settings, @"C:\Apps\Parallax\Parallax.exe");
@@ -293,7 +309,6 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
             Assert.Contains(ShellActionId.FullScreenshot, executed);
             Assert.Contains(ShellActionId.RecordRegion, executed);
             Assert.True(startup.LastResult?.Success);
-            Assert.Equal("GitHub Light", themes.Applied.Single().DisplayName);
             Assert.True(File.Exists(platform.Locations.SettingsFilePath));
             Assert.Equal("Ctrl+Shift+F", new JsonSettingsStore(platform.Locations).Load().HotkeyFullscreen);
         }
@@ -316,14 +331,12 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
             var settings = ParallaxSettings.CreateDefaults(Path.Combine(root, "captures"));
             var hotkeys = new FakeHotkeyService(CapabilityResult.Supported("Hotkeys supported."));
             var startup = new FakeStartupService(platform.Locations);
-            var themes = new FakeThemeApplier();
             var executed = new List<ShellActionId>();
             var applier = new RuntimeSettingsApplier(
                 platform,
                 new JsonSettingsStore(platform.Locations),
                 hotkeys,
                 startup,
-                new ThemeSettingsService(themes),
                 action => () => executed.Add(MapHotkeyAction(action)));
             var model = new SettingsWindowModel(settings)
             {
@@ -332,8 +345,6 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
                 CopyToClipboardAfterCapture = false,
                 SaveAutomatically = true,
                 StartWithSystem = true,
-                ThemeFamily = ThemeCatalog.FamilyGitHub,
-                ThemeMode = ThemeCatalog.ModeLight,
                 HotkeyFullscreen = "Ctrl+Shift+F"
             };
 
@@ -346,13 +357,10 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
             Assert.False(reloaded.CopyToClipboardAfterCapture);
             Assert.True(reloaded.SaveAutomatically);
             Assert.True(reloaded.StartWithSystem);
-            Assert.Equal("GitHub", reloaded.ThemeFamily);
-            Assert.Equal("Light", reloaded.ThemeMode);
             Assert.Equal("Ctrl+Shift+F", reloaded.HotkeyFullscreen);
             hotkeys.Callbacks[HotkeyPlanner.FullscreenScreenshotId].Invoke();
             Assert.Contains(ShellActionId.FullScreenshot, executed);
             Assert.True(startup.LastResult?.Success);
-            Assert.Equal("GitHub Light", themes.Applied.Single().DisplayName);
         }
         finally
         {
@@ -505,16 +513,6 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
         public void Stop()
         {
             Stopped = true;
-        }
-    }
-
-    private sealed class FakeThemeApplier : IThemePreviewApplier
-    {
-        public List<ThemePreset> Applied { get; } = [];
-
-        public void Apply(ThemePreset preset)
-        {
-            Applied.Add(preset);
         }
     }
 

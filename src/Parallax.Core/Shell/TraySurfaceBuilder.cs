@@ -29,27 +29,28 @@ public static class TraySurfaceBuilder
             ? null
             : "Tray/status APIs are unavailable. The fallback control surface exposes the same capture, editor, settings, folder, and quit actions.";
 
+        var features = state.Features ?? ShellFeatureSet.All;
         var items = new List<TrayMenuEntry>
         {
-            BuildAction(ShellActionId.RegionScreenshot, "Capture region", HotkeyAction.RegionScreenshot, capabilities.ScreenCapture, hotkeyByAction),
-            BuildAction(ShellActionId.FullScreenshot, "Capture full screen", HotkeyAction.FullscreenScreenshot, capabilities.ScreenCapture, hotkeyByAction),
+            BuildAction(ShellActionId.RegionScreenshot, "Capture region", HotkeyAction.RegionScreenshot, capabilities.ScreenCapture, hotkeyByAction, isVisible: features.RegionScreenshot),
+            BuildAction(ShellActionId.FullScreenshot, "Capture full screen", HotkeyAction.FullscreenScreenshot, capabilities.ScreenCapture, hotkeyByAction, isVisible: features.FullScreenshot),
             BuildAction(
                 ShellActionId.RecordRegion,
                 "Record region",
                 HotkeyAction.RegionRecording,
                 capabilities.ScreenRecording,
                 hotkeyByAction,
-                isVisible: !state.IsRecording,
+                isVisible: features.RegionRecording && !state.IsRecording,
                 forceDisabled: state.HasActiveVideoEditor,
                 disabledStatus: "Close the active video editor before starting a recording."),
             new(
                 ShellActionId.StopRecording,
                 "Stop recording",
-                IsEnabled: state.IsRecording,
-                IsVisible: state.IsRecording,
+                IsEnabled: features.RegionRecording && state.IsRecording,
+                IsVisible: features.RegionRecording && state.IsRecording,
                 Status: state.IsRecording ? "Recording is active." : "Recording is not active."),
-            new(ShellActionId.OpenVideoEditor, "Open video editor", IsEnabled: !state.IsRecording && !state.HasActiveVideoEditor, IsVisible: true),
-            new(ShellActionId.OpenImageEditor, "Open image editor", IsEnabled: !state.IsRecording, IsVisible: true),
+            new(ShellActionId.OpenVideoEditor, "Open video editor", IsEnabled: features.VideoEditor && !state.IsRecording && !state.HasActiveVideoEditor, IsVisible: features.VideoEditor),
+            new(ShellActionId.OpenImageEditor, "Open image editor", IsEnabled: features.ImageEditor && !state.IsRecording, IsVisible: features.ImageEditor),
             new(ShellActionId.OpenSaveFolder, "Open save folder", IsEnabled: true, IsVisible: true),
             new(ShellActionId.Settings, "Settings", IsEnabled: true, IsVisible: true),
             new(ShellActionId.Quit, "Quit Parallax Capture", IsEnabled: true, IsVisible: true)

@@ -11,7 +11,6 @@ public sealed class SettingsWindow : Window
     private readonly ParallaxSettings _settings;
     private readonly IPlatformBackend _platform;
     private readonly RuntimeSettingsApplier _runtimeSettings;
-    private readonly ThemeSettingsService _themeSettings;
     private readonly string _executablePath;
     private readonly Action<RuntimeSettingsApplyResult>? _applied;
     private readonly SettingsWindowModel _model;
@@ -23,8 +22,6 @@ public sealed class SettingsWindow : Window
     private readonly CheckBox _openVideoEditor;
     private readonly CheckBox _separateFolders;
     private readonly CheckBox _startWithSystem;
-    private readonly ComboBox _themeFamily;
-    private readonly ComboBox _themeMode;
     private readonly CheckBox _hotkeyScreenshotEnabled;
     private readonly CheckBox _hotkeyFullscreenEnabled;
     private readonly CheckBox _hotkeyRegionVideoEnabled;
@@ -37,14 +34,12 @@ public sealed class SettingsWindow : Window
         ParallaxSettings settings,
         IPlatformBackend platform,
         RuntimeSettingsApplier runtimeSettings,
-        ThemeSettingsService themeSettings,
         string executablePath,
         Action<RuntimeSettingsApplyResult>? applied = null)
     {
         _settings = settings;
         _platform = platform;
         _runtimeSettings = runtimeSettings;
-        _themeSettings = themeSettings;
         _executablePath = executablePath;
         _applied = applied;
         _model = new SettingsWindowModel(settings);
@@ -57,7 +52,6 @@ public sealed class SettingsWindow : Window
 
         var hotkeys = HotkeyPlanner.Plan(settings, platform.Capabilities.GlobalHotkeys);
         var saveFolder = SaveFolderPolicy.ValidateAndCreate(settings, platform.Locations, createDirectories: false);
-        var theme = ThemeCatalog.Resolve(settings.ThemeFamily, settings.ThemeMode);
 
         var root = new StackPanel
         {
@@ -84,15 +78,6 @@ public sealed class SettingsWindow : Window
         _startWithSystem = CheckBox("Start with system", _model.StartWithSystem);
         root.Children.Add(_startWithSystem);
         root.Children.Add(Line(saveFolder.Message));
-
-        root.Children.Add(Header("Theme"));
-        root.Children.Add(Line($"{theme.DisplayName} previews immediately and is saved as {theme.Family} / {theme.Mode}."));
-        _themeFamily = ComboBox(ThemeCatalog.Presets.Select(item => item.Family).Distinct().ToArray(), theme.Family);
-        _themeMode = ComboBox([ThemeCatalog.ModeDark, ThemeCatalog.ModeLight], theme.Mode);
-        _themeFamily.SelectionChanged += (_, _) => PreviewTheme();
-        _themeMode.SelectionChanged += (_, _) => PreviewTheme();
-        root.Children.Add(Labeled("Theme family", _themeFamily));
-        root.Children.Add(Labeled("Theme mode", _themeMode));
 
         root.Children.Add(Header("Hotkeys"));
         _hotkeyScreenshotEnabled = CheckBox("Enable region screenshot shortcut", _model.HotkeyScreenshotEnabled);
@@ -160,14 +145,6 @@ public sealed class SettingsWindow : Window
         }
     }
 
-    private void PreviewTheme()
-    {
-        string family = SelectedString(_themeFamily, _model.ThemeFamily);
-        string mode = SelectedString(_themeMode, _model.ThemeMode);
-        var preset = _themeSettings.Preview(family, mode);
-        _status.Text = $"Previewing {preset.DisplayName}. Choose Save to persist it.";
-    }
-
     private void SyncModelFromControls()
     {
         _model.SaveFolder = _saveFolder.Text ?? string.Empty;
@@ -178,8 +155,6 @@ public sealed class SettingsWindow : Window
         _model.OpenVideoEditorAfterRecording = _openVideoEditor.IsChecked == true;
         _model.SeparateFolders = _separateFolders.IsChecked == true;
         _model.StartWithSystem = _startWithSystem.IsChecked == true;
-        _model.ThemeFamily = SelectedString(_themeFamily, _model.ThemeFamily);
-        _model.ThemeMode = SelectedString(_themeMode, _model.ThemeMode);
         _model.HotkeyScreenshotEnabled = _hotkeyScreenshotEnabled.IsChecked == true;
         _model.HotkeyFullscreenEnabled = _hotkeyFullscreenEnabled.IsChecked == true;
         _model.HotkeyRegionVideoEnabled = _hotkeyRegionVideoEnabled.IsChecked == true;

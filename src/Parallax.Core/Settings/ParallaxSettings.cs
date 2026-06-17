@@ -18,10 +18,6 @@ public sealed class ParallaxSettings
 
     public bool StartWithSystem { get; set; }
 
-    public string ThemeFamily { get; set; } = "Material 3";
-
-    public string ThemeMode { get; set; } = "Dark";
-
     public bool HotkeyScreenshotEnabled { get; set; } = true;
 
     public bool HotkeyFullscreenEnabled { get; set; } = true;

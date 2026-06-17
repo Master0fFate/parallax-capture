@@ -16,7 +16,6 @@
   <ItemGroup>
     <AvaloniaResource Include="..\..\icon.ico" Link="Assets\icon.ico" />
   </ItemGroup>
-
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0</TargetFramework>

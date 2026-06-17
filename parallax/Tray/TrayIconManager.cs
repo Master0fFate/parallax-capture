@@ -580,7 +580,6 @@ namespace parallax.Tray
 
                     _settings = _settingsService.Load();
                     _fileService.UpdateSettings(_settings);
-                    AppThemeService.Apply(_settings);
                     SettingsChanged?.Invoke(_settings);
 
                     if (_trayIcon != null)

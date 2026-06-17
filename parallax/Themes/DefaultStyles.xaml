@@ -1,7 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Product color system: Material V3-inspired tokens, updated at runtime by AppThemeService. -->
+    <!-- Fixed product color system. -->
     <SolidColorBrush x:Key="ProductWindowBrush" Color="#FF111318" />
     <SolidColorBrush x:Key="ProductChromeBrush" Color="#FF1B1B20" />
     <SolidColorBrush x:Key="ProductSurfaceBrush" Color="#FF211F26" />

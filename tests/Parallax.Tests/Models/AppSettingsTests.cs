@@ -47,14 +47,6 @@ public class AppSettingsTests
     }
 
     [Fact]
-    public void ThemeFields_DefaultToMaterialDark()
-    {
-        var s = new AppSettings();
-        Assert.Equal("Material 3", s.ThemeFamily);
-        Assert.Equal("Dark", s.ThemeMode);
-    }
-
-    [Fact]
     public void EditorAutoOpenFlags_DefaultTrue()
     {
         var s = new AppSettings();

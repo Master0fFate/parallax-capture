@@ -68,8 +68,6 @@ public class SettingsServiceTests : IDisposable
             OpenVideoEditorAfterRecording = false,
             SeparateFolders = true,
             StartWithWindows = true,
-            ThemeFamily = "GitHub",
-            ThemeMode = "Light",
             HotkeyScreenshotEnabled = false,
             HotkeyFullscreenEnabled = true,
             HotkeyRegionVideoEnabled = true,
@@ -90,8 +88,6 @@ public class SettingsServiceTests : IDisposable
         Assert.Equal(original.OpenVideoEditorAfterRecording, loaded.OpenVideoEditorAfterRecording);
         Assert.Equal(original.SeparateFolders, loaded.SeparateFolders);
         Assert.Equal(original.StartWithWindows, loaded.StartWithWindows);
-        Assert.Equal(original.ThemeFamily, loaded.ThemeFamily);
-        Assert.Equal(original.ThemeMode, loaded.ThemeMode);
         Assert.Equal(original.HotkeyScreenshotEnabled, loaded.HotkeyScreenshotEnabled);
         Assert.Equal(original.HotkeyFullscreenEnabled, loaded.HotkeyFullscreenEnabled);
         Assert.Equal(original.HotkeyRegionVideoEnabled, loaded.HotkeyRegionVideoEnabled);
@@ -138,8 +134,6 @@ public class SettingsServiceTests : IDisposable
         Assert.NotNull(settings);
         Assert.False(settings.CopyToClipboardAfterCapture);
         Assert.Equal("png", settings.ImageFormat); // default for missing field
-        Assert.Equal("Material 3", settings.ThemeFamily);
-        Assert.Equal("Dark", settings.ThemeMode);
     }
 
     [Fact]
@@ -157,8 +151,6 @@ public class SettingsServiceTests : IDisposable
             OpenVideoEditorAfterRecording = false,
             SeparateFolders = true,
             StartWithWindows = true,
-            ThemeFamily = "Catppuccin",
-            ThemeMode = "Dark",
             HotkeyScreenshotEnabled = false,
             HotkeyFullscreenEnabled = true,
             HotkeyRegionVideoEnabled = false,
@@ -174,8 +166,6 @@ public class SettingsServiceTests : IDisposable
         Assert.True(settings.SaveAutomatically);
         Assert.False(settings.OpenAnnotationEditorAfterScreenshot);
         Assert.False(settings.OpenVideoEditorAfterRecording);
-        Assert.Equal("Catppuccin", settings.ThemeFamily);
-        Assert.Equal("Dark", settings.ThemeMode);
         Assert.False(settings.HotkeyScreenshotEnabled);
         Assert.True(settings.HotkeyFullscreenEnabled);
         Assert.False(settings.HotkeyRegionVideoEnabled);

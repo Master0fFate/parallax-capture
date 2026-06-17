@@ -17,6 +17,7 @@ public sealed class AppLifecycleCoordinator
     private readonly ITrayService _trayService;
     private readonly IGlobalHotkeyService _hotkeyService;
     private readonly Action<ShellActionId>? _executeAction;
+    private readonly ShellFeatureSet _features;
     private readonly List<IAppLifecycleResource> _resources = [];
     private bool _isRunning;
     private bool _isRecording;
@@ -26,12 +27,14 @@ public sealed class AppLifecycleCoordinator
         IPlatformBackend platform,
         ITrayService trayService,
         IGlobalHotkeyService hotkeyService,
-        Action<ShellActionId>? executeAction = null)
+        Action<ShellActionId>? executeAction = null,
+        ShellFeatureSet? features = null)
     {
         _platform = platform;
         _trayService = trayService;
         _hotkeyService = hotkeyService;
         _executeAction = executeAction;
+        _features = features ?? ShellFeatureSet.All;
     }
 
     public bool IsRunning => _isRunning;
@@ -45,7 +48,7 @@ public sealed class AppLifecycleCoordinator
         _isRunning = true;
         _isRecording = isRecording;
         var hotkeys = HotkeyPlanner.Plan(settings, _hotkeyService.Capability);
-        foreach (var hotkey in hotkeys.Where(item => item.ShouldRegister))
+        foreach (var hotkey in hotkeys.Where(item => item.ShouldRegister && SupportsHotkey(item.Action)))
         {
             if (!HotkeyParser.TryParse(hotkey.Gesture, out var parsed, out _))
             {
@@ -70,8 +73,16 @@ public sealed class AppLifecycleCoordinator
             var shellAction = action == HotkeyAction.RegionRecording && _isRecording
                 ? ShellActionId.StopRecording
                 : MapHotkeyAction(action);
-            Execute(shellAction);
+            if (_features.Supports(shellAction))
+            {
+                Execute(shellAction);
+            }
         };
+    }
+
+    public bool SupportsHotkey(HotkeyAction action)
+    {
+        return _features.Supports(MapHotkeyAction(action));
     }
 
     public TraySurfaceModel RefreshSurface(
@@ -79,7 +90,7 @@ public sealed class AppLifecycleCoordinator
         IReadOnlyList<PlannedHotkey>? plannedHotkeys = null)
     {
         var hotkeys = plannedHotkeys ?? HotkeyPlanner.Plan(settings, _hotkeyService.Capability);
-        var state = new ShellRuntimeState(_isRecording, _trayService.IsAvailable, _hasActiveVideoEditor);
+        var state = new ShellRuntimeState(_isRecording, _trayService.IsAvailable, _hasActiveVideoEditor, _features);
         var surface = TraySurfaceBuilder.Build(_platform.Info, _platform.Capabilities, state, hotkeys);
         _trayService.SetMenu(surface.MenuItems.Select(item => new TrayMenuItem(
             item.Action.ToString(),
@@ -166,6 +177,11 @@ public sealed class AppLifecycleCoordinator
 
     private void Execute(ShellActionId action)
     {
+        if (!_features.Supports(action))
+        {
+            return;
+        }
+
         if (action == ShellActionId.Quit)
         {
             Quit();

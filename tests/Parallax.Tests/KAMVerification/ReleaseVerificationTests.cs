@@ -1,5 +1,3 @@
-using parallax.Core.Services;
-
 namespace Parallax.Tests.KAMVerification;
 
 public class ReleaseVerificationTests
@@ -82,35 +80,20 @@ public class ReleaseVerificationTests
     }
 
     [Fact]
-    public void SettingsWindow_ExposesDedicatedThemesTabAndConcreteThemeVariants()
+    public void SettingsWindow_DoesNotExposeThemeControls()
     {
         string xaml = ReadSource("SettingsWindow.xaml");
         string code = ReadSource("SettingsWindow.xaml.cs");
 
-        Assert.Contains("Header=\"Themes\"", xaml);
+        Assert.DoesNotContain("Header=\"Themes\"", xaml);
         Assert.DoesNotContain("Header=\"Appearance\"", xaml);
-        Assert.Contains("ChkUseDarkMode", xaml);
-        Assert.Contains("CmbThemePreset", xaml);
-        Assert.Contains("Material 3 Dark", xaml);
-        Assert.Contains("Material 3 Light", xaml);
-        Assert.Contains("Catppuccin Mocha", xaml);
-        Assert.Contains("Catppuccin Latte", xaml);
-        Assert.Contains("shadCN Dark", xaml);
-        Assert.Contains("shadCN Light", xaml);
-        Assert.Contains("GitHub Dark", xaml);
-        Assert.Contains("GitHub Light", xaml);
-        foreach (var preset in AppThemeService.ThemePresets)
-        {
-            Assert.Contains($"Content=\"{preset.DisplayName}\" Tag=\"{preset.Id}\"", xaml);
-            Assert.Equal(preset.DisplayName, AppThemeService.GetPalette(preset.Id, null).DisplayName);
-        }
-
-        Assert.Contains("TxtThemePreviewTitle", xaml);
-        Assert.Contains("ThemeMode_Changed", code);
-        Assert.Contains("ThemePreset_Changed", code);
-        Assert.Contains("PreviewTheme", code);
-        Assert.Contains("TxtThemePreviewTitle.Text = preset.DisplayName", code);
-        Assert.Contains("OnClosed", code);
+        Assert.DoesNotContain("ChkUseDarkMode", xaml);
+        Assert.DoesNotContain("CmbThemePreset", xaml);
+        Assert.DoesNotContain("TxtThemePreviewTitle", xaml);
+        Assert.DoesNotContain("ThemeMode_Changed", code);
+        Assert.DoesNotContain("ThemePreset_Changed", code);
+        Assert.DoesNotContain("PreviewTheme", code);
+        Assert.DoesNotContain("AppThemeService", code);
     }
 
     [Fact]
@@ -148,6 +131,24 @@ public class ReleaseVerificationTests
         Assert.DoesNotContain("Capture region   ", tray);
         Assert.DoesNotContain("Capture full screen   ", tray);
         Assert.DoesNotContain("Record region   ", tray);
+    }
+
+    [Fact]
+    public void AvaloniaShell_DoesNotExposePlaceholderModeMessages()
+    {
+        string repoRoot = FindRepoRoot();
+        string shell = File.ReadAllText(Path.Combine(
+            repoRoot,
+            "src",
+            "Parallax.App.Avalonia",
+            "Shell",
+            "AvaloniaShellCommandHandler.cs"));
+
+        Assert.DoesNotContain("available through the platform screenshot workflow", shell);
+        Assert.DoesNotContain("command is wired", shell);
+        Assert.DoesNotContain("provided by the media milestone", shell);
+        Assert.DoesNotContain("can start after selecting an area", shell);
+        Assert.DoesNotContain("Stop recording command handled", shell);
     }
 
     [Fact]

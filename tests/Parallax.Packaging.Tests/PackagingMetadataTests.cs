@@ -97,6 +97,14 @@ public sealed class PackagingMetadataTests
     }
 
     [Fact]
+    public void TrayAndPackagingIconsUseValidIcoAssets()
+    {
+        AssertValidIco("icon.ico");
+        AssertValidIco("parallax/Assets/icon.ico");
+        Assert.Contains("AvaloniaResource Include=\"..\\..\\icon.ico\"", ReadRepoFile("src/Parallax.App.Avalonia/Parallax.App.Avalonia.csproj"));
+    }
+
+    [Fact]
     public void CiMatrixCoversRequiredRidsAndPackagingSmoke()
     {
         string ci = ReadRepoFile(".github/workflows/ci.yml");
@@ -186,6 +194,20 @@ public sealed class PackagingMetadataTests
         string path = Path.Combine(RepoRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
         Assert.True(File.Exists(path), $"Expected repository file to exist: {relativePath}");
         return File.ReadAllText(path);
+    }
+
+    private static void AssertValidIco(string relativePath)
+    {
+        string path = Path.Combine(RepoRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
+        Assert.True(File.Exists(path), $"Expected icon file to exist: {relativePath}");
+
+        byte[] bytes = File.ReadAllBytes(path);
+        Assert.True(bytes.Length >= 6, $"Icon is too small: {relativePath}");
+        Assert.Equal(0, bytes[0]);
+        Assert.Equal(0, bytes[1]);
+        Assert.Equal(1, bytes[2]);
+        Assert.Equal(0, bytes[3]);
+        Assert.True(bytes[4] > 0 || bytes[5] > 0, $"Icon contains no image entries: {relativePath}");
     }
 
     private static string FindRepoRoot()

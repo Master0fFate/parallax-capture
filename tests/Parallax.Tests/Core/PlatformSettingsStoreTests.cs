@@ -37,8 +37,6 @@ public class PlatformSettingsStoreTests
                 OpenVideoEditorAfterRecording = false,
                 SeparateFolders = true,
                 StartWithSystem = true,
-                ThemeFamily = "GitHub",
-                ThemeMode = "Light",
                 HotkeyScreenshotEnabled = false,
                 HotkeyFullscreenEnabled = true,
                 HotkeyRegionVideoEnabled = false,
@@ -59,8 +57,6 @@ public class PlatformSettingsStoreTests
             Assert.Equal(original.OpenVideoEditorAfterRecording, loaded.OpenVideoEditorAfterRecording);
             Assert.Equal(original.SeparateFolders, loaded.SeparateFolders);
             Assert.Equal(original.StartWithSystem, loaded.StartWithSystem);
-            Assert.Equal(original.ThemeFamily, loaded.ThemeFamily);
-            Assert.Equal(original.ThemeMode, loaded.ThemeMode);
             Assert.Equal(original.HotkeyScreenshotEnabled, loaded.HotkeyScreenshotEnabled);
             Assert.Equal(original.HotkeyFullscreenEnabled, loaded.HotkeyFullscreenEnabled);
             Assert.Equal(original.HotkeyRegionVideoEnabled, loaded.HotkeyRegionVideoEnabled);

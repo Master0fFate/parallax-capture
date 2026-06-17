@@ -123,118 +123,6 @@
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem Header="Themes">
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel>
-                        <Border Style="{StaticResource ProductSectionBorderStyle}" Margin="0,0,0,12">
-                            <StackPanel>
-                                <TextBlock Text="Theme mode"
-                                           Style="{StaticResource ProductSectionHeaderTextStyle}" />
-                                <TextBlock Text="Switch the app between dark and light palettes. Theme entries below include the matching variant names."
-                                           TextWrapping="Wrap"
-                                           Style="{StaticResource ProductCaptionTextStyle}"
-                                           Margin="0,4,0,12" />
-
-                                <CheckBox x:Name="ChkUseDarkMode"
-                                          Content="Use dark mode"
-                                          Checked="ThemeMode_Changed"
-                                          Unchecked="ThemeMode_Changed"
-                                          Style="{StaticResource ProductCheckBoxStyle}" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border Style="{StaticResource ProductSectionBorderStyle}" Margin="0,0,0,12">
-                            <StackPanel>
-                                <TextBlock Text="Theme preset"
-                                           Style="{StaticResource ProductSectionHeaderTextStyle}" />
-                                <TextBlock Text="Pick the exact theme variant to preview immediately. Save settings to keep it."
-                                           TextWrapping="Wrap"
-                                           Style="{StaticResource ProductCaptionTextStyle}"
-                                           Margin="0,4,0,12" />
-
-                                <TextBlock Text="Preset"
-                                           Style="{StaticResource ProductSectionLabelStyle}"
-                                           Margin="0,0,0,4" />
-                                <ComboBox x:Name="CmbThemePreset"
-                                          Width="260"
-                                          HorizontalAlignment="Left"
-                                          SelectionChanged="ThemePreset_Changed"
-                                          Style="{StaticResource ProductComboBoxStyle}">
-                                    <ComboBoxItem Content="Material 3 Dark" Tag="material-3-dark" IsSelected="True" />
-                                    <ComboBoxItem Content="Material 3 Light" Tag="material-3-light" />
-                                    <ComboBoxItem Content="Catppuccin Mocha" Tag="catppuccin-mocha" />
-                                    <ComboBoxItem Content="Catppuccin Latte" Tag="catppuccin-latte" />
-                                    <ComboBoxItem Content="shadCN Dark" Tag="shadcn-dark" />
-                                    <ComboBoxItem Content="shadCN Light" Tag="shadcn-light" />
-                                    <ComboBoxItem Content="GitHub Dark" Tag="github-dark" />
-                                    <ComboBoxItem Content="GitHub Light" Tag="github-light" />
-                                </ComboBox>
-
-                                <TextBlock x:Name="TxtThemeSummary"
-                                           Text="Material 3 Dark is selected."
-                                           TextWrapping="Wrap"
-                                           Style="{StaticResource ProductCaptionTextStyle}"
-                                           Margin="0,8,0,0" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border Style="{StaticResource ProductSectionBorderStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Preview"
-                                           Style="{StaticResource ProductSectionHeaderTextStyle}" />
-                                <TextBlock Text="The preview uses the active theme resources. Choosing a preset previews it immediately."
-                                           TextWrapping="Wrap"
-                                           Style="{StaticResource ProductCaptionTextStyle}"
-                                           Margin="0,4,0,12" />
-
-                                <Border Background="{DynamicResource ProductInputBrush}"
-                                        BorderBrush="{DynamicResource ProductBorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="12"
-                                        Padding="12">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock x:Name="TxtThemePreviewTitle"
-                                                       Text="Material 3 Dark"
-                                                       Style="{StaticResource ProductSectionHeaderTextStyle}" />
-                                            <TextBlock Text="Theme resources drive surfaces, focus states, status colors, and accents."
-                                                       TextWrapping="Wrap"
-                                                       Style="{StaticResource ProductCaptionTextStyle}"
-                                                       Margin="0,3,0,0" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1"
-                                                    Orientation="Horizontal"
-                                                    VerticalAlignment="Center"
-                                                    Margin="16,0,0,0">
-                                            <Ellipse Width="18"
-                                                     Height="18"
-                                                     Fill="{DynamicResource ProductAccentBrush}"
-                                                     Margin="0,0,6,0" />
-                                            <Ellipse Width="18"
-                                                     Height="18"
-                                                     Fill="{DynamicResource ProductSuccessBrush}"
-                                                     Margin="0,0,6,0" />
-                                            <Ellipse Width="18"
-                                                     Height="18"
-                                                     Fill="{DynamicResource ProductWarningBrush}"
-                                                     Margin="0,0,6,0" />
-                                            <Ellipse Width="18"
-                                                     Height="18"
-                                                     Fill="{DynamicResource ProductDangerBrush}" />
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-
             <TabItem Header="Hotkeys">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
@@ -351,7 +239,7 @@
         </TabControl>
 
         <Grid Grid.Row="2" Margin="0,14,0,0">
-            <TextBlock Text="Theme changes preview immediately. Save settings to keep them."
+            <TextBlock Text="Save settings to apply capture, editor, and hotkey changes."
                        Style="{StaticResource ProductCaptionTextStyle}"
                        VerticalAlignment="Center" />
             <Button Content="Save settings"

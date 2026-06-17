@@ -7,8 +7,7 @@ public sealed record RuntimeSettingsApplyResult(
     bool Saved,
     SaveFolderValidationResult SaveFolder,
     IReadOnlyList<PlannedHotkey> Hotkeys,
-    StartupRegistrationResult Startup,
-    ThemePreset Theme);
+    StartupRegistrationResult Startup);
 
 public sealed class RuntimeSettingsApplier
 {
@@ -16,35 +15,32 @@ public sealed class RuntimeSettingsApplier
     private readonly JsonSettingsStore _settingsStore;
     private readonly IGlobalHotkeyService _hotkeyService;
     private readonly IStartupService _startupService;
-    private readonly ThemeSettingsService _themeService;
     private readonly Func<HotkeyAction, Action> _hotkeyCallbackFactory;
+    private readonly Func<HotkeyAction, bool> _supportsHotkey;
 
     public RuntimeSettingsApplier(
         IPlatformBackend platform,
         JsonSettingsStore settingsStore,
         IGlobalHotkeyService hotkeyService,
         IStartupService startupService,
-        ThemeSettingsService themeService,
-        Func<HotkeyAction, Action> hotkeyCallbackFactory)
+        Func<HotkeyAction, Action> hotkeyCallbackFactory,
+        Func<HotkeyAction, bool>? supportsHotkey = null)
     {
         _platform = platform;
         _settingsStore = settingsStore;
         _hotkeyService = hotkeyService;
         _startupService = startupService;
-        _themeService = themeService;
         _hotkeyCallbackFactory = hotkeyCallbackFactory;
+        _supportsHotkey = supportsHotkey ?? (_ => true);
     }
 
     public RuntimeSettingsApplyResult Apply(ParallaxSettings settings, string executablePath)
     {
         var saveFolder = SaveFolderPolicy.ValidateAndCreate(settings, _platform.Locations);
-        var theme = _themeService.Preview(settings.ThemeFamily, settings.ThemeMode);
-        settings.ThemeFamily = theme.Family;
-        settings.ThemeMode = theme.Mode;
 
         _hotkeyService.UnregisterAll();
         var plannedHotkeys = HotkeyPlanner.Plan(settings, _hotkeyService.Capability);
-        foreach (var hotkey in plannedHotkeys.Where(item => item.ShouldRegister))
+        foreach (var hotkey in plannedHotkeys.Where(item => item.ShouldRegister && _supportsHotkey(item.Action)))
         {
             if (!HotkeyParser.TryParse(hotkey.Gesture, out var parsed, out _))
             {
@@ -76,6 +72,6 @@ public sealed class RuntimeSettingsApplier
             _settingsStore.Save(settings);
         }
 
-        return new RuntimeSettingsApplyResult(saveFolder.Success, saveFolder, plannedHotkeys, startup, theme);
+        return new RuntimeSettingsApplyResult(saveFolder.Success, saveFolder, plannedHotkeys, startup);
     }
 }

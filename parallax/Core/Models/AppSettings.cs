@@ -12,8 +12,6 @@ namespace parallax.Core.Models
         public bool OpenVideoEditorAfterRecording { get; set; } = true;
         public bool SeparateFolders { get; set; } = false;
         public bool StartWithWindows { get; set; } = false;
-        public string ThemeFamily { get; set; } = "Material 3";
-        public string ThemeMode { get; set; } = "Dark";
         [Obsolete("Reserved for future use. Overlay opacity is fixed in XAML. Will be wired when per-user opacity setting is implemented.")]
         public int OverlayOpacity { get; set; } = 120;
         public bool HotkeyScreenshotEnabled { get; set; } = true;

@@ -14,8 +14,6 @@ public sealed class SettingsWindowModel
         OpenVideoEditorAfterRecording = settings.OpenVideoEditorAfterRecording;
         SeparateFolders = settings.SeparateFolders;
         StartWithSystem = settings.StartWithSystem;
-        ThemeFamily = settings.ThemeFamily;
-        ThemeMode = settings.ThemeMode;
         HotkeyScreenshotEnabled = settings.HotkeyScreenshotEnabled;
         HotkeyFullscreenEnabled = settings.HotkeyFullscreenEnabled;
         HotkeyRegionVideoEnabled = settings.HotkeyRegionVideoEnabled;
@@ -39,10 +37,6 @@ public sealed class SettingsWindowModel
     public bool SeparateFolders { get; set; }
 
     public bool StartWithSystem { get; set; }
-
-    public string ThemeFamily { get; set; }
-
-    public string ThemeMode { get; set; }
 
     public bool HotkeyScreenshotEnabled { get; set; }
 
@@ -75,8 +69,6 @@ public sealed class SettingsWindowModel
         target.OpenVideoEditorAfterRecording = OpenVideoEditorAfterRecording;
         target.SeparateFolders = SeparateFolders;
         target.StartWithSystem = StartWithSystem;
-        target.ThemeFamily = ThemeFamily;
-        target.ThemeMode = ThemeMode;
         target.HotkeyScreenshotEnabled = HotkeyScreenshotEnabled;
         target.HotkeyFullscreenEnabled = HotkeyFullscreenEnabled;
         target.HotkeyRegionVideoEnabled = HotkeyRegionVideoEnabled;
