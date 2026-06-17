@@ -33,7 +33,15 @@ public static class TraySurfaceBuilder
         {
             BuildAction(ShellActionId.RegionScreenshot, "Capture region", HotkeyAction.RegionScreenshot, capabilities.ScreenCapture, hotkeyByAction),
             BuildAction(ShellActionId.FullScreenshot, "Capture full screen", HotkeyAction.FullscreenScreenshot, capabilities.ScreenCapture, hotkeyByAction),
-            BuildAction(ShellActionId.RecordRegion, "Record region", HotkeyAction.RegionRecording, capabilities.ScreenRecording, hotkeyByAction, isVisible: !state.IsRecording),
+            BuildAction(
+                ShellActionId.RecordRegion,
+                "Record region",
+                HotkeyAction.RegionRecording,
+                capabilities.ScreenRecording,
+                hotkeyByAction,
+                isVisible: !state.IsRecording,
+                forceDisabled: state.HasActiveVideoEditor,
+                disabledStatus: "Close the active video editor before starting a recording."),
             new(
                 ShellActionId.StopRecording,
                 "Stop recording",
@@ -56,15 +64,18 @@ public static class TraySurfaceBuilder
         HotkeyAction hotkeyAction,
         CapabilityResult capability,
         IReadOnlyDictionary<HotkeyAction, PlannedHotkey> hotkeys,
-        bool isVisible = true)
+        bool isVisible = true,
+        bool forceDisabled = false,
+        string? disabledStatus = null)
     {
         hotkeys.TryGetValue(hotkeyAction, out var hotkey);
         string formattedLabel = hotkey == null
             ? label
             : $"{label} ({FormatHotkeyLabel(hotkey)})";
 
-        bool enabled = capability.State is CapabilityState.Supported or CapabilityState.RequiresPermission or CapabilityState.RequiresUserMediation;
-        return new TrayMenuEntry(action, formattedLabel, enabled, isVisible, enabled ? hotkey?.Message : capability.Message);
+        bool enabled = !forceDisabled
+            && capability.State is CapabilityState.Supported or CapabilityState.RequiresPermission or CapabilityState.RequiresUserMediation;
+        return new TrayMenuEntry(action, formattedLabel, enabled, isVisible, enabled ? hotkey?.Message : disabledStatus ?? capability.Message);
     }
 
     private static string FormatHotkeyLabel(PlannedHotkey hotkey)
