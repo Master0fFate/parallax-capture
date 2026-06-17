@@ -95,6 +95,39 @@ public sealed class RecordingBackendsAndHudParityTests : IDisposable
     }
 
     [Fact]
+    public void CompletionFailureSurfacesErrorAndDoesNotPresentFinalRecordingAsSuccess()
+    {
+        var platform = TestPlatform.Create(PlatformKind.Windows, _root);
+        var settings = ParallaxSettings.CreateDefaults(platform.Locations.RecordingsDirectory);
+        settings.OpenVideoEditorAfterRecording = true;
+        var recording = new FakeRecordingService(
+            CapabilityResult.Supported("Windows recording supported."),
+            AudioCaptureCapability.Supported("Audio supported."))
+        {
+            DeleteOutputBeforeSuccessfulStopReturns = true
+        };
+        var editor = new FakeVideoEditorLauncher();
+        var workflow = CreateWorkflow(platform, recording, editor: editor);
+
+        var started = workflow.StartRegionRecording(settings, platform.Locations);
+        var stopped = workflow.StopRecording(RecordingStopSource.Tray, settings, platform.Locations);
+
+        Assert.True(started.Success, started.Message);
+        Assert.False(stopped.Success);
+        Assert.Equal(RecordingFailureKind.Failed, stopped.FailureKind);
+        Assert.False(stopped.PartialOutputPreserved);
+        Assert.NotNull(stopped.Completion);
+        Assert.False(stopped.Completion!.Success);
+        Assert.Null(stopped.Completion.SavedPath);
+        Assert.False(stopped.Completion.SourcePreserved);
+        Assert.False(stopped.Completion.UsedSourceFallback);
+        Assert.False(editor.Opened);
+        Assert.Contains("finalization failed", stopped.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Recording output was not found", stopped.Message);
+        Assert.False(File.Exists(started.TempOutputPath));
+    }
+
+    [Fact]
     public void UnsupportedAudioStartsWithExplicitDegradedState()
     {
         var platform = TestPlatform.Create(PlatformKind.Windows, _root);
@@ -313,6 +346,8 @@ public sealed class RecordingBackendsAndHudParityTests : IDisposable
 
         public bool FailStop { get; init; }
 
+        public bool DeleteOutputBeforeSuccessfulStopReturns { get; init; }
+
         public RecordingStartRequest? LastStartRequest { get; private set; }
 
         public List<RecordingStopSource> StopSources { get; } = [];
@@ -336,9 +371,17 @@ public sealed class RecordingBackendsAndHudParityTests : IDisposable
             Directory.CreateDirectory(Path.GetDirectoryName(LastStartRequest.OutputPath)!);
             File.WriteAllBytes(LastStartRequest.OutputPath, [0, 0, 0, 24, 102, 116, 121, 112, 109, 112, 52, 50]);
 
-            return FailStop
-                ? RecordingStopResult.Failed(RecordingFailureKind.Failed, LastStartRequest.OutputPath, true, "Native recorder failed while finalizing.")
-                : RecordingStopResult.Stopped(LastStartRequest.OutputPath, TimeSpan.FromSeconds(2), "Recording stopped.");
+            if (FailStop)
+            {
+                return RecordingStopResult.Failed(RecordingFailureKind.Failed, LastStartRequest.OutputPath, true, "Native recorder failed while finalizing.");
+            }
+
+            if (DeleteOutputBeforeSuccessfulStopReturns)
+            {
+                File.Delete(LastStartRequest.OutputPath);
+            }
+
+            return RecordingStopResult.Stopped(LastStartRequest.OutputPath, TimeSpan.FromSeconds(2), "Recording stopped.");
         }
     }
 

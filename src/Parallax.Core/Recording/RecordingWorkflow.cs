@@ -154,6 +154,17 @@ public sealed class RecordingWorkflow
             _ffmpegLocator,
             _videoEditor);
 
+        if (!completion.Success)
+        {
+            return new RecordingStopWorkflowResult(
+                false,
+                source,
+                completion,
+                RecordingFailureKind.Failed,
+                completion.SourcePreserved || completion.UsedSourceFallback,
+                $"Recording stopped, but finalization failed: {completion.Message}");
+        }
+
         return new RecordingStopWorkflowResult(true, source, completion, null, PartialOutputPreserved: false, completion.Message);
     }
 
