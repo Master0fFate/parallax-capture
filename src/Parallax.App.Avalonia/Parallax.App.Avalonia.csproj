@@ -4,13 +4,14 @@
     <PackageReference Include="Avalonia" Version="12.0.4" />
     <PackageReference Include="Avalonia.Desktop" Version="12.0.4" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.4" />
+    <PackageReference Include="NAudio" Version="2.2.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Parallax.Core\Parallax.Core.csproj" />
-    <ProjectReference Include="..\Parallax.Platform.Windows\Parallax.Platform.Windows.csproj" />
-    <ProjectReference Include="..\Parallax.Platform.Mac\Parallax.Platform.Mac.csproj" />
-    <ProjectReference Include="..\Parallax.Platform.Linux\Parallax.Platform.Linux.csproj" />
+    <ProjectReference Include="..\Parallax.Platform.Windows\Parallax.Platform.Windows.csproj" Condition="'$(RuntimeIdentifier)' == '' Or $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win-'))" />
+    <ProjectReference Include="..\Parallax.Platform.Mac\Parallax.Platform.Mac.csproj" Condition="'$(RuntimeIdentifier)' == '' Or $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('osx-'))" />
+    <ProjectReference Include="..\Parallax.Platform.Linux\Parallax.Platform.Linux.csproj" Condition="'$(RuntimeIdentifier)' == '' Or $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +28,18 @@
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
     <SelfContained>false</SelfContained>
     <PublishSingleFile>false</PublishSingleFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == ''">
+    <DefineConstants>$(DefineConstants);PARALLAX_MULTI_TARGET</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win-'))">
+    <DefineConstants>$(DefineConstants);PARALLAX_TARGET_WINDOWS</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('osx-'))">
+    <DefineConstants>$(DefineConstants);PARALLAX_TARGET_MACOS</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">
+    <DefineConstants>$(DefineConstants);PARALLAX_TARGET_LINUX</DefineConstants>
   </PropertyGroup>
 
 </Project>

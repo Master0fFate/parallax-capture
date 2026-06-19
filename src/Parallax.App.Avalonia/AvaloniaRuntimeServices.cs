@@ -4,7 +4,9 @@ using Parallax.Core.Capture;
 using Parallax.Core.Platform;
 using Parallax.Core.Settings;
 using Parallax.Core.Shell;
+#if PARALLAX_MULTI_TARGET || PARALLAX_TARGET_WINDOWS
 using Parallax.Platform.Windows;
+#endif
 
 namespace Parallax.App.Avalonia;
 
@@ -17,32 +19,45 @@ public static class AvaloniaRuntimeServices
                 RegionScreenshot: true,
                 FullScreenshot: true,
                 RegionRecording: false,
+                SpeechToText: true,
                 VideoEditor: false,
                 ImageEditor: false)
             : new ShellFeatureSet(
                 RegionScreenshot: false,
                 FullScreenshot: false,
                 RegionRecording: false,
+                SpeechToText: true,
                 VideoEditor: false,
                 ImageEditor: false);
     }
 
     public static IGlobalHotkeyService CreateHotkeyService(IPlatformBackend platform)
     {
-        return platform.Info.Kind == PlatformKind.Windows
-            ? WindowsGlobalHotkeyService.CreateForCurrentThread()
-            : new UnsupportedHotkeyService(platform.Capabilities.GlobalHotkeys);
+#if PARALLAX_MULTI_TARGET || PARALLAX_TARGET_WINDOWS
+        if (platform.Info.Kind == PlatformKind.Windows)
+        {
+            return WindowsGlobalHotkeyService.CreateForCurrentThread();
+        }
+#endif
+
+        return new UnsupportedHotkeyService(platform.Capabilities.GlobalHotkeys);
     }
 
     public static IStartupService CreateStartupService(IPlatformBackend platform)
     {
-        return platform.Info.Kind == PlatformKind.Windows
-            ? new WindowsStartupService(platform.Locations)
-            : new PlannedStartupService(platform.Locations);
+#if PARALLAX_MULTI_TARGET || PARALLAX_TARGET_WINDOWS
+        if (platform.Info.Kind == PlatformKind.Windows)
+        {
+            return new WindowsStartupService(platform.Locations);
+        }
+#endif
+
+        return new PlannedStartupService(platform.Locations);
     }
 
     public static IScreenshotWorkflowRunner CreateScreenshotWorkflowRunner(IPlatformBackend platform, ParallaxSettings settings)
     {
+#if PARALLAX_MULTI_TARGET || PARALLAX_TARGET_WINDOWS
         if (platform.Info.Kind == PlatformKind.Windows)
         {
             var clipboard = new WindowsClipboardService();
@@ -54,6 +69,7 @@ public static class AvaloniaRuntimeServices
                 saver,
                 new AvaloniaAnnotationEditorLauncher(clipboard, saver, platform.Locations, settings)));
         }
+#endif
 
         return new UnsupportedScreenshotWorkflowRunner(platform.Capabilities.ScreenCapture);
     }
@@ -70,6 +86,11 @@ public static class AvaloniaRuntimeServices
         public CapabilityResult Capability { get; }
 
         public HotkeyRegistrationResult Register(int id, uint modifiers, uint virtualKey, string displayText, Action callback)
+        {
+            return new HotkeyRegistrationResult(HotkeyRegistrationResultState.Unsupported, displayText, Capability.Message);
+        }
+
+        public HotkeyRegistrationResult RegisterHold(int id, uint modifiers, uint virtualKey, string displayText, Action started, Action stopped)
         {
             return new HotkeyRegistrationResult(HotkeyRegistrationResultState.Unsupported, displayText, Capability.Message);
         }

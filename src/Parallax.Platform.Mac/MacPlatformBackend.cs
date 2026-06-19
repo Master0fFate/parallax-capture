@@ -19,7 +19,8 @@ public sealed class MacPlatformBackend : IPlatformBackend
         GlobalHotkeys: CapabilityResult.RequiresPermission("Global shortcuts may require Accessibility or Input Monitoring permission."),
         Clipboard: CapabilityResult.Supported("macOS clipboard integration is supported."),
         StartupRegistration: CapabilityResult.Supported("Per-user LaunchAgent startup registration is supported."),
-        CaptureExclusion: CapabilityResult.Unsupported("Capture exclusion is best-effort only and is not guaranteed on macOS."));
+        CaptureExclusion: CapabilityResult.Unsupported("Capture exclusion is best-effort only and is not guaranteed on macOS."),
+        SpeechToText: CapabilityResult.RequiresPermission("macOS speech-to-text requires Microphone permission; paste automation may require Accessibility or Input Monitoring permission."));
 
     public static MacPlatformBackend CreateForUserHome(string userHome, string? tempDirectory = null)
     {

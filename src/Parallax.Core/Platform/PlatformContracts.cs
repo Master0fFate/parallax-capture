@@ -46,7 +46,12 @@ public sealed record PlatformCapabilitySet(
     CapabilityResult GlobalHotkeys,
     CapabilityResult Clipboard,
     CapabilityResult StartupRegistration,
-    CapabilityResult CaptureExclusion);
+    CapabilityResult CaptureExclusion,
+    CapabilityResult SpeechToText = null!)
+{
+    public CapabilityResult SpeechToText { get; init; } =
+        SpeechToText ?? CapabilityResult.Unsupported("Speech-to-text is not configured for this platform session.");
+}
 
 public interface ITrayService
 {
@@ -64,6 +69,8 @@ public interface IGlobalHotkeyService : IDisposable
     CapabilityResult Capability { get; }
 
     HotkeyRegistrationResult Register(int id, uint modifiers, uint virtualKey, string displayText, Action callback);
+
+    HotkeyRegistrationResult RegisterHold(int id, uint modifiers, uint virtualKey, string displayText, Action started, Action stopped);
 
     void UnregisterAll();
 }

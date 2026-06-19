@@ -1,11 +1,11 @@
 using System.Text.RegularExpressions;
 
+using static Parallax.Packaging.Tests.PackagingTestSupport;
+
 namespace Parallax.Packaging.Tests;
 
 public sealed class PackagingMetadataTests
 {
-    private static readonly string RepoRoot = FindRepoRoot();
-
     [Fact]
     public void WindowsInstallerScriptUsesPerUserPathsAndChecksumVerification()
     {
@@ -101,7 +101,9 @@ public sealed class PackagingMetadataTests
     {
         AssertValidIco("icon.ico");
         AssertValidIco("parallax/Assets/icon.ico");
-        Assert.Contains("AvaloniaResource Include=\"..\\..\\icon.ico\"", ReadRepoFile("src/Parallax.App.Avalonia/Parallax.App.Avalonia.csproj"));
+        Assert.Contains(
+            "AvaloniaResource Include=\"..\\..\\icon.ico\"",
+            ReadRepoFile("src/Parallax.App.Avalonia/Parallax.App.Avalonia.csproj"));
     }
 
     [Fact]
@@ -126,6 +128,19 @@ public sealed class PackagingMetadataTests
         Assert.Contains("package-macos.sh", ci);
         Assert.Contains("package-linux.sh", ci);
         Assert.Contains("SHA256SUMS", ci);
+    }
+
+    [Fact]
+    public void ReleaseWorkflowPassesTagsThroughEnvironmentAndRequiresReleaseSigning()
+    {
+        string release = ReadRepoFile(".github/workflows/release.yml");
+
+        Assert.Contains("RELEASE_VERSION: ${{ github.ref_name }}", release);
+        Assert.Contains("RELEASE_BUILD: true", release);
+        Assert.Contains("MACOS_CODESIGN_IDENTITY", release);
+        Assert.Contains("MACOS_NOTARY_PROFILE", release);
+        Assert.DoesNotContain("-Version ${{ github.ref_name }}", release);
+        Assert.DoesNotContain("run: ${{ matrix.command }}", release);
     }
 
     [Fact]
@@ -189,13 +204,6 @@ public sealed class PackagingMetadataTests
                || relative is "README.md" or "parallax/installer.iss";
     }
 
-    private static string ReadRepoFile(string relativePath)
-    {
-        string path = Path.Combine(RepoRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
-        Assert.True(File.Exists(path), $"Expected repository file to exist: {relativePath}");
-        return File.ReadAllText(path);
-    }
-
     private static void AssertValidIco(string relativePath)
     {
         string path = Path.Combine(RepoRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
@@ -208,22 +216,5 @@ public sealed class PackagingMetadataTests
         Assert.Equal(1, bytes[2]);
         Assert.Equal(0, bytes[3]);
         Assert.True(bytes[4] > 0 || bytes[5] > 0, $"Icon contains no image entries: {relativePath}");
-    }
-
-    private static string FindRepoRoot()
-    {
-        string? dir = AppContext.BaseDirectory;
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir, "ParallaxCapture.sln"))
-                && File.Exists(Path.Combine(dir, "README.md")))
-            {
-                return dir;
-            }
-
-            dir = Directory.GetParent(dir)?.FullName;
-        }
-
-        throw new DirectoryNotFoundException("Could not find repository root.");
     }
 }

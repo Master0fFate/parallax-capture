@@ -8,6 +8,7 @@ public static class HotkeyPlanner
     public const int RegionScreenshotId = 9001;
     public const int FullscreenScreenshotId = 9002;
     public const int RegionRecordingId = 9003;
+    public const int SpeechToTextId = 9004;
 
     public static IReadOnlyList<HotkeyBinding> FromSettings(ParallaxSettings settings)
     {
@@ -30,7 +31,13 @@ public static class HotkeyPlanner
                 "Start or stop recording",
                 settings.HotkeyRegionVideoEnabled,
                 settings.HotkeyRegionVideo,
-                RegionRecordingId)
+                RegionRecordingId),
+            new HotkeyBinding(
+                HotkeyAction.SpeechToText,
+                "Transcribe speech",
+                settings.SpeechToTextEnabled,
+                settings.SpeechShortcut,
+                SpeechToTextId)
         ];
     }
 

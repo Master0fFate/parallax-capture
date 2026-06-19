@@ -15,14 +15,34 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+function ConvertTo-PackageVersion {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $InputVersion
+    )
+
+    $match = [regex]::Match($InputVersion, '^(?<prefix>v?)(?<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)$')
+    if (-not $match.Success) {
+        throw "Version must be SemVer without build metadata, for example v1.2.3 or v1.2.3-rc.1: $InputVersion"
+    }
+
+    [pscustomobject] @{
+        PackageVersion = $match.Groups['version'].Value
+        ArtifactVersion = "$($match.Groups['prefix'].Value)$($match.Groups['version'].Value)"
+    }
+}
+
 if ($RuntimeIdentifier -ne 'win-x64') {
     throw "Windows packaging only supports win-x64. Requested: $RuntimeIdentifier"
 }
 
+$versionInfo = ConvertTo-PackageVersion -InputVersion $Version
+$packageVersion = $versionInfo.PackageVersion
+$artifactVersion = $versionInfo.ArtifactVersion
 $repoRoot = Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')
 $artifactRoot = New-Item -ItemType Directory -Force -Path $ArtifactsDirectory
 $publishRoot = Join-Path $repoRoot "artifacts\publish\$RuntimeIdentifier"
-$packageName = "ParallaxCapture-$Version-$RuntimeIdentifier"
+$packageName = "ParallaxCapture-$artifactVersion-$RuntimeIdentifier"
 $zipPath = Join-Path $artifactRoot "$packageName.zip"
 
 if (Test-Path -LiteralPath $publishRoot) {
@@ -35,6 +55,7 @@ dotnet publish (Join-Path $repoRoot 'src\Parallax.App.Avalonia\Parallax.App.Aval
     --self-contained false `
     -p:PublishSingleFile=false `
     -p:PublishReadyToRun=false `
+    -p:Version=$packageVersion `
     -o $publishRoot
 
 $appHost = Join-Path $publishRoot 'Parallax.App.Avalonia.exe'
@@ -55,6 +76,7 @@ if ($iscc) {
     dotnet publish (Join-Path $repoRoot 'parallax\parallax.csproj') `
         -c $Configuration `
         -p:Platform=x64 `
+        -p:Version=$packageVersion `
         -o $legacyPublish
 
     & $iscc.Source (Join-Path $repoRoot 'parallax\installer.iss')

@@ -4,9 +4,32 @@ set -euo pipefail
 CONFIGURATION="${CONFIGURATION:-Release}"
 RID="${1:-${RID:-linux-x64}}"
 VERSION="${VERSION:-1.1.0}"
-PACKAGE_VERSION="${VERSION#v}"
 APP_ID="parallax-capture"
 APP_NAME="Parallax Capture"
+
+normalize_version() {
+  local input="$1"
+  local version="${input#v}"
+
+  if [[ "$input" != "$version" && "$input" != v* ]]; then
+    echo "Version must use an optional lowercase v prefix: $input" >&2
+    exit 64
+  fi
+
+  if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$ ]]; then
+    echo "Version must be SemVer without build metadata, for example v1.2.3 or v1.2.3-rc.1: $input" >&2
+    exit 64
+  fi
+
+  printf '%s' "$version"
+}
+
+PACKAGE_VERSION="$(normalize_version "$VERSION")"
+if [[ "$VERSION" == v* ]]; then
+  ARTIFACT_VERSION="v$PACKAGE_VERSION"
+else
+  ARTIFACT_VERSION="$PACKAGE_VERSION"
+fi
 
 case "$RID" in
   linux-x64) ;;
@@ -21,7 +44,7 @@ APPDIR="$REPO_ROOT/artifacts/package/$RID/AppDir"
 USR="$APPDIR/usr"
 BIN="$USR/bin"
 SHARE="$USR/share"
-PACKAGE_BASENAME="ParallaxCapture-$VERSION-$RID"
+PACKAGE_BASENAME="ParallaxCapture-$ARTIFACT_VERSION-$RID"
 TAR_PATH="$ARTIFACT_ROOT/$PACKAGE_BASENAME.tar.gz"
 APPIMAGE_PATH="$ARTIFACT_ROOT/$PACKAGE_BASENAME.AppImage"
 DEB_ROOT="$REPO_ROOT/artifacts/package/$RID/deb"
@@ -36,6 +59,7 @@ dotnet publish "$REPO_ROOT/src/Parallax.App.Avalonia/Parallax.App.Avalonia.cspro
   --self-contained false \
   -p:PublishSingleFile=false \
   -p:PublishReadyToRun=false \
+  -p:Version="$PACKAGE_VERSION" \
   -o "$PUBLISH_ROOT"
 
 cp -R "$PUBLISH_ROOT"/. "$BIN/"

@@ -5,9 +5,15 @@ using Parallax.App.Avalonia.Shell;
 using Parallax.Core.Platform;
 using Parallax.Core.Settings;
 using Parallax.Core.Shell;
+#if PARALLAX_MULTI_TARGET || PARALLAX_TARGET_LINUX
 using Parallax.Platform.Linux;
+#endif
+#if PARALLAX_MULTI_TARGET || PARALLAX_TARGET_MACOS
 using Parallax.Platform.Mac;
+#endif
+#if PARALLAX_MULTI_TARGET || PARALLAX_TARGET_WINDOWS
 using Parallax.Platform.Windows;
+#endif
 
 namespace Parallax.App.Avalonia;
 
@@ -44,7 +50,8 @@ public sealed class App : Application
                 hotkeys,
                 startup,
                 _coordinator.CreateHotkeyCallback,
-                _coordinator.SupportsHotkey);
+                _coordinator.SupportsHotkey,
+                _coordinator.CreateHotkeyReleaseCallback);
             commandHandler = new AvaloniaShellCommandHandler(
                 desktop,
                 platform,
@@ -69,6 +76,19 @@ public sealed class App : Application
 
     private static IPlatformBackend CreatePlatformBackend()
     {
+#if PARALLAX_TARGET_WINDOWS
+        return WindowsPlatformBackend.CreateCurrentUser();
+#elif PARALLAX_TARGET_MACOS
+        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return MacPlatformBackend.CreateForUserHome(home);
+#elif PARALLAX_TARGET_LINUX
+        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return LinuxPlatformBackend.CreateForUserHome(
+            home,
+            xdgConfigHome: Environment.GetEnvironmentVariable("XDG_CONFIG_HOME"),
+            xdgDataHome: Environment.GetEnvironmentVariable("XDG_DATA_HOME"),
+            xdgStateHome: Environment.GetEnvironmentVariable("XDG_STATE_HOME"));
+#else
         if (OperatingSystem.IsWindows())
         {
             return WindowsPlatformBackend.CreateCurrentUser();
@@ -85,6 +105,7 @@ public sealed class App : Application
             xdgConfigHome: Environment.GetEnvironmentVariable("XDG_CONFIG_HOME"),
             xdgDataHome: Environment.GetEnvironmentVariable("XDG_DATA_HOME"),
             xdgStateHome: Environment.GetEnvironmentVariable("XDG_STATE_HOME"));
+#endif
     }
 
     private static string GetExecutablePath()

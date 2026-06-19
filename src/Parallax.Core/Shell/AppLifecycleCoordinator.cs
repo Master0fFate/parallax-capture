@@ -1,6 +1,7 @@
 using Parallax.Core.Hotkeys;
 using Parallax.Core.Platform;
 using Parallax.Core.Settings;
+using Parallax.Core.Speech;
 
 namespace Parallax.Core.Shell;
 
@@ -21,6 +22,7 @@ public sealed class AppLifecycleCoordinator
     private readonly List<IAppLifecycleResource> _resources = [];
     private bool _isRunning;
     private bool _isRecording;
+    private bool _isTranscribing;
     private bool _hasActiveVideoEditor;
 
     public AppLifecycleCoordinator(
@@ -55,12 +57,7 @@ public sealed class AppLifecycleCoordinator
                 continue;
             }
 
-            _hotkeyService.Register(
-                hotkey.RegistrationId,
-                parsed.Modifiers,
-                parsed.VirtualKey,
-                hotkey.DisplayText,
-                CreateHotkeyCallback(hotkey.Action));
+            RegisterHotkey(settings, hotkey, parsed);
         }
 
         return RefreshSurface(settings, hotkeys);
@@ -70,12 +67,26 @@ public sealed class AppLifecycleCoordinator
     {
         return () =>
         {
-            var shellAction = action == HotkeyAction.RegionRecording && _isRecording
-                ? ShellActionId.StopRecording
-                : MapHotkeyAction(action);
+            var shellAction = action switch
+            {
+                HotkeyAction.RegionRecording when _isRecording => ShellActionId.StopRecording,
+                HotkeyAction.SpeechToText when _isTranscribing => ShellActionId.StopSpeechToText,
+                _ => MapHotkeyAction(action)
+            };
             if (_features.Supports(shellAction))
             {
                 Execute(shellAction);
+            }
+        };
+    }
+
+    public Action CreateHotkeyReleaseCallback(HotkeyAction action)
+    {
+        return () =>
+        {
+            if (action == HotkeyAction.SpeechToText && _isTranscribing && _features.Supports(ShellActionId.StopSpeechToText))
+            {
+                Execute(ShellActionId.StopSpeechToText);
             }
         };
     }
@@ -90,7 +101,7 @@ public sealed class AppLifecycleCoordinator
         IReadOnlyList<PlannedHotkey>? plannedHotkeys = null)
     {
         var hotkeys = plannedHotkeys ?? HotkeyPlanner.Plan(settings, _hotkeyService.Capability);
-        var state = new ShellRuntimeState(_isRecording, _trayService.IsAvailable, _hasActiveVideoEditor, _features);
+        var state = new ShellRuntimeState(_isRecording, _trayService.IsAvailable, _isTranscribing, _hasActiveVideoEditor, _features);
         var surface = TraySurfaceBuilder.Build(_platform.Info, _platform.Capabilities, state, hotkeys);
         _trayService.SetMenu(surface.MenuItems.Select(item => new TrayMenuItem(
             item.Action.ToString(),
@@ -106,6 +117,11 @@ public sealed class AppLifecycleCoordinator
     public void SetRecordingState(bool isRecording)
     {
         _isRecording = isRecording;
+    }
+
+    public void SetTranscribingState(bool isTranscribing)
+    {
+        _isTranscribing = isTranscribing;
     }
 
     public void SetVideoEditorActive(bool isActive)
@@ -192,6 +208,39 @@ public sealed class AppLifecycleCoordinator
         _executeAction?.Invoke(action);
     }
 
+    private void RegisterHotkey(ParallaxSettings settings, PlannedHotkey hotkey, ParsedHotkey parsed)
+    {
+        if (hotkey.Action == HotkeyAction.SpeechToText && settings.SpeechShortcutMode == SpeechShortcutMode.PushToTalk)
+        {
+            _hotkeyService.RegisterHold(
+                hotkey.RegistrationId,
+                parsed.Modifiers,
+                parsed.VirtualKey,
+                hotkey.DisplayText,
+                CreatePushToTalkStartCallback(),
+                CreateHotkeyReleaseCallback(hotkey.Action));
+            return;
+        }
+
+        _hotkeyService.Register(
+            hotkey.RegistrationId,
+            parsed.Modifiers,
+            parsed.VirtualKey,
+            hotkey.DisplayText,
+            CreateHotkeyCallback(hotkey.Action));
+    }
+
+    private Action CreatePushToTalkStartCallback()
+    {
+        return () =>
+        {
+            if (!_isTranscribing && _features.Supports(ShellActionId.StartSpeechToText))
+            {
+                Execute(ShellActionId.StartSpeechToText);
+            }
+        };
+    }
+
     private static ShellActionId MapHotkeyAction(HotkeyAction action)
     {
         return action switch
@@ -199,6 +248,7 @@ public sealed class AppLifecycleCoordinator
             HotkeyAction.RegionScreenshot => ShellActionId.RegionScreenshot,
             HotkeyAction.FullscreenScreenshot => ShellActionId.FullScreenshot,
             HotkeyAction.RegionRecording => ShellActionId.RecordRegion,
+            HotkeyAction.SpeechToText => ShellActionId.StartSpeechToText,
             _ => throw new ArgumentOutOfRangeException(nameof(action), action, "Unsupported hotkey action.")
         };
     }

@@ -28,6 +28,7 @@ public sealed class SettingsWindow : Window
     private readonly TextBox _hotkeyScreenshot;
     private readonly TextBox _hotkeyFullscreen;
     private readonly TextBox _hotkeyRegionVideo;
+    private readonly SpeechSettingsSection _speechSettings;
     private readonly TextBlock _status;
 
     public SettingsWindow(
@@ -92,6 +93,9 @@ public sealed class SettingsWindow : Window
         _hotkeyRegionVideo = TextBox(_model.HotkeyRegionVideo);
         root.Children.Add(_hotkeyRegionVideoEnabled);
         root.Children.Add(Labeled("Region recording", _hotkeyRegionVideo));
+        _speechSettings = new SpeechSettingsSection(_model, platform.Locations);
+        root.Children.Add(_speechSettings.EnabledControl);
+        root.Children.Add(Labeled("Transcribe speech", _speechSettings.ShortcutControl));
         foreach (var hotkey in hotkeys)
         {
             root.Children.Add(Line($"{hotkey.Name}: {hotkey.DisplayText} ({hotkey.State})"));
@@ -103,7 +107,10 @@ public sealed class SettingsWindow : Window
 
         root.Children.Add(Header("Platform"));
         root.Children.Add(Line(platform.Capabilities.GlobalHotkeys.Message));
+        root.Children.Add(Line(platform.Capabilities.SpeechToText.Message));
         root.Children.Add(Line(platform.Capabilities.StartupRegistration.Message));
+
+        _speechSettings.AddTo(root);
 
         _status = Line("Changes are applied when you choose Save.");
         root.Children.Add(_status);
@@ -161,6 +168,7 @@ public sealed class SettingsWindow : Window
         _model.HotkeyScreenshot = _hotkeyScreenshot.Text ?? string.Empty;
         _model.HotkeyFullscreen = _hotkeyFullscreen.Text ?? string.Empty;
         _model.HotkeyRegionVideo = _hotkeyRegionVideo.Text ?? string.Empty;
+        _speechSettings.ApplyTo(_model);
     }
 
     private static TextBlock Header(string text)
@@ -225,4 +233,5 @@ public sealed class SettingsWindow : Window
     {
         return comboBox.SelectedItem as string ?? fallback;
     }
+
 }

@@ -17,6 +17,10 @@ public interface IPlatformLocations
     string ScreenshotsDirectory { get; }
 
     string RecordingsDirectory { get; }
+
+    string TranscriptionHistoryDirectory { get; }
+
+    string SpeechModelsDirectory { get; }
 }
 
 public sealed record PlatformLocations(
@@ -27,4 +31,6 @@ public sealed record PlatformLocations(
     string ToolsDirectory,
     string TempDirectory,
     string ScreenshotsDirectory,
-    string RecordingsDirectory) : IPlatformLocations;
+    string RecordingsDirectory,
+    string TranscriptionHistoryDirectory = "",
+    string SpeechModelsDirectory = "") : IPlatformLocations;

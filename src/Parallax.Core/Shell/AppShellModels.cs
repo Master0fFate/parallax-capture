@@ -6,6 +6,8 @@ public enum ShellActionId
     FullScreenshot,
     RecordRegion,
     StopRecording,
+    StartSpeechToText,
+    StopSpeechToText,
     OpenVideoEditor,
     OpenImageEditor,
     OpenSaveFolder,
@@ -17,6 +19,7 @@ public sealed record ShellFeatureSet(
     bool RegionScreenshot = true,
     bool FullScreenshot = true,
     bool RegionRecording = true,
+    bool SpeechToText = true,
     bool VideoEditor = true,
     bool ImageEditor = true)
 {
@@ -29,6 +32,7 @@ public sealed record ShellFeatureSet(
             ShellActionId.RegionScreenshot => RegionScreenshot,
             ShellActionId.FullScreenshot => FullScreenshot,
             ShellActionId.RecordRegion or ShellActionId.StopRecording => RegionRecording,
+            ShellActionId.StartSpeechToText or ShellActionId.StopSpeechToText => SpeechToText,
             ShellActionId.OpenVideoEditor => VideoEditor,
             ShellActionId.OpenImageEditor => ImageEditor,
             _ => true
@@ -39,6 +43,7 @@ public sealed record ShellFeatureSet(
 public sealed record ShellRuntimeState(
     bool IsRecording,
     bool TrayAvailable,
+    bool IsTranscribing = false,
     bool HasActiveVideoEditor = false,
     ShellFeatureSet? Features = null);
 

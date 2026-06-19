@@ -4,10 +4,12 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Parallax.App.Avalonia.Capture;
 using Parallax.App.Avalonia.Settings;
+using Parallax.App.Avalonia.Speech;
 using Parallax.Core.Capture;
 using Parallax.Core.Platform;
 using Parallax.Core.Settings;
 using Parallax.Core.Shell;
+using Parallax.Core.Speech;
 
 namespace Parallax.App.Avalonia.Shell;
 
@@ -24,6 +26,7 @@ public sealed class AvaloniaShellCommandHandler
     private ParallaxSettings _settings;
     private Window? _settingsWindow;
     private Window? _statusWindow;
+    private CancellationTokenSource? _speechCancellation;
 
     public AvaloniaShellCommandHandler(
         IClassicDesktopStyleApplicationLifetime desktop,
@@ -71,6 +74,14 @@ public sealed class AvaloniaShellCommandHandler
                 break;
             case ShellActionId.StopRecording:
                 _coordinator.SetRecordingState(false);
+                _coordinator.RefreshSurface(_settings);
+                break;
+            case ShellActionId.StartSpeechToText:
+                RunSpeechToText();
+                break;
+            case ShellActionId.StopSpeechToText:
+                _speechCancellation?.Cancel();
+                _coordinator.SetTranscribingState(false);
                 _coordinator.RefreshSurface(_settings);
                 break;
             case ShellActionId.OpenVideoEditor:
@@ -140,6 +151,54 @@ public sealed class AvaloniaShellCommandHandler
         if (!result.Success || (!result.ClipboardCopied && !result.EditorOpened && string.IsNullOrWhiteSpace(result.SavedPath)))
         {
             ShowStatus(title, FormatScreenshotResult(result));
+        }
+    }
+
+    private async void RunSpeechToText()
+    {
+        if (!_settings.SpeechToTextEnabled)
+        {
+            ShowStatus("Speech-to-text", "Speech-to-text is disabled in Settings.");
+            return;
+        }
+
+        if (_platform.Capabilities.SpeechToText.State == CapabilityState.Unsupported)
+        {
+            ShowStatus("Speech-to-text", _platform.Capabilities.SpeechToText.Message);
+            return;
+        }
+
+        _speechCancellation?.Cancel();
+        _speechCancellation?.Dispose();
+        _speechCancellation = new CancellationTokenSource();
+        _coordinator.SetTranscribingState(true);
+        _coordinator.RefreshSurface(_settings);
+        try
+        {
+            var workflow = AvaloniaSpeechServices.CreateWorkflow(
+                _platform,
+                _desktop.MainWindow ?? _settingsWindow ?? _statusWindow);
+            var result = await workflow.TranscribeOnceAsync(_settings, _platform.Locations, _speechCancellation.Token);
+            ShowStatus(
+                result.Success ? "Speech-to-text" : "Speech-to-text issue",
+                result.Success ? result.Text : result.Message);
+        }
+        catch (Exception ex) when (ex is HttpRequestException
+                                   or IOException
+                                   or InvalidOperationException
+                                   or OperationCanceledException)
+        {
+            string message = ex is OperationCanceledException
+                ? "Speech-to-text was stopped."
+                : $"Speech-to-text failed: {ex.Message}";
+            ShowStatus("Speech-to-text issue", message);
+        }
+        finally
+        {
+            _speechCancellation?.Dispose();
+            _speechCancellation = null;
+            _coordinator.SetTranscribingState(false);
+            _coordinator.RefreshSurface(_settings);
         }
     }
 

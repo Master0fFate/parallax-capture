@@ -27,6 +27,14 @@ Desktop.ini
 *.tmp
 *.log
 
+# ── AI agent/session artifacts ──
+.omo/
+.OMO/
+*.omo
+*.session.md
+session-*.md
+agent-session-*.md
+
 # ── LatentContext MCP cache ──
 DATA/
 data/

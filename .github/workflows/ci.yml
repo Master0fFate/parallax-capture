@@ -20,11 +20,11 @@ jobs:
             test_command: dotnet test ParallaxCapture.sln -c Release --no-build --logger "console;verbosity=minimal"
           - os: macos-13
             rid: osx-x64
-            package_command: bash ./scripts/package-macos.sh osx-x64
+            package_command: MACOS_ALLOW_UNSIGNED=true bash ./scripts/package-macos.sh osx-x64
             test_command: dotnet test tests/Parallax.Packaging.Tests/Parallax.Packaging.Tests.csproj -c Release --no-build --logger "console;verbosity=minimal"
           - os: macos-latest
             rid: osx-arm64
-            package_command: bash ./scripts/package-macos.sh osx-arm64
+            package_command: MACOS_ALLOW_UNSIGNED=true bash ./scripts/package-macos.sh osx-arm64
             test_command: dotnet test tests/Parallax.Packaging.Tests/Parallax.Packaging.Tests.csproj -c Release --no-build --logger "console;verbosity=minimal"
           - os: ubuntu-latest
             rid: linux-x64

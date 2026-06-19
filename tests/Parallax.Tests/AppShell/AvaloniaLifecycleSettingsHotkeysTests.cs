@@ -4,6 +4,7 @@ using Parallax.Core.Hotkeys;
 using Parallax.Core.Platform;
 using Parallax.Core.Settings;
 using Parallax.Core.Shell;
+using Parallax.Core.Speech;
 
 namespace Parallax.Tests.AppShell;
 
@@ -52,6 +53,28 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
         Assert.Contains(ShellActionId.RegionScreenshot, executed);
         Assert.Contains(ShellActionId.Quit, executed);
         Assert.True(coordinator.ShutdownRequested);
+    }
+
+    [Fact]
+    public void SpeechPushToTalkRegistersHoldCallbacksAndReleaseStopsTranscription()
+    {
+        var executed = new List<ShellActionId>();
+        var platform = TestPlatform.Create(PlatformKind.Windows);
+        var hotkeys = new FakeHotkeyService(CapabilityResult.Supported("Hotkeys supported."));
+        var coordinator = new AppLifecycleCoordinator(platform, new FakeTrayService(isAvailable: true), hotkeys, executed.Add);
+        var settings = ParallaxSettings.CreateDefaults(platform.Locations.ScreenshotsDirectory);
+        settings.SpeechToTextEnabled = true;
+        settings.SpeechShortcutMode = SpeechShortcutMode.PushToTalk;
+
+        coordinator.StartTrayFirst(settings);
+        var hold = hotkeys.HoldCallbacks[HotkeyPlanner.SpeechToTextId];
+        hold.Started.Invoke();
+        coordinator.SetTranscribingState(true);
+        hold.Stopped.Invoke();
+
+        Assert.Contains(ShellActionId.StartSpeechToText, executed);
+        Assert.Contains(ShellActionId.StopSpeechToText, executed);
+        Assert.DoesNotContain(HotkeyPlanner.SpeechToTextId, hotkeys.Callbacks.Keys);
     }
 
     [Fact]
@@ -192,7 +215,9 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
         Assert.Equal(PlannedHotkeyState.Invalid, planned.Single(item => item.Action == HotkeyAction.FullscreenScreenshot).State);
 
         planned = HotkeyPlanner.Plan(settings, CapabilityResult.Unsupported("Global shortcuts are unavailable on this desktop."));
-        Assert.All(planned.Where(item => item.Action != HotkeyAction.RegionScreenshot), item => Assert.Equal(PlannedHotkeyState.Unsupported, item.State));
+        Assert.All(
+            planned.Where(item => item.Action is not HotkeyAction.RegionScreenshot and not HotkeyAction.SpeechToText),
+            item => Assert.Equal(PlannedHotkeyState.Unsupported, item.State));
 
         var platform = TestPlatform.Create(PlatformKind.Linux);
         var surface = TraySurfaceBuilder.Build(
@@ -378,6 +403,7 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
             HotkeyAction.RegionScreenshot => ShellActionId.RegionScreenshot,
             HotkeyAction.FullscreenScreenshot => ShellActionId.FullScreenshot,
             HotkeyAction.RegionRecording => ShellActionId.RecordRegion,
+            HotkeyAction.SpeechToText => ShellActionId.StartSpeechToText,
             _ => throw new ArgumentOutOfRangeException(nameof(action), action, "Unsupported hotkey action.")
         };
     }
@@ -479,6 +505,8 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
 
         public Dictionary<int, Action> Callbacks { get; } = [];
 
+        public Dictionary<int, (Action Started, Action Stopped)> HoldCallbacks { get; } = [];
+
         public HotkeyRegistrationResult Register(int id, uint modifiers, uint virtualKey, string displayText, Action callback)
         {
             Registered.Add(displayText);
@@ -486,11 +514,19 @@ public sealed class AvaloniaLifecycleSettingsHotkeysTests
             return new HotkeyRegistrationResult(HotkeyRegistrationResultState.Registered, displayText, $"Registered {displayText}.");
         }
 
+        public HotkeyRegistrationResult RegisterHold(int id, uint modifiers, uint virtualKey, string displayText, Action started, Action stopped)
+        {
+            Registered.Add(displayText);
+            HoldCallbacks[id] = (started, stopped);
+            return new HotkeyRegistrationResult(HotkeyRegistrationResultState.Registered, displayText, $"Registered hold-to-record {displayText}.");
+        }
+
         public void UnregisterAll()
         {
             Unregistered = true;
             Registered.Clear();
             Callbacks.Clear();
+            HoldCallbacks.Clear();
         }
 
         public void Dispose()

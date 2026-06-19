@@ -19,7 +19,8 @@ public sealed class LinuxPlatformBackend : IPlatformBackend
         GlobalHotkeys: CapabilityResult.Unsupported("Global shortcuts may be unavailable on some Linux desktop sessions."),
         Clipboard: CapabilityResult.Supported("Linux clipboard integration is supported when a desktop session clipboard is available."),
         StartupRegistration: CapabilityResult.Supported("Per-user XDG autostart registration is supported."),
-        CaptureExclusion: CapabilityResult.Unsupported("Capture exclusion is best-effort only and is not guaranteed on Linux."));
+        CaptureExclusion: CapabilityResult.Unsupported("Capture exclusion is best-effort only and is not guaranteed on Linux."),
+        SpeechToText: CapabilityResult.RequiresUserMediation("Linux speech-to-text can use OpenAI-compatible APIs and local models; microphone and paste automation depend on the desktop session."));
 
     public static LinuxPlatformBackend CreateForUserHome(
         string userHome,

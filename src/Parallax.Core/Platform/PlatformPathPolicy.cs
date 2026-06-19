@@ -36,7 +36,9 @@ public static class PlatformPathPolicy
             ToolsDirectory: Combine(local, WindowsAppDirectoryName, "tools"),
             TempDirectory: Combine(temp.TrimEnd('\\', '/'), WindowsAppDirectoryName),
             ScreenshotsDirectory: Combine(pictures, "parallax_captures"),
-            RecordingsDirectory: Combine(videos, "parallax_recordings"));
+            RecordingsDirectory: Combine(videos, "parallax_recordings"),
+            TranscriptionHistoryDirectory: Combine(local, WindowsAppDirectoryName, "transcriptions"),
+            SpeechModelsDirectory: Combine(local, WindowsAppDirectoryName, "models"));
     }
 
     private static PlatformLocations CreateMacOS(PlatformPathEnvironment environment)
@@ -55,7 +57,9 @@ public static class PlatformPathPolicy
             ToolsDirectory: Combine(config, "tools"),
             TempDirectory: Combine(temp.TrimEnd('\\', '/'), LinuxAppDirectoryName),
             ScreenshotsDirectory: Combine(pictures, AppleAppDirectoryName),
-            RecordingsDirectory: Combine(movies, AppleAppDirectoryName));
+            RecordingsDirectory: Combine(movies, AppleAppDirectoryName),
+            TranscriptionHistoryDirectory: Combine(config, "transcriptions"),
+            SpeechModelsDirectory: Combine(config, "models"));
     }
 
     private static PlatformLocations CreateLinux(PlatformPathEnvironment environment)
@@ -77,7 +81,9 @@ public static class PlatformPathPolicy
             ToolsDirectory: Combine(dataRoot, LinuxAppDirectoryName, "tools"),
             TempDirectory: Combine(temp.TrimEnd('\\', '/'), LinuxAppDirectoryName),
             ScreenshotsDirectory: Combine(pictures, AppleAppDirectoryName),
-            RecordingsDirectory: Combine(videos, AppleAppDirectoryName));
+            RecordingsDirectory: Combine(videos, AppleAppDirectoryName),
+            TranscriptionHistoryDirectory: Combine(stateRoot, LinuxAppDirectoryName, "transcriptions"),
+            SpeechModelsDirectory: Combine(dataRoot, LinuxAppDirectoryName, "models"));
     }
 
     private static string RequiredOrFallback(string? value, string fallback)

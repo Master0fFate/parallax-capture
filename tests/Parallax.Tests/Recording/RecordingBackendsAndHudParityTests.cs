@@ -492,6 +492,11 @@ public sealed class RecordingBackendsAndHudParityTests : IDisposable
             return new HotkeyRegistrationResult(HotkeyRegistrationResultState.Registered, displayText, "Registered.");
         }
 
+        public HotkeyRegistrationResult RegisterHold(int id, uint modifiers, uint virtualKey, string displayText, Action started, Action stopped)
+        {
+            return new HotkeyRegistrationResult(HotkeyRegistrationResultState.Registered, displayText, "Registered hold.");
+        }
+
         public void UnregisterAll()
         {
         }

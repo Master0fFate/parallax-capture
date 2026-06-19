@@ -4,7 +4,8 @@ public enum HotkeyAction
 {
     RegionScreenshot,
     FullscreenScreenshot,
-    RegionRecording
+    RegionRecording,
+    SpeechToText
 }
 
 public sealed record HotkeyBinding(HotkeyAction Action, string Name, bool Enabled, string? Gesture, int RegistrationId);

@@ -14,6 +14,8 @@ public static class TraySurfaceBuilder
         var hotkeyByAction = hotkeys.ToDictionary(item => item.Action);
         string tooltip = state.IsRecording
             ? "Parallax Capture is recording"
+            : state.IsTranscribing
+                ? "Parallax Capture is transcribing"
             : "Parallax Capture";
 
         string activationHint = platform.Kind switch
@@ -49,6 +51,20 @@ public static class TraySurfaceBuilder
                 IsEnabled: features.RegionRecording && state.IsRecording,
                 IsVisible: features.RegionRecording && state.IsRecording,
                 Status: state.IsRecording ? "Recording is active." : "Recording is not active."),
+            BuildAction(
+                ShellActionId.StartSpeechToText,
+                "Transcribe speech",
+                HotkeyAction.SpeechToText,
+                capabilities.SpeechToText,
+                hotkeyByAction,
+                isVisible: features.SpeechToText && !state.IsTranscribing,
+                disabledStatus: capabilities.SpeechToText.Message),
+            new(
+                ShellActionId.StopSpeechToText,
+                "Stop transcription",
+                IsEnabled: features.SpeechToText && state.IsTranscribing,
+                IsVisible: features.SpeechToText && state.IsTranscribing,
+                Status: state.IsTranscribing ? "Speech recording is active." : "Speech recording is not active."),
             new(ShellActionId.OpenVideoEditor, "Open video editor", IsEnabled: features.VideoEditor && !state.IsRecording && !state.HasActiveVideoEditor, IsVisible: features.VideoEditor),
             new(ShellActionId.OpenImageEditor, "Open image editor", IsEnabled: features.ImageEditor && !state.IsRecording, IsVisible: features.ImageEditor),
             new(ShellActionId.OpenSaveFolder, "Open save folder", IsEnabled: true, IsVisible: true),

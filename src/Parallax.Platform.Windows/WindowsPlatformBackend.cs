@@ -19,7 +19,8 @@ public sealed class WindowsPlatformBackend : IPlatformBackend
         GlobalHotkeys: CapabilityResult.Supported("Win32 global hotkeys are supported on Windows."),
         Clipboard: CapabilityResult.Supported("Windows clipboard integration is supported."),
         StartupRegistration: CapabilityResult.Supported("Per-user startup registration is supported on Windows."),
-        CaptureExclusion: CapabilityResult.Supported("Windows capture exclusion uses best-effort display affinity where available."));
+        CaptureExclusion: CapabilityResult.Supported("Windows capture exclusion uses best-effort display affinity where available."),
+        SpeechToText: CapabilityResult.Supported("Windows speech-to-text can record microphone audio and use OpenAI-compatible API or local Whisper CLI transcription."));
 
     public static WindowsPlatformBackend CreateCurrentUser()
     {

@@ -14,6 +14,7 @@
 - **Annotation editor:** pen, arrow, rectangle, ellipse, text, highlighter, blur, undo.
 - **Region video recording:** record a screen area with platform capability and permission states.
 - **Video editor:** trim, preview, save frames, export GIFs, and keep source recordings safe.
+- **Speech-to-text:** push-to-talk or toggle transcription with OpenAI-compatible APIs or local Whisper CLI models.
 - **Tray or status controls:** runs quietly with global hotkeys where the OS allows them.
 - **Clipboard auto-copy:** screenshots land on your clipboard instantly when enabled.
 - **No admin required:** normal install, run, settings, and uninstall flows use per-user paths.
@@ -97,11 +98,11 @@ Release automation may also publish `ParallaxCapture-<version>-osx-x64.dmg` or `
 **Build a package from source:**
 
 ```sh
-bash ./scripts/package-macos.sh osx-x64
-bash ./scripts/package-macos.sh osx-arm64
+MACOS_ALLOW_UNSIGNED=true bash ./scripts/package-macos.sh osx-x64
+MACOS_ALLOW_UNSIGNED=true bash ./scripts/package-macos.sh osx-arm64
 ```
 
-The script publishes the Avalonia app, creates a `.app` bundle, writes `Info.plist`, includes entitlements metadata, creates the app `tar.gz`, optionally creates a DMG with `hdiutil`, and regenerates `SHA256SUMS`. If `MACOS_CODESIGN_IDENTITY` and `MACOS_NOTARY_PROFILE` are configured, it runs signing, hardened runtime, notarization, and stapling steps. Without those values, local packages are unsigned.
+The script publishes the Avalonia app, creates a `.app` bundle, writes `Info.plist`, includes entitlements metadata, creates the app `tar.gz`, optionally creates a DMG with `hdiutil`, and regenerates `SHA256SUMS`. Local unsigned packages require the explicit `MACOS_ALLOW_UNSIGNED=true` opt-in. Release builds set `RELEASE_BUILD=true` and fail unless `MACOS_CODESIGN_IDENTITY` and `MACOS_NOTARY_PROFILE` are configured for signing, hardened runtime, notarization, and stapling.
 
 **Prerequisites:** macOS on Intel or Apple Silicon for native package generation, `curl`, `tar`, `shasum`, .NET 10 SDK for source packaging, Xcode command-line tooling for signing/notarization steps, and `hdiutil` for DMG creation.
 
@@ -173,6 +174,14 @@ dotnet restore ParallaxCapture.sln
 dotnet build src/Parallax.App.Avalonia/Parallax.App.Avalonia.csproj -c Release --no-restore
 ```
 
+Build a local Windows test executable without creating a release package:
+
+```powershell
+dotnet publish src/Parallax.App.Avalonia/Parallax.App.Avalonia.csproj -c Release -r win-x64 --self-contained false -o artifacts/local-test/win-x64
+```
+
+Run `artifacts/local-test/win-x64/Parallax.App.Avalonia.exe` for a local smoke test. The `artifacts/` folder is ignored by Git.
+
 ## Test
 
 Run the complete Windows-hosted suite:
@@ -198,8 +207,8 @@ pwsh ./scripts/package-windows.ps1 -RuntimeIdentifier win-x64 -Version v1.1.0
 macOS:
 
 ```sh
-bash ./scripts/package-macos.sh osx-x64
-bash ./scripts/package-macos.sh osx-arm64
+MACOS_ALLOW_UNSIGNED=true bash ./scripts/package-macos.sh osx-x64
+MACOS_ALLOW_UNSIGNED=true bash ./scripts/package-macos.sh osx-arm64
 ```
 
 Linux:
@@ -225,6 +234,17 @@ FFmpeg is used for video trim, frame export, GIF export, and related media opera
 - The app does not verify FFmpeg signatures or hashes. Use built-in or manual FFmpeg install only if you trust the source.
 - Video export runs FFmpeg locally with argument-list process startup, bounded error output, timeouts, generated output names, and source recording preservation.
 
+## Speech-to-text
+
+Speech-to-text is configured from Settings and can be launched from the tray/status menu or the configured shortcut.
+
+- **Shortcut:** defaults to `Ctrl` + `Shift` + `D`. Push-to-talk records while held; toggle mode starts on the first press and stops on the next.
+- **API providers:** use any OpenAI-compatible `/audio/transcriptions` endpoint by setting the base URL, API key, model, and language. `auto` is the default language.
+- **Local Whisper:** choose `LocalWhisper`, download a pinned tiny/base GGML model from Settings, and place `whisper-cli`, `main`, or `whisper` in the app tools folder or on `PATH`.
+- **Output:** paste through clipboard, `Ctrl` + `V`, `Ctrl` + `Shift` + `V`, or `Shift` + `Insert`, with optional auto-submit.
+- **Custom words:** add frequently misheard names or terms so transcription output is normalized before paste/history.
+- **History:** transcripts and recordings are kept under the app transcription history folder, with configurable maximum entries and retention days.
+
 ## Usage
 
 | Action | Default shortcut |
@@ -232,6 +252,7 @@ FFmpeg is used for video trim, frame export, GIF export, and related media opera
 | Region screenshot | `Print Screen` where supported |
 | Full screenshot | `Alt` + `Print Screen` where supported |
 | Start or stop region recording | `Alt` + `R` where supported |
+| Transcribe speech | `Ctrl` + `Shift` + `D` where supported |
 | Stop recording fallback | Tray/status menu or configured recording shortcut |
 
 Right-click the tray icon or use the platform status item for the full menu: open video editor, open image editor, settings, save folder, and quit.
