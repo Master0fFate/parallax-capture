@@ -1,5 +1,5 @@
 # Parallax Capture
-
+## Currently getting a complete rework, unfunctional at this state - built quickly for the (check forks) ToddShot.
 > Screenshot and screen recording tool: region capture, annotation, video trimming, tray or status item controls, and cross-platform packaging.
 
 ![.NET](https://img.shields.io/badge/.NET-10.0-512bd4?logo=dotnet)
